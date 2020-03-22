@@ -180,7 +180,17 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 ImageDocument::~ImageDocument()
 {
 	// unregister / free the m_image
+	if (m_image)
+	{
+		glDeleteTextures(1, &m_image);
+		m_image = 0;
+	}
 	// unregister / free the m_pSurface
+	if (m_pSurface)
+	{
+		SDL_FreeSurface(m_pSurface);
+		m_pSurface = nullptr;
+	}
 }
 
 void ImageDocument::Render()
