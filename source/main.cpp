@@ -195,11 +195,26 @@ ImageDocument::~ImageDocument()
 
 void ImageDocument::Render()
 {
+	// Number of Colors
+	// Dithering
+	// Quality
+	// Posterize
+	// Force Target Palette
+
 	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
-	ImGui::Begin(m_windowName.c_str(),&m_bOpen,ImGuiWindowFlags_AlwaysAutoResize);
-	ImGui::Image(tex_id, ImVec2(m_width*m_zoom, m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+	ImGui::Begin(m_windowName.c_str(),&m_bOpen,ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
+
+	ImGui::Text("%d x %d Pixels",m_width,m_height);
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(1);
+	ImGui::InputInt("", &m_zoom);
+	if (m_zoom < 1) m_zoom = 1;
+	if (m_zoom >16) m_zoom = 16;
+	ImGui::SameLine(); ImGui::Text("%dx zoom", m_zoom);
+
+	ImGui::Image(tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 	ImGui::End();
 }
 
@@ -283,7 +298,7 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
