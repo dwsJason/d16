@@ -30,9 +30,12 @@
 // Statics
 int ImageDocument::s_uniqueId = 0;
 
+// Prototype for helper function, that should live in a some sort of helper
+// module, but so far does not
 GLuint
 SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
 
+//------------------------------------------------------------------------------
 
 ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Surface *pImage)
 	: m_filename(filename)
@@ -155,6 +158,8 @@ void PutPixel8(SDL_Surface * surface, int x, int y, Uint32 color)
 }
 #endif
 
+//------------------------------------------------------------------------------
+
 int ImageDocument::CountUniqueColors()
 {
     SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, m_width, m_height,
@@ -217,6 +222,8 @@ int ImageDocument::CountUniqueColors()
 
 	return (int)histogram.size();
 }
+
+//------------------------------------------------------------------------------
 
 void ImageDocument::Render()
 {
@@ -382,4 +389,5 @@ void ImageDocument::Quant()
 
 }
 
+//------------------------------------------------------------------------------
 
