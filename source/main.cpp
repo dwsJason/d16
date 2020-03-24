@@ -504,6 +504,10 @@ int main(int, char**)
 		if (show_palette_window)
 		{
 			ImGui::Begin("Palettes", &show_palette_window);
+
+			for (int idx = 0; idx < paletteDocuments.size(); ++idx)
+				paletteDocuments[ idx ]->Render();
+
 			ImGui::End();
 		}
 
