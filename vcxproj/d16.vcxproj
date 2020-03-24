@@ -240,6 +240,7 @@
     <ClCompile Include="..\libs\libimagequant-msvc\pam.c" />
     <ClCompile Include="..\source\common\log.cpp" />
     <ClCompile Include="..\source\icon.cpp" />
+    <ClCompile Include="..\source\imagedoc.cpp" />
     <ClCompile Include="..\source\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -276,6 +277,7 @@
     <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
     <ClInclude Include="..\source\common\concurrent_queue.h" />
     <ClInclude Include="..\source\common\log.h" />
+    <ClInclude Include="..\source\imagedoc.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libs\imgui\misc\natvis\imgui.natvis" />

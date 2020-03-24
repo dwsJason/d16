@@ -53,6 +53,9 @@
     <ClCompile Include="..\libs\libimagequant-msvc\blur.c">
       <Filter>libs\libimagequant</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\imagedoc.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -153,6 +156,9 @@
     </ClInclude>
     <ClInclude Include="..\libs\libimagequant-msvc\pam.h">
       <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\imagedoc.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
