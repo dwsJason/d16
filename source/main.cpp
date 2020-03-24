@@ -12,6 +12,7 @@
 #include "log.h"
 #include "ImGuiFileDialog.h"
 #include "imagedoc.h"
+#include "paldoc.h"
 
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
@@ -102,6 +103,7 @@ SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord)
 //------------------------------------------------------------------------------
 
 std::vector<ImageDocument*>   imageDocuments;
+std::vector<PaletteDocument*> paletteDocuments;
 
 //------------------------------------------------------------------------------
 
@@ -211,8 +213,14 @@ int main(int, char**)
     //IM_ASSERT(font != NULL);
 
     // Our state
+#ifdef _DEBUG
     bool show_demo_window = false;
     bool show_another_window = false;
+#endif
+
+	bool show_log_window = true;
+	bool show_palette_window = true;
+
     ImVec4 clear_color = ImVec4(0.18f, 0.208f, 0.38f, 1.00f);
 
 	//--------------------------------------------------------------------------
@@ -364,12 +372,14 @@ int main(int, char**)
 
 					ImGui::Separator();
 
-					if (ImGui::MenuItem("Palettes", nullptr, true))
+					if (ImGui::MenuItem("Palettes", nullptr, show_palette_window))
 					{
+						show_palette_window = !show_palette_window;
 					}
 
-					if (ImGui::MenuItem("Log", nullptr, true))
+					if (ImGui::MenuItem("Log", nullptr, show_log_window))
 					{
+						show_log_window = !show_log_window;
 					}
 
 					ImGui::EndMenu();
@@ -461,6 +471,14 @@ int main(int, char**)
 			}
 		}
 
+		// Render the Palette Window
+
+		if (show_palette_window)
+		{
+			ImGui::Begin("Palettes", &show_palette_window);
+			ImGui::End();
+		}
+
 
 		//$$JGA Some picture windows, just for fun
 #if 0
@@ -492,7 +510,10 @@ int main(int, char**)
 
 //		ShowClipper();
 
-		ShowLog();
+		if (show_log_window)
+		{
+			ShowLog();
+		}
 
 #ifdef _DEBUG
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).

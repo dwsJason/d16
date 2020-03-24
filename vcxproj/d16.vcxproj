@@ -242,6 +242,7 @@
     <ClCompile Include="..\source\icon.cpp" />
     <ClCompile Include="..\source\imagedoc.cpp" />
     <ClCompile Include="..\source\main.cpp" />
+    <ClCompile Include="..\source\paldoc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.h" />
@@ -278,6 +279,7 @@
     <ClInclude Include="..\source\common\concurrent_queue.h" />
     <ClInclude Include="..\source\common\log.h" />
     <ClInclude Include="..\source\imagedoc.h" />
+    <ClInclude Include="..\source\paldoc.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libs\imgui\misc\natvis\imgui.natvis" />
