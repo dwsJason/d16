@@ -445,7 +445,35 @@ int main(int, char**)
 				  // action
 				  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
 				  {
-					  LOG("%s, %s\n", it->first.c_str(), it->second.c_str());
+					  LOG("Open PAL: %s, %s\n", it->first.c_str(), it->second.c_str());
+
+					  // Eventually, support opening any type of image, and extracting
+					  // the palette, for now, lets just open the file, if it has a
+					  // .pal extension
+					  std::string filename = it->first;
+					  std::string& fullpath = it->second;
+
+					  std::string extension = ".pal";
+
+					  if (fullpath.length() > extension.length())
+					  {
+						  size_t fullpath_offset = fullpath.length() - extension.length();
+
+						  for (int idx = 0; idx < extension.length(); ++idx)
+						  {
+							  if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
+							  {
+								  LOG("FAILED %s\n", filename.c_str());
+							  }
+						  }
+
+						  paletteDocuments.push_back(new PaletteDocument(filename, fullpath));
+					  }
+					  else
+					  {
+						  LOG("FAILED %s\n", filename.c_str());
+					  }
+
 				  }
 			  }
 			  // close

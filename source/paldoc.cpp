@@ -29,8 +29,24 @@
 
 //------------------------------------------------------------------------------
 
-PaletteDocument::PaletteDocument(std::string filename)
+PaletteDocument::PaletteDocument(std::string filename, std::string pathname)
+	: m_filename(filename)
+	, m_pathname(pathname)
 {
+	FILE* pFile = fopen(pathname.c_str(), "rb");
+
+	unsigned int colors[16] = {0};
+
+	size_t numread = fread(colors, sizeof(unsigned int), 16, pFile);
+
+	fclose(pFile);
+
+	LOG("Read in %d Colors\n", (int)numread);
+
+	for (int idx = 0; idx < numread; ++idx)
+	{
+		m_colors.push_back( colors[ idx ] );
+	}
 }
 
 PaletteDocument::~PaletteDocument()

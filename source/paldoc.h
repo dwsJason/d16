@@ -6,16 +6,22 @@
 #define _PALETTE_DOCUMENT_
 
 #include <string>
+#include <vector>
 
 class PaletteDocument
 {
 public:
-	PaletteDocument(std::string filename);
+	PaletteDocument(std::string filename, std::string pathname);
 	~PaletteDocument();
 
 	void Render();
 
 private:
+
+	std::string m_filename;
+	std::string m_pathname;
+
+	std::vector<unsigned int>  m_colors;
 
 };
 
