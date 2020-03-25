@@ -514,6 +514,13 @@ int main(int, char**)
 		// Render out the Resize Window
 
 		{
+			int iOriginalWidth  = 1024;
+			int iOriginalHeight = 768;
+			static int iNewWidth = 320;
+			static int iNewHeight = 200;
+			static bool bMaintainAspectRatio = false;
+			static float fAspectRatio = 1.0f;
+
 			static bool show_resize_image = true;
 			ImGui::Begin("Resize Image", &show_resize_image,
 						 ImGuiWindowFlags_AlwaysAutoResize
@@ -523,36 +530,66 @@ int main(int, char**)
 
 			ImGui::SameLine(ImGui::GetWindowWidth()/4);
 
-			static bool bMaintainAspectRatio = false;
-			ImGui::Checkbox("Maintain Aspect Ratio", &bMaintainAspectRatio);
+			if (ImGui::Checkbox("Maintain Aspect Ratio", &bMaintainAspectRatio))
+			{
+				if (bMaintainAspectRatio)
+				{
+					fAspectRatio = (float)iNewWidth/(float)iNewHeight;
+				}
+			}
 
 			ImGui::NewLine();
 
-			static int iNewWidth = 320;
-			static int iNewHeight = 200;
-
 			ImGui::Text("New Width:");  ImGui::SameLine(100); ImGui::SetNextItemWidth(128);
-			ImGui::InputInt("Pixels##Width", &iNewWidth);
+			if (ImGui::InputInt("Pixels##Width", &iNewWidth))
+			{
+				if (iNewWidth < 1) iNewWidth = 1;
+				iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+				if (iNewHeight < 1) iNewHeight = 1;
+			}
 
 			ImGui::Text("New Height:");  ImGui::SameLine(100); ImGui::SetNextItemWidth(128);
-			ImGui::InputInt("Pixels##Height", &iNewHeight);
+			if (ImGui::InputInt("Pixels##Height", &iNewHeight))
+			{
+				if (iNewHeight < 1) iNewHeight = 1;
+				iNewWidth = (int)((((float)iNewHeight) * fAspectRatio) + 0.5f);
+				if (iNewWidth < 1) iNewWidth = 1;
+			}
 
 			ImGui::NewLine();
 
 			if(ImGui::Button("Original Size"))
 			{
+				iNewWidth = iOriginalWidth;
+				iNewHeight = iOriginalHeight;
+				if (bMaintainAspectRatio)
+					fAspectRatio = (float)iNewWidth/(float)iNewHeight;
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Half"))
 			{
+				iNewWidth>>=1;
+				//iNewHeight>>=1;
+				if (iNewWidth < 1) iNewWidth = 1;
+				iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+				if (iNewHeight < 1) iNewHeight = 1;
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Double"))
 			{
+				iNewWidth<<=1;
+				iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+				if (iNewHeight < 1) iNewHeight = 1;
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("320x200"))
 			{
+				iNewWidth  = 320;
+				iNewHeight = 200;
+				if (bMaintainAspectRatio)
+				{
+					fAspectRatio = (float)iNewWidth/(float)iNewHeight;
+				}
 			}
 
 			ImGui::NewLine();
@@ -581,24 +618,45 @@ int main(int, char**)
 
 			ImVec2 buttonSize = ImVec2(32,32);
 
-			ImGui::SameLine(128);
-			ImGui::Button("##UL", buttonSize); ImGui::SameLine(164);
-			ImGui::Button("##UM", buttonSize); ImGui::SameLine(200);
-			ImGui::Button("##UR", buttonSize);
+			//  0 1 2
+			//  3 4 5
+			//  6 7 8
+			static int iLitButtonIndex = 4;
 
-			ImGui::NewLine();
-			ImGui::SameLine(128);
-			ImGui::Button("##ML", buttonSize); ImGui::SameLine(164);
-			ImGui::Button("##MM", buttonSize); ImGui::SameLine(200);
-			ImGui::Button("##MR", buttonSize);
+			ImVec4 ButtonColor = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+			ImVec4 ActiveColor = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
 
-			ImGui::NewLine();
-			ImGui::SameLine(128);
-			ImGui::Button("##LL", buttonSize); ImGui::SameLine(164);
-			ImGui::Button("##LM", buttonSize); ImGui::SameLine(200);
-			ImGui::Button("##LR", buttonSize);
 
-			ImGui::NewLine();
+			// Draw the 9 buttons, and leave our selection lit up
+			int index = 0;
+			for (int y = 0; y < 3; ++y)
+			{
+				float xpos = 128.0f;
+
+				for (int x = 0; x < 3; ++x)
+				{
+					ImGui::SameLine(xpos);
+
+					ImGui::PushID(index);
+
+					ImGui::PushStyleColor(ImGuiCol_Button,
+										  iLitButtonIndex==index ?
+										  ActiveColor :
+										  ButtonColor);
+
+					xpos += (buttonSize.x + 4.0f);
+					if (ImGui::Button("", buttonSize))
+						iLitButtonIndex = index;
+
+					ImGui::PopStyleColor();
+					ImGui::PopID();
+
+					++index;
+				}
+				ImGui::NewLine();
+			}
+
+			//ImGui::NewLine();
 			ImGui::Separator();
 			ImGui::NewLine();
 
