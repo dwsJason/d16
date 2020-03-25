@@ -511,6 +511,106 @@ int main(int, char**)
 			ImGui::End();
 		}
 
+		// Render out the Resize Window
+
+		{
+			static bool show_resize_image = true;
+			ImGui::Begin("Resize Image", &show_resize_image,
+						 ImGuiWindowFlags_AlwaysAutoResize
+						 | ImGuiWindowFlags_NoCollapse
+						 | ImGuiWindowFlags_NoDocking
+						 );
+
+			ImGui::SameLine(ImGui::GetWindowWidth()/4);
+
+			static bool bMaintainAspectRatio = false;
+			ImGui::Checkbox("Maintain Aspect Ratio", &bMaintainAspectRatio);
+
+			ImGui::NewLine();
+
+			static int iNewWidth = 320;
+			static int iNewHeight = 200;
+
+			ImGui::Text("New Width:");  ImGui::SameLine(100); ImGui::SetNextItemWidth(128);
+			ImGui::InputInt("Pixels##Width", &iNewWidth);
+
+			ImGui::Text("New Height:");  ImGui::SameLine(100); ImGui::SetNextItemWidth(128);
+			ImGui::InputInt("Pixels##Height", &iNewHeight);
+
+			ImGui::NewLine();
+
+			if(ImGui::Button("Original Size"))
+			{
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("Half"))
+			{
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("Double"))
+			{
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("320x200"))
+			{
+			}
+
+			ImGui::NewLine();
+			ImGui::Separator();
+			ImGui::NewLine();
+
+			static int scale_or_crop = 0;
+
+			ImGui::RadioButton("Scale Image", &scale_or_crop, 0); ImGui::SameLine(128);
+
+			const char* items[] = { "Point Sample", "Bilinear Sample", "AVIR" };
+            static int item_current = 2;
+			ImGui::SetNextItemWidth(148);
+            ImGui::Combo("##SampleCombo", &item_current, items, IM_ARRAYSIZE(items));
+
+			static bool bDither = false;
+			ImGui::NewLine();
+			ImGui::SameLine(128);
+			ImGui::Checkbox("Dither", &bDither);
+
+			ImGui::NewLine();
+			ImGui::Separator();
+			ImGui::NewLine();
+
+			ImGui::RadioButton("Reposition", &scale_or_crop, 1);
+
+			ImVec2 buttonSize = ImVec2(32,32);
+
+			ImGui::SameLine(128);
+			ImGui::Button("##UL", buttonSize); ImGui::SameLine(164);
+			ImGui::Button("##UM", buttonSize); ImGui::SameLine(200);
+			ImGui::Button("##UR", buttonSize);
+
+			ImGui::NewLine();
+			ImGui::SameLine(128);
+			ImGui::Button("##ML", buttonSize); ImGui::SameLine(164);
+			ImGui::Button("##MM", buttonSize); ImGui::SameLine(200);
+			ImGui::Button("##MR", buttonSize);
+
+			ImGui::NewLine();
+			ImGui::SameLine(128);
+			ImGui::Button("##LL", buttonSize); ImGui::SameLine(164);
+			ImGui::Button("##LM", buttonSize); ImGui::SameLine(200);
+			ImGui::Button("##LR", buttonSize);
+
+			ImGui::NewLine();
+			ImGui::Separator();
+			ImGui::NewLine();
+
+			ImVec2 okSize = ImVec2(90, 24);
+			ImGui::SameLine(96);
+			ImGui::Button("Ok", okSize);
+			ImGui::SameLine();
+			ImGui::Button("Cancel", okSize);
+
+			ImGui::End();
+		}
+
 
 		//$$JGA Some picture windows, just for fun
 #if 0
