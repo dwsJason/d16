@@ -568,6 +568,8 @@ bool ImGuiFileDialog::FileDialog(const std::string& vKey, ImGuiWindowFlags vFlag
 
 		IsOk = false;
 
+		ImGui::SetNextWindowSize(ImVec2(512,384), ImGuiCond_FirstUseEver);
+
 		bool beg = false;
 		if (dlg_modal)
 		{
