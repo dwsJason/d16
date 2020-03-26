@@ -277,11 +277,22 @@ void ImageDocument::Render()
 						  ImGuiWindowFlags_HorizontalScrollbar |
 						  ImGuiWindowFlags_AlwaysAutoResize);
 
+
+		ImGui::Image(tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+
+		if (m_targetImage)
+		{
+			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
+
+			ImGui::SameLine();
+			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+		}
+
 //-----------------------------  Hand and Pan ----------------------------------
 		static bool bPanActive = false;
 
 		// Show the Hand Cursor
-		if (ImGui::IsItemHovered() || bPanActive)
+		if (ImGui::IsWindowHovered() || bPanActive)
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
 		// Scroll the window around using mouse
@@ -290,7 +301,7 @@ void ImageDocument::Render()
 		static float OriginalScrollY = 0.0f;
 		static float OriginalScrollX = 0.0f;
 
-		if (io.MouseClicked[0] && ImGui::IsItemHovered())
+		if (io.MouseClicked[0] && ImGui::IsWindowHovered())
 		{
 			OriginalScrollX = ImGui::GetScrollX();
 			OriginalScrollY = ImGui::GetScrollY();
@@ -311,15 +322,6 @@ void ImageDocument::Render()
 		}
 //-----------------------------  Hand and Pan ----------------------------------
 
-		ImGui::Image(tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-
-		if (m_targetImage)
-		{
-			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
-
-			ImGui::SameLine();
-			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-		}
 
 	ImGui::EndChild();
 
