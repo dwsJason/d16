@@ -232,6 +232,7 @@ void ImageDocument::Render()
 	// Quality
 	// Posterize
 	// Force Target Palette
+	const float TOOLBAR_HEIGHT = 48.0f;
 
 	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
@@ -241,12 +242,11 @@ void ImageDocument::Render()
 
 	float padding_w = (style.WindowPadding.x + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
 	float padding_h = (style.WindowPadding.y + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
-	padding_h += 48.0f;
+	padding_h += TOOLBAR_HEIGHT;
 
 	ImGui::SetNextWindowSize(ImVec2((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h), ImGuiCond_FirstUseEver);
 
-	//ImGui::Begin(m_windowName.c_str(),&m_bOpen,ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
-	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar);
+	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 
 	ImGui::Text("%d Colors", m_numSourceColors);
 	ImGui::SameLine();
@@ -262,7 +262,7 @@ void ImageDocument::Render()
 
 	if (ImGui::Button("Quant"))
 	{
-		//$$TODO - free the target texture
+		// Make it 16 colors
 		Quant();
 	}
 
@@ -271,10 +271,14 @@ void ImageDocument::Render()
 	ImVec2 window_size = ImGui::GetWindowSize();
 	window_size.x -= padding_w;
 	window_size.y -= padding_h;
+	window_size.x += style.ChildBorderSize*2.0f;
+	window_size.y += style.ChildBorderSize*2.0f;
+
 	ImGui::BeginChild("Source", ImVec2(window_size.x,
 									   window_size.y ), false,
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_HorizontalScrollbar |
+						  ImGuiWindowFlags_NoScrollWithMouse |
 						  ImGuiWindowFlags_AlwaysAutoResize);
 
 
