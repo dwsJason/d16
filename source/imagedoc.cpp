@@ -236,7 +236,17 @@ void ImageDocument::Render()
 	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
-	ImGui::Begin(m_windowName.c_str(),&m_bOpen,ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
+
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	float padding_w = (style.WindowPadding.x + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
+	float padding_h = (style.WindowPadding.y + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
+	padding_h += 48.0f;
+
+	ImGui::SetNextWindowSize(ImVec2((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h), ImGuiCond_FirstUseEver);
+
+	//ImGui::Begin(m_windowName.c_str(),&m_bOpen,ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar);
 
 	ImGui::Text("%d Colors", m_numSourceColors);
 	ImGui::SameLine();
@@ -256,21 +266,62 @@ void ImageDocument::Render()
 		Quant();
 	}
 
-	//ImGui::BeginChild("Source", ImVec2(m_width*m_zoom,m_height*m_zoom), true,
-		//				  ImGuiWindowFlags_NoResize |
-		//				  ImGuiWindowFlags_AlwaysAutoResize |
-		//				  ImGuiWindowFlags_HorizontalScrollbar);
+	// Width and Height here needs to be based on the parent Window
+
+	ImVec2 window_size = ImGui::GetWindowSize();
+	window_size.x -= padding_w;
+	window_size.y -= padding_h;
+	ImGui::BeginChild("Source", ImVec2(window_size.x,
+									   window_size.y ), false,
+						  ImGuiWindowFlags_NoMove |
+						  ImGuiWindowFlags_HorizontalScrollbar |
+						  ImGuiWindowFlags_AlwaysAutoResize);
+
+//-----------------------------  Hand and Pan ----------------------------------
+		static bool bPanActive = false;
+
+		// Show the Hand Cursor
+		if (ImGui::IsItemHovered() || bPanActive)
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+
+		// Scroll the window around using mouse
+		ImGuiIO& io = ImGui::GetIO();
+
+		static float OriginalScrollY = 0.0f;
+		static float OriginalScrollX = 0.0f;
+
+		if (io.MouseClicked[0] && ImGui::IsItemHovered())
+		{
+			OriginalScrollX = ImGui::GetScrollX();
+			OriginalScrollY = ImGui::GetScrollY();
+			bPanActive = true;
+		}
+
+		if (io.MouseDown[0] && bPanActive)
+		{
+			float dx = io.MouseClickedPos[0].x - io.MousePos.x;
+			float dy = io.MouseClickedPos[0].y - io.MousePos.y;
+
+			ImGui::SetScrollX(OriginalScrollX + dx);
+			ImGui::SetScrollY(OriginalScrollY + dy);
+		}
+		else
+		{
+			bPanActive = false;
+		}
+//-----------------------------  Hand and Pan ----------------------------------
+
 		ImGui::Image(tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-	//ImGui::EndChild();
 
-	if (m_targetImage)
-	{
-		ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
+		if (m_targetImage)
+		{
+			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
 
-		ImGui::SameLine();
-		ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-	}
+			ImGui::SameLine();
+			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+		}
 
+	ImGui::EndChild();
 
 	ImGui::End();
 }
