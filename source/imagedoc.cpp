@@ -303,6 +303,9 @@ void ImageDocument::Render()
 		// Scroll the window around using mouse
 		ImGuiIO& io = ImGui::GetIO();
 
+		static float OriginalScrollY = 0.0f;
+		static float OriginalScrollX = 0.0f;
+
 		if (ImGui::IsWindowHovered())
 		{
 			ImVec2 winPos = ImGui::GetWindowPos();
@@ -311,6 +314,7 @@ void ImageDocument::Render()
 			float cursorX = io.MousePos.x - winPos.x;
 			float cursorY = io.MousePos.y - winPos.y;
 
+			// Which pixel on the canvas is the mouse over?
 			float px = cursorX/m_zoom + scrollX/m_zoom;
 			float py = cursorY/m_zoom + scrollY/m_zoom;
 			bool bZoom = false;
@@ -342,16 +346,22 @@ void ImageDocument::Render()
 
 			if (bZoom)
 			{
+				// New Scroll Position based on the new zoom
 				scrollX = -(cursorX/m_zoom - px) * m_zoom;
 				scrollY = -(cursorY/m_zoom - py) * m_zoom;
 
 				ImGui::SetScrollX(scrollX);
 				ImGui::SetScrollY(scrollY);
+
+				if (bPanActive)
+				{
+					// pretend you let up off the mouse button, and clicked
+					// again for the pan
+					//OriginalScrollX = scrollX;
+					//OriginalScrollY = scrollY;
+				}
 			}
 		}
-
-		static float OriginalScrollY = 0.0f;
-		static float OriginalScrollX = 0.0f;
 
 		if (io.MouseClicked[0] && ImGui::IsWindowHovered())
 		{
