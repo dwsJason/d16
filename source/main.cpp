@@ -569,16 +569,19 @@ int main(int, char**)
 			if(ImGui::Button("Half"))
 			{
 				iNewWidth>>=1;
-				//iNewHeight>>=1;
+				iNewHeight>>=1;
 				if (iNewWidth < 1) iNewWidth = 1;
-				iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+				if (bMaintainAspectRatio)
+					iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
 				if (iNewHeight < 1) iNewHeight = 1;
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Double"))
 			{
 				iNewWidth<<=1;
-				iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+				iNewHeight <<= 1;
+				if (bMaintainAspectRatio)
+					iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
 				if (iNewHeight < 1) iNewHeight = 1;
 			}
 			ImGui::SameLine();
