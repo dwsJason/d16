@@ -47,7 +47,9 @@ private:
 	SDL_Surface* m_pTargetSurface;
 	int m_numTargetColors;
 
+//-- UI State
 	bool m_bOpen;
+	bool m_bPanActive;
 
 static int s_uniqueId;
 

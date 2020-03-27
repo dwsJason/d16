@@ -46,6 +46,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_pTargetSurface(nullptr)
 	, m_numTargetColors(16)
 	, m_bOpen(true)
+	, m_bPanActive(false)
 {
 	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
 
@@ -225,6 +226,9 @@ int ImageDocument::CountUniqueColors()
 
 //------------------------------------------------------------------------------
 
+//
+// $$JGA FIXME - NO STATIC STATE VARIABLES, WE SUPPORT MULTIPLE DOCMENTS
+//
 void ImageDocument::Render()
 {
 	// Number of Colors
@@ -247,6 +251,8 @@ void ImageDocument::Render()
 	ImGui::SetNextWindowSize(ImVec2((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h), ImGuiCond_FirstUseEver);
 
 	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
+
+	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
 	ImGui::Text("%d Colors", m_numSourceColors);
 	ImGui::SameLine();
@@ -294,10 +300,11 @@ void ImageDocument::Render()
 		}
 
 //-----------------------------  Hand and Pan ----------------------------------
-		static bool bPanActive = false;
+
+		bHasFocus = bHasFocus && ImGui::IsWindowHovered();
 
 		// Show the Hand Cursor
-		if (ImGui::IsWindowHovered() || bPanActive)
+		if (bHasFocus || m_bPanActive)
 			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
 		// Scroll the window around using mouse
@@ -306,7 +313,7 @@ void ImageDocument::Render()
 		static float OriginalScrollY = 0.0f;
 		static float OriginalScrollX = 0.0f;
 
-		if (ImGui::IsWindowHovered())
+		if (bHasFocus)
 		{
 			ImVec2 winPos = ImGui::GetWindowPos();
 			float scrollX = ImGui::GetScrollX();
@@ -353,7 +360,7 @@ void ImageDocument::Render()
 				ImGui::SetScrollX(scrollX);
 				ImGui::SetScrollY(scrollY);
 
-				if (bPanActive)
+				if (m_bPanActive)
 				{
 					// pretend you let up off the mouse button, and clicked
 					// again for the pan
@@ -363,14 +370,14 @@ void ImageDocument::Render()
 			}
 		}
 
-		if (io.MouseClicked[0] && ImGui::IsWindowHovered())
+		if (io.MouseClicked[0] && bHasFocus)
 		{
 			OriginalScrollX = ImGui::GetScrollX();
 			OriginalScrollY = ImGui::GetScrollY();
-			bPanActive = true;
+			m_bPanActive = true;
 		}
 
-		if (io.MouseDown[0] && bPanActive)
+		if (io.MouseDown[0] && m_bPanActive)
 		{
 			float dx = io.MouseClickedPos[0].x - io.MousePos.x;
 			float dy = io.MouseClickedPos[0].y - io.MousePos.y;
@@ -380,7 +387,7 @@ void ImageDocument::Render()
 		}
 		else
 		{
-			bPanActive = false;
+			m_bPanActive = false;
 		}
 //-----------------------------  Hand and Pan ----------------------------------
 
