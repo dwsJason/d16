@@ -12,6 +12,7 @@
 #include "libimagequant.h"
 
 #include <map>
+#include <vector>
 
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
@@ -236,7 +237,7 @@ void ImageDocument::Render()
 	// Quality
 	// Posterize
 	// Force Target Palette
-	const float TOOLBAR_HEIGHT = 48.0f;
+	const float TOOLBAR_HEIGHT = 72.0f;
 
 	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
@@ -259,7 +260,7 @@ void ImageDocument::Render()
 	ImGui::Text("%d x %d Pixels",m_width,m_height);
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(1);
-	ImGui::InputInt("", &m_zoom);
+	ImGui::InputInt("##zoom", &m_zoom);
 
 	if (m_zoom < 1) m_zoom = 1;
 	if (m_zoom >16) m_zoom = 16;
@@ -272,6 +273,36 @@ void ImageDocument::Render()
 		// Make it 16 colors
 		Quant();
 	}
+
+	// Second Line of Toolbar
+	//--------------------------------------------------------------------------
+	static bool bPosterize = true;
+	ImGui::Checkbox("Posterize", &bPosterize); ImGui::SameLine();
+	static int iDither = 0;
+	ImGui::SetNextItemWidth(96);
+	ImGui::DragInt("Dither", &iDither, 1, 0, 100, "%d%%"); ImGui::SameLine();
+
+	ImVec2 buttonSize = ImVec2(20,20);
+
+	std::vector<ImVec4> m_floatColors;
+	for (int idx = 0; idx < 16; ++idx)
+	{
+		m_floatColors.push_back(ImVec4(idx/15.0f,idx/15.0f,idx/15.0f, 1.0f));
+	}
+
+	for (int idx = 0; idx < m_floatColors.size(); ++idx)
+	{
+		ImGui::SameLine(256.0f + (idx * buttonSize.x));
+
+		std::string colorId = m_filename + "##" + std::to_string(idx);
+		ImGui::ColorButton(colorId.c_str(), m_floatColors[idx],
+						   ImGuiColorEditFlags_NoLabel |
+						   ImGuiColorEditFlags_NoBorder, buttonSize );
+
+	}
+	//ImGui::NewLine();
+
+	//--------------------------------------------------------------------------
 
 	// Width and Height here needs to be based on the parent Window
 
