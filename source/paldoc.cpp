@@ -52,6 +52,15 @@ PaletteDocument::PaletteDocument(std::string filename, std::string pathname)
 	for (int idx = 0; idx < numread; ++idx)
 	{
 		m_colors.push_back( colors[ idx ] | 0xFF000000 );
+
+		unsigned int icolor = m_colors[idx];
+		ImVec4 temp_color;
+		temp_color.x = (icolor>>0  & 0xFF) / 255.0f;
+		temp_color.y = (icolor>>8  & 0xFF) / 255.0f;
+		temp_color.z = (icolor>>16 & 0xFF) / 255.0f;
+		temp_color.w = (icolor>>24 & 0xFF) / 255.0f;
+
+		m_floatColors.push_back(temp_color);
 	}
 }
 
@@ -63,31 +72,24 @@ PaletteDocument::~PaletteDocument()
 
 void PaletteDocument::Render()
 {
-	ImGui::BeginChild(m_filename.c_str(), ImVec2(500, 64), true, ImGuiWindowFlags_NoMove);
+	ImGui::BeginChild(m_filename.c_str(), ImVec2(500, 56), true, ImGuiWindowFlags_NoMove);
 
 		ImGui::Text(m_filename.c_str());
+		ImGui::NewLine();
 
-		ImVec2 buttonSize = ImVec2(16,20);
+		ImVec2 buttonSize = ImVec2(20,20);
 
 		for (int idx = 0; idx < m_colors.size(); ++idx)
 		{
-			unsigned int icolor = m_colors[idx];
-			ImVec4 temp_color;
-			temp_color.x = (icolor>>0  & 0xFF) / 255.0f;
-			temp_color.y = (icolor>>8  & 0xFF) / 255.0f;
-			temp_color.z = (icolor>>16 & 0xFF) / 255.0f;
-			temp_color.w = (icolor>>24 & 0xFF) / 255.0f;
+			ImGui::SameLine(10.0f + (idx * buttonSize.x));
 
-			ImGui::ColorButton("", temp_color,
+			std::string colorId = m_filename + "##" + std::to_string(idx);
+			ImGui::ColorButton(colorId.c_str(), m_floatColors[idx],
 							   ImGuiColorEditFlags_NoLabel |
 							   ImGuiColorEditFlags_NoBorder, buttonSize );
 
-			if (idx != m_colors.size()-1)
-			{
-				ImGui::SameLine();
-			}
 		}
-
+		ImGui::NewLine();
 
 	ImGui::EndChild();
 }

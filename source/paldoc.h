@@ -5,6 +5,7 @@
 #ifndef _PALETTE_DOCUMENT_
 #define _PALETTE_DOCUMENT_
 
+#include "imgui.h"
 #include <string>
 #include <vector>
 
@@ -22,6 +23,7 @@ private:
 	std::string m_pathname;
 
 	std::vector<unsigned int>  m_colors;
+	std::vector<ImVec4> m_floatColors;
 
 };
 
