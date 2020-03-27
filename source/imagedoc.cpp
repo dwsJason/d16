@@ -254,6 +254,7 @@ void ImageDocument::Render()
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(1);
 	ImGui::InputInt("", &m_zoom);
+
 	if (m_zoom < 1) m_zoom = 1;
 	if (m_zoom >16) m_zoom = 16;
 	ImGui::SameLine(); ImGui::Text("%dx zoom", m_zoom);
@@ -301,6 +302,53 @@ void ImageDocument::Render()
 
 		// Scroll the window around using mouse
 		ImGuiIO& io = ImGui::GetIO();
+
+		if (ImGui::IsWindowHovered())
+		{
+			ImVec2 winPos = ImGui::GetWindowPos();
+			float scrollX = ImGui::GetScrollX();
+			float scrollY = ImGui::GetScrollY();
+			float cursorX = io.MousePos.x - winPos.x;
+			float cursorY = io.MousePos.y - winPos.y;
+
+			float px = cursorX/m_zoom + scrollX/m_zoom;
+			float py = cursorY/m_zoom + scrollY/m_zoom;
+			bool bZoom = false;
+
+			if (io.MouseWheel > 0.0f)
+			{
+				m_zoom--;
+				if (m_zoom < 1)
+				{
+					m_zoom = 1;
+				}
+				else
+				{
+					bZoom = true;
+				}
+			}
+			else if (io.MouseWheel < 0.0f)
+			{
+				m_zoom++;
+				if (m_zoom > 16)
+				{
+					m_zoom = 16;
+				}
+				else
+				{
+					bZoom = true;
+				}
+			}
+
+			if (bZoom)
+			{
+				scrollX = -(cursorX/m_zoom - px) * m_zoom;
+				scrollY = -(cursorY/m_zoom - py) * m_zoom;
+
+				ImGui::SetScrollX(scrollX);
+				ImGui::SetScrollY(scrollY);
+			}
+		}
 
 		static float OriginalScrollY = 0.0f;
 		static float OriginalScrollX = 0.0f;
