@@ -86,6 +86,7 @@ void PaletteDocument::Render()
 			std::string colorId = m_filename + "##" + std::to_string(idx);
 			ImGui::ColorButton(colorId.c_str(), m_floatColors[idx],
 							   ImGuiColorEditFlags_NoLabel |
+							   ImGuiColorEditFlags_NoAlpha |
 							   ImGuiColorEditFlags_NoBorder, buttonSize );
 
 		}
