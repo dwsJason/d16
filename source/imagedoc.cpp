@@ -255,32 +255,104 @@ void ImageDocument::Render()
 
 	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
-	ImGui::Text("%d Colors", m_numSourceColors);
+//	ImGui::Text("Source:");
+//	ImGui::SameLine();
+
+	ImGui::TextColored(ImVec4(0.7f,0.7f,0.7f,1.0f),"%d Colors", m_numSourceColors);
 	ImGui::SameLine();
-	ImGui::Text("%d x %d Pixels",m_width,m_height);
-	ImGui::SameLine();
-	ImGui::SetNextItemWidth(1);
-	ImGui::InputInt("##zoom", &m_zoom);
+	ImGui::TextColored(ImVec4(0.7f,0.7f,0.7f,1.0f),"%d x %d Pixels",m_width,m_height);
+	//ImGui::SameLine();
+	//ImGui::SetNextItemWidth(1);
+	//ImGui::InputInt("##zoom", &m_zoom);
 
 	if (m_zoom < 1) m_zoom = 1;
 	if (m_zoom >16) m_zoom = 16;
-	ImGui::SameLine(); ImGui::Text("%dx zoom", m_zoom);
+	ImGui::SameLine(); ImGui::TextColored(ImVec4(0.7f,1.0f,0.7f,1.0f),"%dx zoom", m_zoom);
+
+
+	static bool bLocks[16];
+
+	bool bHasTip = false;
+
+	for (int idx = 0; idx < 16; ++idx)
+	{
+		ImGui::SameLine(320.0f + (idx * 20.0f));
+		std::string id = "##" + std::to_string(idx);
+		ImGui::Checkbox(id.c_str(), &bLocks[idx]);
+
+		if (ImGui::IsItemHovered() && !bHasTip)
+		{
+			bHasTip = true;  // work around for me putting the boxes too close togeher
+
+            //if (ImGui::BeginPopupContextItem()) // <-- This is using IsItemHovered()
+			//{
+			//    if (ImGui::MenuItem("Lock All")) { }
+			//    if (ImGui::MenuItem("Unlock All")) { }
+			//    if (ImGui::MenuItem("Invert All")) { }
+			//    ImGui::EndPopup();
+			//}
+			//else
+			{
+				ImGui::BeginTooltip();
+				if (bLocks[idx])
+				{
+					ImGui::Text("LOCKED");
+					ImGui::Text("keep this color");
+				}
+				else
+				{
+					ImGui::Text("Unlocked");
+					ImGui::Text("Q will choose a color");
+				}
+				ImGui::EndTooltip();
+			}
+		}
+	}
+
+
+	// Second Line of Toolbar
+	//--------------------------------------------------------------------------
+	ImGui::Text("Target:");
+	ImGui::SameLine();
+
+	static int posterize = 0; // 4,3 or 0
+	ImGui::SetNextItemWidth(56);
+	ImGui::Combo("##Posterize", &posterize, "444\0" "555\0" "888\0\0");
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("RGB Posterize");
+		ImGui::Text("Color Resolution");
+		ImGui::EndTooltip();
+	}
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Quant"))
+	static int iDither = 0;
+	ImGui::SetNextItemWidth(32);
+	ImGui::DragInt("##Dither", &iDither, 1, 0, 100, "%d%%"); ImGui::SameLine();
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Dither (drag)");
+		ImGui::EndTooltip();
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Quantize Image"))
 	{
 		// Make it 16 colors
 		Quant();
 	}
 
-	// Second Line of Toolbar
-	//--------------------------------------------------------------------------
-	static bool bPosterize = true;
-	ImGui::Checkbox("Posterize", &bPosterize); ImGui::SameLine();
-	static int iDither = 0;
-	ImGui::SetNextItemWidth(96);
-	ImGui::DragInt("Dither", &iDither, 1, 0, 100, "%d%%"); ImGui::SameLine();
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Reduce / Remap Colors");
+		ImGui::EndTooltip();
+	}
 
 	ImVec2 buttonSize = ImVec2(20,20);
 
@@ -292,11 +364,12 @@ void ImageDocument::Render()
 
 	for (int idx = 0; idx < m_floatColors.size(); ++idx)
 	{
-		ImGui::SameLine(256.0f + (idx * buttonSize.x));
+		ImGui::SameLine(320.0f + (idx * buttonSize.x));
 
 		std::string colorId = m_filename + "##" + std::to_string(idx);
 		ImGui::ColorButton(colorId.c_str(), m_floatColors[idx],
 						   ImGuiColorEditFlags_NoLabel |
+						   ImGuiColorEditFlags_NoAlpha |
 						   ImGuiColorEditFlags_NoBorder, buttonSize );
 
 	}
