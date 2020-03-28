@@ -286,6 +286,8 @@ int main(int, char**)
 
 	{
 		// Scan preset palette directory
+		LOG("Load Preset Palettes\n");
+
 		std::string vPath = ".\\data\\palettes";
 		struct dirent **files = nullptr;
 		int fileCount = scandir(vPath.c_str(), &files, nullptr, alphaSort);
