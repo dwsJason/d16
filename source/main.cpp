@@ -13,6 +13,7 @@
 #include "ImGuiFileDialog.h"
 #include "imagedoc.h"
 #include "paldoc.h"
+#include "dirent.h"
 
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
@@ -101,7 +102,11 @@ SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord)
     return texture;
 }
 //------------------------------------------------------------------------------
-
+static int alphaSort(const struct dirent **a, const struct dirent **b)
+{
+	return strcoll((*a)->d_name, (*b)->d_name);
+}
+//------------------------------------------------------------------------------
 std::vector<ImageDocument*>   imageDocuments;
 std::vector<PaletteDocument*> paletteDocuments;
 
@@ -279,6 +284,45 @@ int main(int, char**)
 	ImGuiFileDialog::Instance()->SetFilterColor(".WEBP", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".PAL", ImVec4(0,1,0,1));
 
+	{
+		// Scan preset palette directory
+		std::string vPath = ".\\data\\palettes";
+		struct dirent **files = nullptr;
+		int fileCount = scandir(vPath.c_str(), &files, nullptr, alphaSort);
+
+		for (int idx = 0; idx < fileCount; ++idx)
+		{
+			struct dirent *ent = files[idx];
+
+			if (DT_REG == ent->d_type)
+			{
+				std::string filename = ent->d_name;
+
+				int len = filename.size();
+
+				if (len > 4)
+				{
+					int extensionOffset = len - 4;
+
+					if ('.' == filename[extensionOffset++])
+					{
+						if ('p' == tolower(filename[extensionOffset++]))
+						{
+							if ('a' == tolower(filename[extensionOffset++]))
+							{
+								if ('l' == tolower(filename[extensionOffset++]))
+								{
+									LOG("%s\n", filename.c_str());
+
+									paletteDocuments.push_back(new PaletteDocument(filename, vPath+"\\"+filename ));
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
     // Main loop
     bool done = false;
