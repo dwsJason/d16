@@ -385,6 +385,9 @@ int main(int, char**)
 					ImGui::EndMenu();
 				}
 
+				ImGui::Button("Pan/Zoom");
+				ImGui::Button("Eye Dropper");
+
 				ImGui::EndMenuBar();
 			}
 

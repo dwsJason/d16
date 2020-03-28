@@ -430,7 +430,7 @@ void ImageDocument::Render()
 			float py = cursorY/m_zoom + scrollY/m_zoom;
 			bool bZoom = false;
 
-			if (io.MouseWheel > 0.0f)
+			if (io.MouseWheel < 0.0f)
 			{
 				m_zoom--;
 				if (m_zoom < 1)
@@ -442,7 +442,7 @@ void ImageDocument::Render()
 					bZoom = true;
 				}
 			}
-			else if (io.MouseWheel < 0.0f)
+			else if (io.MouseWheel > 0.0f)
 			{
 				m_zoom++;
 				if (m_zoom > 16)
