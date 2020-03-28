@@ -280,18 +280,30 @@ void ImageDocument::Render()
 		std::string id = "##" + std::to_string(idx);
 		ImGui::Checkbox(id.c_str(), &bLocks[idx]);
 
+		if (ImGui::BeginPopupContextItem()) // <-- This is using IsItemHovered()
+		{
+		    if (ImGui::MenuItem("Lock All"))
+			{
+				for (int lockIndex = 0; lockIndex < 16; ++lockIndex)
+					bLocks[lockIndex] = true;
+			}
+		    if (ImGui::MenuItem("Unlock All"))
+			{
+				for (int lockIndex = 0; lockIndex < 16; ++lockIndex)
+					bLocks[lockIndex] = false;
+			}
+		    if (ImGui::MenuItem("Invert All"))
+			{
+				for (int lockIndex = 0; lockIndex < 16; ++lockIndex)
+					bLocks[lockIndex] = !bLocks[lockIndex];
+			}
+		    ImGui::EndPopup();
+		}
+
 		if (ImGui::IsItemHovered() && !bHasTip)
 		{
 			bHasTip = true;  // work around for me putting the boxes too close togeher
 
-            //if (ImGui::BeginPopupContextItem()) // <-- This is using IsItemHovered()
-			//{
-			//    if (ImGui::MenuItem("Lock All")) { }
-			//    if (ImGui::MenuItem("Unlock All")) { }
-			//    if (ImGui::MenuItem("Invert All")) { }
-			//    ImGui::EndPopup();
-			//}
-			//else
 			{
 				ImGui::BeginTooltip();
 				if (bLocks[idx])
