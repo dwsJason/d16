@@ -3,7 +3,9 @@
 #define _IMAGE_DOCUMENT_
 
 #include <string>
+#include <vector>
 
+#include "imgui.h"
 #include "SDL_Surface.h"
 
 #ifndef GLuint
@@ -11,6 +13,12 @@ typedef unsigned int	GLuint;		/* 4-byte unsigned */
 typedef float		GLfloat;	/* single precision float */
 #endif
 
+enum PosterizeTargets
+{
+	ePosterize444,
+	ePosterize555,
+	ePosterize888
+};
 
 class ImageDocument
 {
@@ -46,6 +54,12 @@ private:
 	GLuint m_targetImage; // GL Image Number
 	SDL_Surface* m_pTargetSurface;
 	int m_numTargetColors;
+
+	int m_iDither;
+	int m_iPosterize;
+
+	std::vector<int>   m_bLocks;
+	std::vector<ImVec4> m_targetColors;
 
 //-- UI State
 	bool m_bOpen;

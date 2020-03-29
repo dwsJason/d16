@@ -46,6 +46,8 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_targetImage(0)
 	, m_pTargetSurface(nullptr)
 	, m_numTargetColors(16)
+	, m_iDither(50)
+	, m_iPosterize(ePosterize444)
 	, m_bOpen(true)
 	, m_bPanActive(false)
 {
@@ -69,6 +71,14 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	m_windowName = filename + "##" + std::to_string(s_uniqueId++);
 
 	m_numSourceColors = CountUniqueColors();
+
+	// Initialize Target Colors
+	for (int idx = 0; idx < 16; ++idx)
+	{
+		m_targetColors.push_back(ImVec4(idx/15.0f,idx/15.0f,idx/15.0f, 1.0f));
+		m_bLocks.push_back(0);
+	}
+
 }
 
 ImageDocument::~ImageDocument()
@@ -269,33 +279,30 @@ void ImageDocument::Render()
 	if (m_zoom >16) m_zoom = 16;
 	ImGui::SameLine(); ImGui::TextColored(ImVec4(0.7f,1.0f,0.7f,1.0f),"%dx zoom", m_zoom);
 
-
-	static bool bLocks[16];
-
 	bool bHasTip = false;
 
-	for (int idx = 0; idx < 16; ++idx)
+	for (int idx = 0; idx < m_bLocks.size(); ++idx)
 	{
 		ImGui::SameLine(320.0f + (idx * 20.0f));
 		std::string id = "##" + std::to_string(idx);
-		ImGui::Checkbox(id.c_str(), &bLocks[idx]);
+		ImGui::Checkbox(id.c_str(), (bool*)&m_bLocks[idx]);
 
 		if (ImGui::BeginPopupContextItem()) // <-- This is using IsItemHovered()
 		{
 		    if (ImGui::MenuItem("Lock All"))
 			{
-				for (int lockIndex = 0; lockIndex < 16; ++lockIndex)
-					bLocks[lockIndex] = true;
+				for (int lockIndex = 0; lockIndex < m_bLocks.size(); ++lockIndex)
+					m_bLocks[lockIndex] = true;
 			}
 		    if (ImGui::MenuItem("Unlock All"))
 			{
-				for (int lockIndex = 0; lockIndex < 16; ++lockIndex)
-					bLocks[lockIndex] = false;
+				for (int lockIndex = 0; lockIndex < m_bLocks.size(); ++lockIndex)
+					m_bLocks[lockIndex] = false;
 			}
 		    if (ImGui::MenuItem("Invert All"))
 			{
-				for (int lockIndex = 0; lockIndex < 16; ++lockIndex)
-					bLocks[lockIndex] = !bLocks[lockIndex];
+				for (int lockIndex = 0; lockIndex < m_bLocks.size(); ++lockIndex)
+					m_bLocks[lockIndex] = !m_bLocks[lockIndex];
 			}
 		    ImGui::EndPopup();
 		}
@@ -306,7 +313,7 @@ void ImageDocument::Render()
 
 			{
 				ImGui::BeginTooltip();
-				if (bLocks[idx])
+				if (m_bLocks[idx])
 				{
 					ImGui::Text("LOCKED");
 					ImGui::Text("keep this color");
@@ -327,9 +334,8 @@ void ImageDocument::Render()
 	ImGui::Text("Target:");
 	ImGui::SameLine();
 
-	static int posterize = 0; // 4,3 or 0
 	ImGui::SetNextItemWidth(56);
-	ImGui::Combo("##Posterize", &posterize, "444\0" "555\0" "888\0\0");
+	ImGui::Combo("##Posterize", &m_iPosterize, "444\0" "555\0" "888\0\0");
 
 	if (ImGui::IsItemHovered())
 	{
@@ -341,9 +347,8 @@ void ImageDocument::Render()
 
 	ImGui::SameLine();
 
-	static int iDither = 0;
 	ImGui::SetNextItemWidth(32);
-	ImGui::DragInt("##Dither", &iDither, 1, 0, 100, "%d%%"); ImGui::SameLine();
+	ImGui::DragInt("##Dither", &m_iDither, 1, 0, 100, "%d%%"); ImGui::SameLine();
 	if (ImGui::IsItemHovered())
 	{
 		ImGui::BeginTooltip();
@@ -368,21 +373,79 @@ void ImageDocument::Render()
 
 	ImVec2 buttonSize = ImVec2(20,20);
 
-	std::vector<ImVec4> m_floatColors;
-	for (int idx = 0; idx < 16; ++idx)
-	{
-		m_floatColors.push_back(ImVec4(idx/15.0f,idx/15.0f,idx/15.0f, 1.0f));
-	}
-
-	for (int idx = 0; idx < m_floatColors.size(); ++idx)
+	for (int idx = 0; idx < m_targetColors.size(); ++idx)
 	{
 		ImGui::SameLine(320.0f + (idx * buttonSize.x));
 
 		std::string colorId = m_filename + "##" + std::to_string(idx);
-		ImGui::ColorButton(colorId.c_str(), m_floatColors[idx],
+		bool open_popup = ImGui::ColorButton(colorId.c_str(), m_targetColors[idx],
 						   ImGuiColorEditFlags_NoLabel |
 						   ImGuiColorEditFlags_NoAlpha |
 						   ImGuiColorEditFlags_NoBorder, buttonSize );
+
+		static ImVec4 backup_color;
+
+		std::string pickerid = "picker##" + std::to_string(idx);
+
+		if (open_popup)
+		{
+            ImGui::OpenPopup(pickerid.c_str());
+            backup_color = m_targetColors[ idx ];
+		}
+        if (ImGui::BeginPopup(pickerid.c_str()))
+		{
+            ImGui::Text("Edit Target Color");
+            ImGui::Separator();
+			ImGui::ColorPicker3("##Picker", (float *)&m_targetColors[idx], ImGuiColorEditFlags_NoAlpha);
+
+            ImGui::SameLine();
+
+            ImGui::BeginGroup(); // Lock X position
+
+            ImGui::Text("Current");
+            ImGui::ColorButton("##current", m_targetColors[ idx ], ImGuiColorEditFlags_NoPicker, ImVec2(60,40));
+            ImGui::Text("Previous");
+            if (ImGui::ColorButton("##previous", backup_color, ImGuiColorEditFlags_NoPicker, ImVec2(60,40)))
+                m_targetColors[idx] = backup_color;
+            ImGui::Separator();
+
+			#if 0 // put some sort of palette here?
+            ImGui::Text("Palette");
+            for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+            {
+                ImGui::PushID(n);
+                if ((n % 8) != 0)
+                    ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+                if (ImGui::ColorButton("##palette", saved_palette[n], ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip, ImVec2(20,20)))
+                    color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
+
+                // Allow user to drop colors into each palette entry
+                // (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
+                if (ImGui::BeginDragDropTarget())
+                {
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+                        memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+                        memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 4);
+                    ImGui::EndDragDropTarget();
+                }
+
+                ImGui::PopID();
+            }
+			#endif
+
+            ImGui::EndGroup();
+			ImGui::Separator();
+			if (ImGui::Button("Okay"))
+				ImGui::CloseCurrentPopup();
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel"))
+			{
+                m_targetColors[idx] = backup_color;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::EndPopup();
+		}
 
 	}
 	//ImGui::NewLine();
