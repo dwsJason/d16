@@ -562,6 +562,9 @@ int main(int, char**)
 
 		// Render out the Resize Window
 
+		static bool show_resize_image = true;
+
+		if (show_resize_image)
 		{
 			int iOriginalWidth  = 1024;
 			int iOriginalHeight = 768;
@@ -570,7 +573,6 @@ int main(int, char**)
 			static bool bMaintainAspectRatio = false;
 			static float fAspectRatio = 1.0f;
 
-			static bool show_resize_image = true;
 			ImGui::Begin("Resize Image", &show_resize_image,
 						 ImGuiWindowFlags_AlwaysAutoResize
 						 | ImGuiWindowFlags_NoCollapse
