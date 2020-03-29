@@ -431,8 +431,8 @@ int main(int, char**)
 					ImGui::EndMenu();
 				}
 
-				ImGui::Button("Pan/Zoom");
-				ImGui::Button("Eye Dropper");
+				//ImGui::Button("Pan/Zoom");
+				//ImGui::Button("Eye Dropper");
 
 				ImGui::EndMenuBar();
 			}
@@ -562,7 +562,7 @@ int main(int, char**)
 
 		// Render out the Resize Window
 
-		static bool show_resize_image = true;
+		static bool show_resize_image = false;
 
 		if (show_resize_image)
 		{

@@ -50,6 +50,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_iPosterize(ePosterize444)
 	, m_bOpen(true)
 	, m_bPanActive(false)
+	, m_bShowResizeUI(false)
 {
 	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
 
@@ -263,7 +264,7 @@ void ImageDocument::Render()
 
 	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 
-	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+//	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
 //	ImGui::Text("Source:");
 //	ImGui::SameLine();
@@ -409,7 +410,7 @@ void ImageDocument::Render()
                 m_targetColors[idx] = backup_color;
             ImGui::Separator();
 
-			#if 0 // put some sort of palette here?
+			#if 0 // put some kind of shared palette here?
             ImGui::Text("Palette");
             for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
             {
@@ -467,6 +468,8 @@ void ImageDocument::Render()
 						  ImGuiWindowFlags_NoScrollWithMouse |
 						  ImGuiWindowFlags_AlwaysAutoResize);
 
+//------------------------------------------------------------------------------
+// Render Images
 
 		ImGui::Image(tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 
@@ -478,104 +481,143 @@ void ImageDocument::Render()
 			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 		}
 
-//-----------------------------  Hand and Pan ----------------------------------
+//-----------------------------  Context Menu ----------------------------------
 
-		bHasFocus = bHasFocus && ImGui::IsWindowHovered();
+		bool bOpenResizeModal = false;
 
-		// Show the Hand Cursor
-		if (bHasFocus || m_bPanActive)
-			ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
-
-		// Scroll the window around using mouse
-		ImGuiIO& io = ImGui::GetIO();
-
-		static float OriginalScrollY = 0.0f;
-		static float OriginalScrollX = 0.0f;
-
-		if (bHasFocus)
+		if (ImGui::BeginPopupContextItem("Source")) // <-- This is using IsItemHovered()
 		{
-			ImVec2 winPos = ImGui::GetWindowPos();
-			float scrollX = ImGui::GetScrollX();
-			float scrollY = ImGui::GetScrollY();
-			float cursorX = io.MousePos.x - winPos.x;
-			float cursorY = io.MousePos.y - winPos.y;
-
-			// Which pixel on the canvas is the mouse over?
-			float px = cursorX/m_zoom + scrollX/m_zoom;
-			float py = cursorY/m_zoom + scrollY/m_zoom;
-			bool bZoom = false;
-
-			if (io.MouseWheel < 0.0f)
+		    if (ImGui::MenuItem("Resize Image"))
 			{
-				m_zoom--;
-				if (m_zoom < 1)
-				{
-					m_zoom = 1;
-				}
-				else
-				{
-					bZoom = true;
-				}
+				bOpenResizeModal = true;
 			}
-			else if (io.MouseWheel > 0.0f)
-			{
-				m_zoom++;
-				if (m_zoom > 16)
-				{
-					m_zoom = 16;
-				}
-				else
-				{
-					bZoom = true;
-				}
-			}
-
-			if (bZoom)
-			{
-				// New Scroll Position based on the new zoom
-				scrollX = -(cursorX/m_zoom - px) * m_zoom;
-				scrollY = -(cursorY/m_zoom - py) * m_zoom;
-
-				ImGui::SetScrollX(scrollX);
-				ImGui::SetScrollY(scrollY);
-
-				if (m_bPanActive)
-				{
-					// pretend you let up off the mouse button, and clicked
-					// again for the pan
-					//OriginalScrollX = scrollX;
-					//OriginalScrollY = scrollY;
-				}
-			}
+		    ImGui::EndPopup();
 		}
 
-		if (io.MouseClicked[0] && bHasFocus)
+//-------------------------------- Resize Image --------------------------------
+
+		if (bOpenResizeModal)
 		{
-			OriginalScrollX = ImGui::GetScrollX();
-			OriginalScrollY = ImGui::GetScrollY();
-			m_bPanActive = true;
+			m_bShowResizeUI = true;
+			ImGui::OpenPopup("Resize Image##modal");
 		}
 
-		if (io.MouseDown[0] && m_bPanActive)
+		if (m_bShowResizeUI)
 		{
-			float dx = io.MouseClickedPos[0].x - io.MousePos.x;
-			float dy = io.MouseClickedPos[0].y - io.MousePos.y;
+			if (ImGui::BeginPopupModal("Resize Image##modal", &m_bShowResizeUI,
+						 ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				RenderResizeDialog();
+				ImGui::EndPopup();
+			}
 
-			ImGui::SetScrollX(OriginalScrollX + dx);
-			ImGui::SetScrollY(OriginalScrollY + dy);
 		}
 		else
 		{
-			m_bPanActive = false;
+//---------------------------------- Pan Image ---------------------------------
+			RenderPanAndZoom();
 		}
-//-----------------------------  Hand and Pan ----------------------------------
-
 
 	ImGui::EndChild();
 
 	ImGui::End();
 }
 
+//------------------------------------------------------------------------------
+void ImageDocument::RenderPanAndZoom()
+{
+	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+
+	bHasFocus = bHasFocus && ImGui::IsWindowHovered();
+
+	// Show the Hand Cursor
+	if (bHasFocus || m_bPanActive)
+		ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+
+	// Scroll the window around using mouse
+	ImGuiIO& io = ImGui::GetIO();
+
+	static float OriginalScrollY = 0.0f;
+	static float OriginalScrollX = 0.0f;
+
+	if (bHasFocus)
+	{
+		ImVec2 winPos = ImGui::GetWindowPos();
+		float scrollX = ImGui::GetScrollX();
+		float scrollY = ImGui::GetScrollY();
+		float cursorX = io.MousePos.x - winPos.x;
+		float cursorY = io.MousePos.y - winPos.y;
+
+		// Which pixel on the canvas is the mouse over?
+		float px = cursorX/m_zoom + scrollX/m_zoom;
+		float py = cursorY/m_zoom + scrollY/m_zoom;
+		bool bZoom = false;
+
+		if (io.MouseWheel < 0.0f)
+		{
+			m_zoom--;
+			if (m_zoom < 1)
+			{
+				m_zoom = 1;
+			}
+			else
+			{
+				bZoom = true;
+			}
+		}
+		else if (io.MouseWheel > 0.0f)
+		{
+			m_zoom++;
+			if (m_zoom > 16)
+			{
+				m_zoom = 16;
+			}
+			else
+			{
+				bZoom = true;
+			}
+		}
+
+		if (bZoom)
+		{
+			// New Scroll Position based on the new zoom
+			scrollX = -(cursorX/m_zoom - px) * m_zoom;
+			scrollY = -(cursorY/m_zoom - py) * m_zoom;
+
+			ImGui::SetScrollX(scrollX);
+			ImGui::SetScrollY(scrollY);
+
+			if (m_bPanActive)
+			{
+				// pretend you let up off the mouse button, and clicked
+				// again for the pan
+				//OriginalScrollX = scrollX;
+				//OriginalScrollY = scrollY;
+			}
+		}
+	}
+
+	if (io.MouseClicked[0] && bHasFocus)
+	{
+		OriginalScrollX = ImGui::GetScrollX();
+		OriginalScrollY = ImGui::GetScrollY();
+		m_bPanActive = true;
+	}
+
+	if (io.MouseDown[0] && m_bPanActive)
+	{
+		float dx = io.MouseClickedPos[0].x - io.MousePos.x;
+		float dy = io.MouseClickedPos[0].y - io.MousePos.y;
+
+		ImGui::SetScrollX(OriginalScrollX + dx);
+		ImGui::SetScrollY(OriginalScrollY + dy);
+	}
+	else
+	{
+		m_bPanActive = false;
+	}
+
+}
 //------------------------------------------------------------------------------
 
 void ImageDocument::Quant()
@@ -721,6 +763,174 @@ void ImageDocument::Quant()
     SDL_FreeSurface(pImage);     /* No longer needed */
 
 }
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::RenderResizeDialog()
+{
+	int iOriginalWidth  = m_width;
+	int iOriginalHeight = m_height;
+	static int iNewWidth = 320;
+	static int iNewHeight = 200;
+	static bool bMaintainAspectRatio = false;
+	static float fAspectRatio = 1.0f;
+
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+
+	if (ImGui::Checkbox("Maintain Aspect Ratio", &bMaintainAspectRatio))
+	{
+		if (bMaintainAspectRatio)
+		{
+			fAspectRatio = (float)iNewWidth/(float)iNewHeight;
+		}
+	}
+
+	ImGui::NewLine();
+
+	ImGui::Text("New Width:");  ImGui::SameLine(100); ImGui::SetNextItemWidth(128);
+	if (ImGui::InputInt("Pixels##Width", &iNewWidth))
+	{
+		if (iNewWidth < 1) iNewWidth = 1;
+		iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+		if (iNewHeight < 1) iNewHeight = 1;
+	}
+
+	ImGui::Text("New Height:");  ImGui::SameLine(100); ImGui::SetNextItemWidth(128);
+	if (ImGui::InputInt("Pixels##Height", &iNewHeight))
+	{
+		if (iNewHeight < 1) iNewHeight = 1;
+		iNewWidth = (int)((((float)iNewHeight) * fAspectRatio) + 0.5f);
+		if (iNewWidth < 1) iNewWidth = 1;
+	}
+
+	ImGui::NewLine();
+
+	if(ImGui::Button("Original Size"))
+	{
+		iNewWidth = iOriginalWidth;
+		iNewHeight = iOriginalHeight;
+		if (bMaintainAspectRatio)
+			fAspectRatio = (float)iNewWidth/(float)iNewHeight;
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Half"))
+	{
+		iNewWidth>>=1;
+		iNewHeight>>=1;
+		if (iNewWidth < 1) iNewWidth = 1;
+		if (bMaintainAspectRatio)
+			iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+		if (iNewHeight < 1) iNewHeight = 1;
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("Double"))
+	{
+		iNewWidth<<=1;
+		iNewHeight <<= 1;
+		if (bMaintainAspectRatio)
+			iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+		if (iNewHeight < 1) iNewHeight = 1;
+	}
+	ImGui::SameLine();
+	if(ImGui::Button("320x200"))
+	{
+		iNewWidth  = 320;
+		iNewHeight = 200;
+		if (bMaintainAspectRatio)
+		{
+			fAspectRatio = (float)iNewWidth/(float)iNewHeight;
+		}
+	}
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	static int scale_or_crop = 0;
+
+	ImGui::RadioButton("Scale Image", &scale_or_crop, 0); ImGui::SameLine(128);
+
+	const char* items[] = { "Point Sample", "Bilinear Sample", "AVIR" };
+	static int item_current = 2;
+	ImGui::SetNextItemWidth(148);
+	ImGui::Combo("##SampleCombo", &item_current, items, IM_ARRAYSIZE(items));
+
+	static bool bDither = false;
+	ImGui::NewLine();
+	ImGui::SameLine(128);
+	ImGui::Checkbox("Dither", &bDither);
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	ImGui::RadioButton("Reposition", &scale_or_crop, 1);
+
+	ImVec2 buttonSize = ImVec2(32,32);
+
+	//  0 1 2
+	//  3 4 5
+	//  6 7 8
+	static int iLitButtonIndex = 4;
+
+	ImVec4 ButtonColor = ImGui::GetStyleColorVec4(ImGuiCol_Button);
+	ImVec4 ActiveColor = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+
+
+	// Draw the 9 buttons, and leave our selection lit up
+	int index = 0;
+	for (int y = 0; y < 3; ++y)
+	{
+		float xpos = 128.0f;
+
+		for (int x = 0; x < 3; ++x)
+		{
+			ImGui::SameLine(xpos);
+
+			ImGui::PushID(index);
+
+			ImGui::PushStyleColor(ImGuiCol_Button,
+								  iLitButtonIndex==index ?
+								  ActiveColor :
+								  ButtonColor);
+
+			xpos += (buttonSize.x + 4.0f);
+			if (ImGui::Button("", buttonSize))
+				iLitButtonIndex = index;
+
+			ImGui::PopStyleColor();
+			ImGui::PopID();
+
+			++index;
+		}
+		ImGui::NewLine();
+	}
+
+	//ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	ImVec2 okSize = ImVec2(90, 24);
+	ImGui::SameLine(96);
+
+	if (ImGui::Button("Ok", okSize))
+	{
+		// Put some code here to dispatch the crop/resize
+		m_bShowResizeUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Cancel", okSize))
+	{
+		m_bShowResizeUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+	
+}
+
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 

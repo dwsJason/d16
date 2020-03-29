@@ -35,6 +35,9 @@ private:
 	int CountUniqueColors();
 	void Quant();
 
+	void RenderPanAndZoom();
+	void RenderResizeDialog();
+
 	std::string m_windowName;
 	std::string m_filename;
 	std::string m_pathname;
@@ -64,6 +67,7 @@ private:
 //-- UI State
 	bool m_bOpen;
 	bool m_bPanActive;
+	bool m_bShowResizeUI;
 
 static int s_uniqueId;
 
