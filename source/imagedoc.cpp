@@ -636,12 +636,44 @@ void ImageDocument::Quant()
 
 	liq_set_max_colors(handle, 16);
 	liq_set_speed(handle, 1);   // 1-10  (1 best quality)
-	liq_set_min_posterization(handle, 4);
+
+	int min_posterize = 4;
+	switch (m_iPosterize)
+	{
+	case ePosterize444:
+		min_posterize = 4;
+		break;
+	case ePosterize555:
+		min_posterize = 3;
+		break;
+	case ePosterize888:
+		min_posterize = 0;
+		break;
+	}
+
+	liq_set_min_posterization(handle, min_posterize);
 
 	//$$JGA Fixed Colors can be added to the input_image
 	//$$JGA which is going to be sweet
     liq_image *input_image = liq_image_create_rgba(handle, raw_rgba_pixels, width, height, 0);
-    // You could set more options here, like liq_set_quality
+
+	// Add the fixed colors
+	for (int idx = 0; idx < m_bLocks.size(); ++idx)
+	{
+		if (m_bLocks[idx])
+		{
+			liq_color color;
+			color.r = (unsigned char) (m_targetColors[idx].x * 255.0f);
+			color.g = (unsigned char) (m_targetColors[idx].y * 255.0f); 
+			color.b = (unsigned char) (m_targetColors[idx].z * 255.0f); 
+			color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
+			
+			// Add a Color
+			liq_image_add_fixed_color(input_image, color);
+		}
+	}
+
+	// You could set more options here, like liq_set_quality
     liq_result *quantization_result;
     if (liq_image_quantize(input_image, handle, &quantization_result) != LIQ_OK) {
         LOG("Quantization failed\n");
@@ -652,7 +684,7 @@ void ImageDocument::Quant()
 
     size_t pixels_size = width * height;
     unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
-    liq_set_dithering_level(quantization_result, 1.0);  // 0.0->1.0
+	liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
 //	liq_set_output_gamma(quantization_result, 1.0);
 
     liq_write_remapped_image(quantization_result, input_image, raw_8bit_pixels, pixels_size);
