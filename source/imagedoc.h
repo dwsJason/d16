@@ -71,6 +71,8 @@ private:
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
 
+	SDL_Surface *SDL_SurfaceToRGBA(SDL_Surface* pSurface);
+
 	std::string m_windowName;
 	std::string m_filename;
 	std::string m_pathname;

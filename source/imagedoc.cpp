@@ -1099,13 +1099,20 @@ void ImageDocument::PointSampleResize(int iNewWidth, int iNewHeight)
 	dest_area.w = iNewWidth;
 	dest_area.h = iNewHeight;
 
-	SDL_BlitScaled(m_pSurface, &source_area,
+	SDL_Surface *pSource = SDL_SurfaceToRGBA(m_pSurface);
+
+	SDL_BlitScaled(pSource, &source_area,
 					pImage, &dest_area);
 
 	/* Restore the alpha blending attributes */
 	SDL_SetSurfaceBlendMode(m_pSurface, saved_mode);
 
 	// Free up the source image, and opengl texture
+
+	if (pSource)
+	{
+		SDL_FreeSurface(pSource);
+	}
 
 	// unregister / free the m_image
 	if (m_image)
@@ -1139,6 +1146,29 @@ void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
 {
 
+}
+//------------------------------------------------------------------------------
+SDL_Surface *ImageDocument::SDL_SurfaceToRGBA(SDL_Surface* pSurface)
+{
+	SDL_PixelFormat format;
+
+	format.format = SDL_PIXELFORMAT_RGBA8888;
+	format.BitsPerPixel = 32;
+	format.BytesPerPixel = 4;
+
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+    format.Rmask = 0x000000FF;
+    format.Gmask = 0x0000FF00;
+	format.Bmask = 0x00FF0000;
+	format.Amask = 0xFF000000;
+#else
+	format.Rmask = 0xFF000000;
+	format.Gmask = 0x00FF0000;
+	format.Bmask = 0x0000FF00;
+	format.Amask = 0x000000FF;
+#endif
+
+	return SDL_ConvertSurface(pSurface, &format, 0);
 }
 //------------------------------------------------------------------------------
 
