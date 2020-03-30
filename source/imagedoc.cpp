@@ -215,9 +215,9 @@ int ImageDocument::CountUniqueColors()
 
 	std::map<Uint32,Uint32> histogram;
 
-	for (int y = 0; y < m_pSurface->h; ++y)
+	for (int y = 0; y < pImage->h; ++y)
 	{
-		for (int x = 0; x < m_pSurface->w; ++x)
+		for (int x = 0; x < pImage->w; ++x)
 		{
 			Uint8 * pixel = (Uint8*)pImage->pixels;
 			pixel += (y * pImage->pitch) + (x * sizeof(Uint32));
@@ -1140,8 +1140,69 @@ void ImageDocument::PointSampleResize(int iNewWidth, int iNewHeight)
 //------------------------------------------------------------------------------
 void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 {
+	SDL_Surface *pSource = SDL_SurfaceToRGBA(m_pSurface);
 
+	if (pSource)
+	{
+		if( SDL_MUSTLOCK(pSource) )
+			SDL_LockSurface(pSource);
+
+		Uint32* pPixels = (Uint32*) malloc(pSource->w * pSource->h * sizeof(Uint32));
+
+		// So do some work here
+		for (int y = 0; y < pSource->h; ++y)
+		{
+			for (int x = 0; x < pSource->w; ++x)
+			{
+				Uint8 * pixel = (Uint8*)pSource->pixels;
+				pixel += (y * pSource->pitch) + (x * sizeof(Uint32));
+
+				Uint32 color = *((Uint32*)pixel);
+
+				// Dump the Colors out into an array
+				pPixels[ (y * pSource->w) + x ] = color;
+			}
+		}
+
+		if( SDL_MUSTLOCK(pSource) )
+			SDL_UnlockSurface(pSource);
+
+
+		Uint32* pTargetPixels = (Uint32*) malloc(iNewWidth * iNewHeight * sizeof(Uint32));
+
+		// Scale Ratios
+		float Xratio = (float)pSource->w / (float)iNewWidth;
+		float Yratio = (float)pSource->h / (float)iNewHeight;
+
+		for (int y = 0; y < iNewHeight; ++y)
+		{
+			for (int x = 0 ; x < iNewWidth; ++x)
+			{
+				Uint32 color = LinearSample( pPixels, pSource->w, pSource->h, x * Xratio, y * Yratio, Xratio, Yratio );
+
+				pTargetPixels[(y * pSource->w) + x] = color;
+			}
+		}
+
+		SDL_FreeSurface(pSource);
+		free(pPixels);
+	}
 }
+
+Uint32 ImageDocument::LinearSample( Uint32* pPixels, int width, int height, float x, float y, float xRatio, float yRatio)
+{
+	// Use the information passed in, to sample a rectangle of color, out of this image
+	// average the result, and return it
+	int xSteps = (xRatio < 1.0f) ? 1 : (int)(xRatio * 2.0f);
+	int ySteps = (yRatio < 1.0f) ? 1 : (int)(yRatio * 2.0f);
+
+	float totalSamples = (float)(xSteps * ySteps);
+
+
+
+	return 0;
+}
+
 //------------------------------------------------------------------------------
 void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
 {

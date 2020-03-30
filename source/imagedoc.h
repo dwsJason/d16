@@ -68,6 +68,9 @@ private:
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
 	void AvirSampleResize(int iNewWidth, int iNewHeight);
 
+	Uint32 LinearSample( Uint32* pPixels, int width, int height, float x, float y, float xRatio, float yRatio);
+
+
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
 
