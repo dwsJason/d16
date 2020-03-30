@@ -20,6 +20,27 @@ enum PosterizeTargets
 	ePosterize888
 };
 
+//-------------------------------
+//  0 1 2
+//  3 4 5
+//  6 7 8
+//-------------------------------
+enum Justify
+{
+	eUpperLeft,
+	eUpperCenter,
+	eUpperRight,
+
+	eCenterLeft,
+	eCenterCenter,
+	eCenterRight,
+
+	eLowerLeft,
+	eLowerCenter,
+	eLowerRight
+};
+//-------------------------------
+
 class ImageDocument
 {
 public:
@@ -33,6 +54,7 @@ public:
 private:
 
 	int CountUniqueColors();
+	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant();
 
 	void RenderPanAndZoom();

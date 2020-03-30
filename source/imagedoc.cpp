@@ -791,7 +791,8 @@ void ImageDocument::RenderResizeDialog()
 	if (ImGui::InputInt("Pixels##Width", &iNewWidth))
 	{
 		if (iNewWidth < 1) iNewWidth = 1;
-		iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
+		if (bMaintainAspectRatio)
+			iNewHeight = (int)((((float)iNewWidth) / fAspectRatio) + 0.5f);
 		if (iNewHeight < 1) iNewHeight = 1;
 	}
 
@@ -799,7 +800,8 @@ void ImageDocument::RenderResizeDialog()
 	if (ImGui::InputInt("Pixels##Height", &iNewHeight))
 	{
 		if (iNewHeight < 1) iNewHeight = 1;
-		iNewWidth = (int)((((float)iNewHeight) * fAspectRatio) + 0.5f);
+		if (bMaintainAspectRatio)
+			iNewWidth = (int)((((float)iNewHeight) * fAspectRatio) + 0.5f);
 		if (iNewWidth < 1) iNewWidth = 1;
 	}
 
@@ -915,6 +917,18 @@ void ImageDocument::RenderResizeDialog()
 
 	if (ImGui::Button("Ok", okSize))
 	{
+		if (scale_or_crop)
+		{
+			// Crop
+			// Resize, and justified copy
+			CropImage(iNewWidth, iNewHeight, iLitButtonIndex);
+		}
+		else
+		{
+			// Scale
+			// Resize and Resample
+		}
+
 		// Put some code here to dispatch the crop/resize
 		m_bShowResizeUI = false;
 		ImGui::CloseCurrentPopup();
@@ -926,8 +940,116 @@ void ImageDocument::RenderResizeDialog()
 		m_bShowResizeUI = false;
 		ImGui::CloseCurrentPopup();
 	}
+}
 
-	
+//------------------------------------------------------------------------------
+//  iJustify
+//
+//  0 1 2
+//  3 4 5
+//  6 7 8
+//
+void ImageDocument::CropImage(int iNewWidth, int iNewHeight, int iJustify)
+{
+    SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iNewWidth, iNewHeight,
+											   32,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+                                 0x000000FF,
+                                 0x0000FF00, 0x00FF0000, 0xFF000000
+#else
+                                 0xFF000000,
+                                 0x00FF0000, 0x0000FF00, 0x000000FF
+#endif
+											   );
+	if (nullptr == pImage)
+		return;
+
+	/* Save the alpha blending attributes */
+	SDL_Rect source_area;
+	SDL_Rect dest_area;
+	SDL_BlendMode saved_mode;
+	SDL_GetSurfaceBlendMode(m_pSurface, &saved_mode);
+	SDL_SetSurfaceBlendMode(m_pSurface, SDL_BLENDMODE_NONE);
+
+	/* Copy the surface into the GL texture image */
+	source_area.x = 0;
+	source_area.y = 0;
+	source_area.w = m_pSurface->w;
+	source_area.h = m_pSurface->h;
+	dest_area.w = iNewWidth;
+	dest_area.h = iNewHeight;
+
+	// Left Right Position
+
+	switch (iJustify)
+	{
+	case eUpperLeft:
+	case eCenterLeft:
+	case eLowerLeft:
+			dest_area.x = 0;
+			break;
+	case eUpperCenter:
+	case eCenterCenter:
+	case eLowerCenter:
+			dest_area.x = (iNewWidth - m_width)/2;
+			break;
+	case eUpperRight:
+	case eCenterRight:
+	case eLowerRight:
+			dest_area.x = iNewWidth - m_width;
+			break;	
+	}
+
+	// Vertical Position
+	switch (iJustify)
+	{
+	case eUpperLeft:
+	case eUpperCenter:
+	case eUpperRight:
+			dest_area.y = 0;
+			break;
+	case eCenterLeft:
+	case eCenterCenter:
+	case eCenterRight:
+			dest_area.y = (iNewHeight - m_height)/2;
+			break;
+	case eLowerLeft:
+	case eLowerCenter:
+	case eLowerRight:
+			dest_area.y = iNewHeight - m_height;
+			break;	
+	}
+
+	SDL_BlitSurface(m_pSurface, &source_area,
+					pImage, &dest_area);
+
+	/* Restore the alpha blending attributes */
+	SDL_SetSurfaceBlendMode(m_pSurface, saved_mode);
+
+	// Free up the source image, and opengl texture
+
+	// unregister / free the m_image
+	if (m_image)
+	{
+		glDeleteTextures(1, &m_image);
+		m_image = 0;
+	}
+	// unregister / free the m_pSurface
+	if (m_pSurface)
+	{
+		SDL_FreeSurface(m_pSurface);
+		m_pSurface = nullptr;
+	}
+
+	// Set, and Register the new image
+	m_pSurface = pImage;
+	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
+
+	m_width  = pImage->w;
+	m_height = pImage->h;
+
+	// Update colors
+	m_numSourceColors = CountUniqueColors();
 }
 
 //------------------------------------------------------------------------------
