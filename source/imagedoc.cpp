@@ -853,7 +853,7 @@ void ImageDocument::RenderResizeDialog()
 	ImGui::RadioButton("Scale Image", &scale_or_crop, 0); ImGui::SameLine(128);
 
 	const char* items[] = { "Point Sample", "Bilinear Sample", "AVIR" };
-	static int item_current = 2;
+	static int item_current = eAVIR;
 	ImGui::SetNextItemWidth(148);
 	ImGui::Combo("##SampleCombo", &item_current, items, IM_ARRAYSIZE(items));
 
@@ -927,6 +927,18 @@ void ImageDocument::RenderResizeDialog()
 		{
 			// Scale
 			// Resize and Resample
+			switch (item_current)
+			{
+			case ePointSample:
+				PointSampleResize(iNewWidth,iNewHeight);
+				break;
+			case eBilinearSample:
+				LinearSampleResize(iNewWidth,iNewHeight);
+				break;
+			case eAVIR:
+				AvirSampleResize(iNewWidth,iNewHeight);
+				break;
+			}
 		}
 
 		// Put some code here to dispatch the crop/resize
@@ -1054,5 +1066,79 @@ void ImageDocument::CropImage(int iNewWidth, int iNewHeight, int iJustify)
 
 //------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+void ImageDocument::PointSampleResize(int iNewWidth, int iNewHeight)
+{
+    SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iNewWidth, iNewHeight,
+											   32,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+                                 0x000000FF,
+                                 0x0000FF00, 0x00FF0000, 0xFF000000
+#else
+                                 0xFF000000,
+                                 0x00FF0000, 0x0000FF00, 0x000000FF
+#endif
+											   );
+	if (nullptr == pImage)
+		return;
+
+	/* Save the alpha blending attributes */
+	SDL_Rect source_area;
+	SDL_Rect dest_area;
+	SDL_BlendMode saved_mode;
+	SDL_GetSurfaceBlendMode(m_pSurface, &saved_mode);
+	SDL_SetSurfaceBlendMode(m_pSurface, SDL_BLENDMODE_NONE);
+
+	/* Copy the surface into the GL texture image */
+	source_area.x = 0;
+	source_area.y = 0;
+	source_area.w = m_pSurface->w;
+	source_area.h = m_pSurface->h;
+	dest_area.x = 0;
+	dest_area.y = 0;
+	dest_area.w = iNewWidth;
+	dest_area.h = iNewHeight;
+
+	SDL_BlitScaled(m_pSurface, &source_area,
+					pImage, &dest_area);
+
+	/* Restore the alpha blending attributes */
+	SDL_SetSurfaceBlendMode(m_pSurface, saved_mode);
+
+	// Free up the source image, and opengl texture
+
+	// unregister / free the m_image
+	if (m_image)
+	{
+		glDeleteTextures(1, &m_image);
+		m_image = 0;
+	}
+	// unregister / free the m_pSurface
+	if (m_pSurface)
+	{
+		SDL_FreeSurface(m_pSurface);
+		m_pSurface = nullptr;
+	}
+
+	// Set, and Register the new image
+	m_pSurface = pImage;
+	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
+
+	m_width  = pImage->w;
+	m_height = pImage->h;
+
+	// Update colors
+	m_numSourceColors = CountUniqueColors();
+}
+//------------------------------------------------------------------------------
+void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
+{
+
+}
+//------------------------------------------------------------------------------
+void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
+{
+
+}
 //------------------------------------------------------------------------------
 

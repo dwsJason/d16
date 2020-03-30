@@ -40,6 +40,13 @@ enum Justify
 	eLowerRight
 };
 //-------------------------------
+enum ScaleFilter
+{
+	ePointSample,
+	eBilinearSample,
+	eAVIR
+};
+//-------------------------------
 
 class ImageDocument
 {
@@ -56,6 +63,10 @@ private:
 	int CountUniqueColors();
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant();
+
+	void PointSampleResize(int iNewWidth, int iNewHeight);
+	void LinearSampleResize(int iNewWidth, int iNewHeight);
+	void AvirSampleResize(int iNewWidth, int iNewHeight);
 
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
