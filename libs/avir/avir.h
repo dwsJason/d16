@@ -1859,13 +1859,13 @@ private:
 		for( i = FracCount; i >= 0; i-- )
 		{
 			TableFillFlags[ i ] = 0;
-			double* p = Buf + BufOffs + i;
+			double* P = Buf + BufOffs + i;
 
 			for( j = 0; j < SrcFilterLen; j++ )
 			{
-				op0[ 0 ] = p[ 0 ];
+				op0[ 0 ] = P[ 0 ];
 				op0++;
-				p += FracCount;
+				P += FracCount;
 			}
 		}
 
@@ -1932,13 +1932,13 @@ private:
 
 		for( j = 0; j < ResLen; j++ )
 		{
-			int k = 0;
+			int K = 0;
 			int l = j - ExtFilter.getCapacity() + 1;
 			int r = l + ExtFilter.getCapacity();
 
 			if( l < 0 )
 			{
-				k -= l;
+				K -= l;
 				l = 0;
 			}
 
@@ -1947,7 +1947,7 @@ private:
 				r = SrcFilterLen;
 			}
 
-			const double* const extfltb = extflt + k;
+			const double* const extfltb = extflt + K;
 			const double* const srcfltb = srcflt + l;
 			double s = 0.0;
 			l = r - l;
@@ -4560,7 +4560,7 @@ public:
 
 		updateBufLenAndRPosPtrs( FltSteps, Vars, NewWidth );
 
-		if( IsOutFloat && sizeof( FltBuf[ 0 ]) == sizeof( Tout ) &&
+		if constexpr( IsOutFloat && sizeof( FltBuf[ 0 ]) == sizeof( Tout ) &&
 			fpclass :: packmode == 0 )
 		{
 			// In-place output.
@@ -4637,7 +4637,7 @@ public:
 		int TruncBits; // The number of lower bits to truncate and dither.
 		int OutRange; // Output range.
 
-		if( sizeof( Tout ) == 1 )
+		if constexpr( sizeof( Tout ) == 1 )
 		{
 			TruncBits = 8 - ResBitDepth;
 			OutRange = 255;
@@ -5045,31 +5045,31 @@ private:
 
 		for( i = si; i < Steps.getItemCount() - ( si ^ 1 ); i++ )
 		{
-			const CFilterStep& fs = Steps[ i ];
+			const CFilterStep& FS = Steps[ i ];
 
-			if( fs.IsUpsample )
+			if( FS.IsUpsample )
 			{
-				curbw *= fs.ResampleFactor;
+				curbw *= FS.ResampleFactor;
 
-				if( fs.FltOrig.getCapacity() > 0 )
+				if( FS.FltOrig.getCapacity() > 0 )
 				{
 					continue;
 				}
 			}
 
-			const double dcg = 1.0 / fs.DCGain; // DC gain correction.
+			const double dcg = 1.0 / FS.DCGain; // DC gain correction.
 			const fptype* Flt;
 			int FltLen;
 
-			if( fs.ResampleFactor == 0 )
+			if( FS.ResampleFactor == 0 )
 			{
-				Flt = fs.FltBank -> getFilter( 0 );
-				FltLen = fs.FltBank -> getFilterLen();
+				Flt = FS.FltBank -> getFilter( 0 );
+				FltLen = FS.FltBank -> getFilterLen();
 			}
 			else
 			{
-				Flt = &fs.Flt[ 0 ];
-				FltLen = fs.Flt.getCapacity();
+				Flt = &FS.Flt[ 0 ];
+				FltLen = FS.Flt.getCapacity();
 			}
 
 			// Calculate frequency response adjustment introduced by the
@@ -5085,9 +5085,9 @@ private:
 				Bins[ j ] /= sqrt( re * re + im * im ) * dcg;
 			}
 
-			if( !fs.IsUpsample && fs.ResampleFactor > 1 )
+			if( !FS.IsUpsample && FS.ResampleFactor > 1 )
 			{
-				curbw /= fs.ResampleFactor;
+				curbw /= FS.ResampleFactor;
 			}
 		}
 
