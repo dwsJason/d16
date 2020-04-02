@@ -65,18 +65,21 @@ FloatPixel LinearImage::SuperSample(float x, float y, float xRatio, float yRatio
 {
 	FloatPixel result;
 
-	int stepsX = xRatio < 1.0f ? 1 : (int)(xRatio * 2);
-	int stepsY = yRatio < 1.0f ? 1 : (int)(yRatio * 2);
+	int stepsX = xRatio < 1.0f ? 1 : ((int)(xRatio * 2)+1);
+	int stepsY = yRatio < 1.0f ? 1 : ((int)(yRatio * 2)+1);
 
 	float sx = stepsX > 1 ? x - (xRatio*0.5f) : x;
 	float sy = stepsY > 1 ? y - (yRatio*0.5f) : y;
+
+	float dx = xRatio / stepsX;
+	float dy = yRatio / stepsY;
 	
 	for (int coordinateY = 0; coordinateY < stepsY; ++coordinateY)
 	{
 		for (int coordinateX = 0; coordinateX < stepsX; ++coordinateX)
 		{
-			FloatPixel ss = SubSample( sx + (coordinateX * sx),
-									   sy + (coordinateY * sy) );
+			FloatPixel ss = SubSample( sx + (coordinateX * dx),
+									   sy + (coordinateY * dy) );
 
 			result.r += ss.r;
 			result.g += ss.g;
@@ -150,6 +153,8 @@ FloatPixel LinearImage::Lerp(FloatPixel& left, FloatPixel& right, float lerp)
 	pixel.g = ((right.g - left.g) * lerp) + left.g;
 	pixel.b = ((right.b - left.b) * lerp) + left.b;
 	pixel.a = ((right.a - left.a) * lerp) + left.a;
+
+	return pixel;
 }
 
 

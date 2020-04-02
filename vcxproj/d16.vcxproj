@@ -90,7 +90,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -123,7 +123,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -154,7 +154,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -193,7 +193,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -238,6 +238,7 @@
     <ClCompile Include="..\libs\libimagequant-msvc\mempool.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\nearest.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\pam.c" />
+    <ClCompile Include="..\source\common\limage.cpp" />
     <ClCompile Include="..\source\common\log.cpp" />
     <ClCompile Include="..\source\icon.cpp" />
     <ClCompile Include="..\source\imagedoc.cpp" />
@@ -245,6 +246,11 @@
     <ClCompile Include="..\source\paldoc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\avir\avir.h" />
+    <ClInclude Include="..\libs\avir\avir_dil.h" />
+    <ClInclude Include="..\libs\avir\avir_float4_sse.h" />
+    <ClInclude Include="..\libs\avir\avir_float8_avx.h" />
+    <ClInclude Include="..\libs\avir\lancir.h" />
     <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.h" />
     <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
     <ClInclude Include="..\libs\imgui\imconfig.h" />
@@ -277,6 +283,7 @@
     <ClInclude Include="..\libs\vectormath\vec2d.hpp" />
     <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
     <ClInclude Include="..\source\common\concurrent_queue.h" />
+    <ClInclude Include="..\source\common\limage.h" />
     <ClInclude Include="..\source\common\log.h" />
     <ClInclude Include="..\source\imagedoc.h" />
     <ClInclude Include="..\source\paldoc.h" />

@@ -10,6 +10,7 @@
 #include <SDL_image.h>
 #include "log.h"
 #include "libimagequant.h"
+#include "limage.h"
 
 #include <map>
 #include <vector>
@@ -852,7 +853,7 @@ void ImageDocument::RenderResizeDialog()
 
 	ImGui::RadioButton("Scale Image", &scale_or_crop, 0); ImGui::SameLine(128);
 
-	const char* items[] = { "Point Sample", "Bilinear Sample", "AVIR" };
+	const char* items[] = { "Point Sample", "Linear Sample", "AVIR" };
 	static int item_current = eAVIR;
 	ImGui::SetNextItemWidth(148);
 	ImGui::Combo("##SampleCombo", &item_current, items, IM_ARRAYSIZE(items));
@@ -1167,40 +1168,83 @@ void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 		if( SDL_MUSTLOCK(pSource) )
 			SDL_UnlockSurface(pSource);
 
+		// Shuttle us over to the linear image class
+		LinearImage sourceImage(pPixels, pSource->w, pSource->h);
 
-		Uint32* pTargetPixels = (Uint32*) malloc(iNewWidth * iNewHeight * sizeof(Uint32));
-
-		// Scale Ratios
-		float Xratio = (float)pSource->w / (float)iNewWidth;
-		float Yratio = (float)pSource->h / (float)iNewHeight;
-
-		for (int y = 0; y < iNewHeight; ++y)
-		{
-			for (int x = 0 ; x < iNewWidth; ++x)
-			{
-				Uint32 color = LinearSample( pPixels, pSource->w, pSource->h, x * Xratio, y * Yratio, Xratio, Yratio );
-
-				pTargetPixels[(y * pSource->w) + x] = color;
-			}
-		}
+		LinearImage* pDestImage = sourceImage.Scale( iNewWidth, iNewHeight );
 
 		SDL_FreeSurface(pSource);
 		free(pPixels);
+//------------------------------------------
+		SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iNewWidth, iNewHeight,
+												   32,
+	#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+									 0x000000FF,
+									 0x0000FF00, 0x00FF0000, 0xFF000000
+	#else
+									 0xFF000000,
+									 0x00FF0000, 0x0000FF00, 0x000000FF
+	#endif
+												   );
+
+		if (nullptr == pImage)
+			return;
+
+		if( SDL_MUSTLOCK(pImage) )
+			SDL_LockSurface(pImage);
+
+
+		for (int y = 0; y < iNewHeight; ++y)
+		{
+			for (int x = 0; x < iNewWidth; ++x)
+			{
+				FloatPixel p = pDestImage->GetPixel(x, y);
+
+				Uint32 pixel = ((Uint32)p.a)&0xFF;
+				pixel<<=8;
+				pixel |= ((Uint32)p.b)&0xFF;
+				pixel<<=8;
+				pixel |= ((Uint32)p.g)&0xFF;
+				pixel<<=8;
+				pixel |= ((Uint32)p.r)&0xFF;
+
+				Uint8* pPixel = (Uint8*)pImage->pixels;
+				pPixel += (y*pImage->pitch) + (x * sizeof(Uint32));
+
+				*((Uint32*)pPixel) = pixel;
+			}
+		}
+
+		if( SDL_MUSTLOCK(pImage) )
+			SDL_UnlockSurface(pImage);
+
+		delete pDestImage;
+		pDestImage = nullptr;
+//------------------------------------------
+		// unregister / free the m_image
+		if (m_image)
+		{
+			glDeleteTextures(1, &m_image);
+			m_image = 0;
+		}
+		// unregister / free the m_pSurface
+		if (m_pSurface)
+		{
+			SDL_FreeSurface(m_pSurface);
+			m_pSurface = nullptr;
+		}
+
+		// Set, and Register the new image
+		m_pSurface = pImage;
+		m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
+
+		m_width  = pImage->w;
+		m_height = pImage->h;
+
+		// Update colors
+		m_numSourceColors = CountUniqueColors();
+
 	}
-}
-
-Uint32 ImageDocument::LinearSample( Uint32* pPixels, int width, int height, float x, float y, float xRatio, float yRatio)
-{
-	// Use the information passed in, to sample a rectangle of color, out of this image
-	// average the result, and return it
-	int xSteps = (xRatio < 1.0f) ? 1 : (int)(xRatio * 2.0f);
-	int ySteps = (yRatio < 1.0f) ? 1 : (int)(yRatio * 2.0f);
-
-	float totalSamples = (float)(xSteps * ySteps);
-
-
-
-	return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -1212,6 +1256,8 @@ void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
 SDL_Surface *ImageDocument::SDL_SurfaceToRGBA(SDL_Surface* pSurface)
 {
 	SDL_PixelFormat format;
+
+	memset(&format, 0, sizeof(SDL_PixelFormat));
 
 	format.format = SDL_PIXELFORMAT_RGBA8888;
 	format.BitsPerPixel = 32;

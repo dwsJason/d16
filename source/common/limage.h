@@ -12,16 +12,16 @@ public:
 		: r(0)
 		, g(0)
 		, b(0)
-		, a(1)
+		, a(0)
 	{
 	}
 
 	FloatPixel(unsigned int rgba)
 	{
-		r = (rgba >> 0  & 0xFF) / 255.0f;
-		g = (rgba >> 8  & 0xFF) / 255.0f;
-		b = (rgba >> 16 & 0xFF) / 255.0f;
-		a = (rgba >> 24 & 0xFF) / 255.0f;
+		r = (rgba >> 0 ) & 0xFF;
+		g = (rgba >> 8 ) & 0xFF;
+		b = (rgba >> 16) & 0xFF;
+		a = (rgba >> 24) & 0xFF;
 	}
 
 	FloatPixel(float red, float green, float blue, float alpha)
