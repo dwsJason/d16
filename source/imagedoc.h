@@ -44,6 +44,7 @@ enum ScaleFilter
 {
 	ePointSample,
 	eBilinearSample,
+	eLanczos,
 	eAVIR
 };
 //-------------------------------

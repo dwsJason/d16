@@ -11,6 +11,7 @@
 #include "log.h"
 #include "libimagequant.h"
 #include "limage.h"
+#include "avir.h"
 
 #include <map>
 #include <vector>
@@ -853,7 +854,7 @@ void ImageDocument::RenderResizeDialog()
 
 	ImGui::RadioButton("Scale Image", &scale_or_crop, 0); ImGui::SameLine(128);
 
-	const char* items[] = { "Point Sample", "Linear Sample", "AVIR" };
+	const char* items[] = { "Point Sample", "Linear Sample", "Lanczos", "AVIR" };
 	static int item_current = eAVIR;
 	ImGui::SetNextItemWidth(148);
 	ImGui::Combo("##SampleCombo", &item_current, items, IM_ARRAYSIZE(items));
@@ -935,6 +936,8 @@ void ImageDocument::RenderResizeDialog()
 				break;
 			case eBilinearSample:
 				LinearSampleResize(iNewWidth,iNewHeight);
+				break;
+			case eLanczos:
 				break;
 			case eAVIR:
 				AvirSampleResize(iNewWidth,iNewHeight);

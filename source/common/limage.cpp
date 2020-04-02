@@ -71,8 +71,8 @@ FloatPixel LinearImage::SuperSample(float x, float y, float xRatio, float yRatio
 	float sx = stepsX > 1 ? x - (xRatio*0.5f) : x;
 	float sy = stepsY > 1 ? y - (yRatio*0.5f) : y;
 
-	float dx = xRatio / stepsX;
-	float dy = yRatio / stepsY;
+	float dx = stepsX > 1 ? xRatio / (stepsX-1) : 0;
+	float dy = stepsY > 1 ? yRatio / (stepsY-1) : 0;
 	
 	for (int coordinateY = 0; coordinateY < stepsY; ++coordinateY)
 	{
@@ -94,6 +94,11 @@ FloatPixel LinearImage::SuperSample(float x, float y, float xRatio, float yRatio
 	result.g /= sampleCount;
 	result.b /= sampleCount;
 	result.a /= sampleCount;
+
+	if (result.r > 255.0f) result.r = 255.0f;
+	if (result.g > 255.0f) result.g = 255.0f;
+	if (result.b > 255.0f) result.b = 255.0f;
+	if (result.a > 255.0f) result.a = 255.0f;
 
 	return result;
 }
