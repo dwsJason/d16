@@ -1228,7 +1228,26 @@ void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
 
 	if (pPixels)
 	{
+		avir::CImageResizer<> AvirResizer(8);
+
+		Uint32* pNewPixels = new Uint32[ iNewWidth * iNewHeight ];
+
+		AvirResizer.resizeImage<Uint8,Uint8>((Uint8*)pPixels, m_width, m_height,
+											 m_width*sizeof(Uint32),
+											 (Uint8*)pNewPixels,
+											 iNewWidth, iNewHeight,
+											 sizeof(Uint32),  // RGBA 8888
+											 0);
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pNewPixels, iNewWidth, iNewHeight);
+
+		delete[] pNewPixels;
 		delete[] pPixels;
+
+		if (pSurface)
+		{
+			SetDocumentSurface( pSurface );
+		}
 	}
 }
 //------------------------------------------------------------------------------
