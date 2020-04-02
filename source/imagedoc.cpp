@@ -12,6 +12,7 @@
 #include "libimagequant.h"
 #include "limage.h"
 #include "avir.h"
+#include "lancir.h"
 
 #include <map>
 #include <vector>
@@ -1257,6 +1258,21 @@ void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
 
 	if (pPixels)
 	{
+		avir::CLancIR LanczosResizer;
+
+		Uint32* pNewPixels = new Uint32[ iNewWidth * iNewHeight ];
+
+		LanczosResizer.resizeImage<unsigned char>((unsigned char*)pPixels,
+										   m_width, m_height,
+										   sizeof(Uint32)*m_width,  		// $$JGA Since this takes a stride, we might be able to pass SDL Surface directly in
+											(unsigned char*)pNewPixels,
+												  iNewWidth, iNewHeight,
+												  sizeof(Uint32));  //RGBA 8888
+
+
+
+
+		delete[] pNewPixels;
 		delete[] pPixels;
 	}
 }
