@@ -938,6 +938,7 @@ void ImageDocument::RenderResizeDialog()
 				LinearSampleResize(iNewWidth,iNewHeight);
 				break;
 			case eLanczos:
+				LanczosResize(iNewWidth, iNewHeight);
 				break;
 			case eAVIR:
 				AvirSampleResize(iNewWidth,iNewHeight);
@@ -1249,14 +1250,29 @@ void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 
 	}
 }
+//------------------------------------------------------------------------------
+void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
+{
+	Uint32* pPixels = SDL_SurfaceToUint32Array(m_pSurface);
+
+	if (pPixels)
+	{
+		delete[] pPixels;
+	}
+}
 
 //------------------------------------------------------------------------------
 void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
 {
+	Uint32* pPixels = SDL_SurfaceToUint32Array(m_pSurface);
 
+	if (pPixels)
+	{
+		delete[] pPixels;
+	}
 }
 //------------------------------------------------------------------------------
-SDL_Surface *ImageDocument::SDL_SurfaceToRGBA(SDL_Surface* pSurface)
+SDL_Surface* ImageDocument::SDL_SurfaceToRGBA(SDL_Surface* pSurface)
 {
 	SDL_PixelFormat format;
 
@@ -1281,4 +1297,45 @@ SDL_Surface *ImageDocument::SDL_SurfaceToRGBA(SDL_Surface* pSurface)
 	return SDL_ConvertSurface(pSurface, &format, 0);
 }
 //------------------------------------------------------------------------------
+
+Uint32* ImageDocument::SDL_SurfaceToUint32Array(SDL_Surface* pSurface)
+{
+	Uint32* pPixels = nullptr;
+
+	SDL_Surface *pSource = SDL_SurfaceToRGBA(pSurface);
+
+	if (pSource)
+	{
+		if( SDL_MUSTLOCK(pSource) )
+			SDL_LockSurface(pSource);
+
+		pPixels = new Uint32[ pSource->w * pSource->h ];
+
+		// So do some work here
+		for (int y = 0; y < pSource->h; ++y)
+		{
+			for (int x = 0; x < pSource->w; ++x)
+			{
+				Uint8 * pixel = (Uint8*)pSource->pixels;
+				pixel += (y * pSource->pitch) + (x * sizeof(Uint32));
+
+				Uint32 color = *((Uint32*)pixel);
+
+				// Dump the Colors out into an array
+				pPixels[ (y * pSource->w) + x ] = color;
+			}
+		}
+
+		if( SDL_MUSTLOCK(pSource) )
+			SDL_UnlockSurface(pSource);
+
+		SDL_FreeSurface(pSource);
+
+	}
+
+	return pPixels;
+}
+
+//------------------------------------------------------------------------------
+
 

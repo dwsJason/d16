@@ -67,12 +67,14 @@ private:
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
+	void LanczosResize(int iNewWidth, int iNewHeight);
 	void AvirSampleResize(int iNewWidth, int iNewHeight);
 
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
 
-	SDL_Surface *SDL_SurfaceToRGBA(SDL_Surface* pSurface);
+	SDL_Surface* SDL_SurfaceToRGBA(SDL_Surface* pSurface);
+	Uint32* SDL_SurfaceToUint32Array(SDL_Surface* pSurface);
 
 	std::string m_windowName;
 	std::string m_filename;
