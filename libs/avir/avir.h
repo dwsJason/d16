@@ -2041,6 +2041,8 @@ public:
 
 	virtual void addWorkload( CWorkload* const Workload )
 	{
+		//++JGA - Stop Compiler Warning
+		Workload;
 	}
 
 	/**
