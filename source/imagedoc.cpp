@@ -863,7 +863,7 @@ void ImageDocument::RenderResizeDialog()
 	static bool bDither = false;
 	ImGui::NewLine();
 	ImGui::SameLine(128);
-	ImGui::Checkbox("Dither", &bDither);
+	ImGui::Checkbox("Dither (AVIR Only)", &bDither);
 
 	ImGui::NewLine();
 	ImGui::Separator();
@@ -942,7 +942,7 @@ void ImageDocument::RenderResizeDialog()
 				LanczosResize(iNewWidth, iNewHeight);
 				break;
 			case eAVIR:
-				AvirSampleResize(iNewWidth,iNewHeight);
+				AvirSampleResize(iNewWidth,iNewHeight,bDither);
 				break;
 			}
 		}
@@ -1222,22 +1222,39 @@ void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
 }
 
 //------------------------------------------------------------------------------
-void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight)
+void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither)
 {
 	Uint32* pPixels = SDL_SurfaceToUint32Array(m_pSurface);
 
 	if (pPixels)
 	{
-		avir::CImageResizer<> AvirResizer(8);
-
 		Uint32* pNewPixels = new Uint32[ iNewWidth * iNewHeight ];
 
-		AvirResizer.resizeImage<Uint8,Uint8>((Uint8*)pPixels, m_width, m_height,
-											 m_width*sizeof(Uint32),
-											 (Uint8*)pNewPixels,
-											 iNewWidth, iNewHeight,
-											 sizeof(Uint32),  // RGBA 8888
-											 0);
+		if (bDither)
+		{
+			typedef avir::fpclass_def< float, float,
+				avir::CImageResizerDithererErrdINL< float > > fpclass_dith;
+
+			avir::CImageResizer< fpclass_dith > DitherResizer( 8 );
+
+			DitherResizer.resizeImage<Uint8,Uint8>((Uint8*)pPixels, m_width, m_height,
+												 m_width*sizeof(Uint32),
+												 (Uint8*)pNewPixels,
+												 iNewWidth, iNewHeight,
+												 sizeof(Uint32),  // RGBA 8888
+												 0);
+		}
+		else
+		{
+			avir::CImageResizer<> AvirResizer(8);
+
+			AvirResizer.resizeImage<Uint8,Uint8>((Uint8*)pPixels, m_width, m_height,
+												 m_width*sizeof(Uint32),
+												 (Uint8*)pNewPixels,
+												 iNewWidth, iNewHeight,
+												 sizeof(Uint32),  // RGBA 8888
+												 0);
+		}
 
 		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pNewPixels, iNewWidth, iNewHeight);
 

@@ -68,7 +68,7 @@ private:
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
 	void LanczosResize(int iNewWidth, int iNewHeight);
-	void AvirSampleResize(int iNewWidth, int iNewHeight);
+	void AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither);
 
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
