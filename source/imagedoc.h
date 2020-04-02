@@ -73,7 +73,10 @@ private:
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
 
+	void SetDocumentSurface(SDL_Surface* pSurface);
+
 	SDL_Surface* SDL_SurfaceToRGBA(SDL_Surface* pSurface);
+	SDL_Surface* SDL_SurfaceFromRawRGBA(Uint32* pPixels, int iWidth, int iHeight);
 	Uint32* SDL_SurfaceToUint32Array(SDL_Surface* pSurface);
 
 	std::string m_windowName;

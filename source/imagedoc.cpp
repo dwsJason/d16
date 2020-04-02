@@ -1044,30 +1044,9 @@ void ImageDocument::CropImage(int iNewWidth, int iNewHeight, int iJustify)
 	/* Restore the alpha blending attributes */
 	SDL_SetSurfaceBlendMode(m_pSurface, saved_mode);
 
+
 	// Free up the source image, and opengl texture
-
-	// unregister / free the m_image
-	if (m_image)
-	{
-		glDeleteTextures(1, &m_image);
-		m_image = 0;
-	}
-	// unregister / free the m_pSurface
-	if (m_pSurface)
-	{
-		SDL_FreeSurface(m_pSurface);
-		m_pSurface = nullptr;
-	}
-
-	// Set, and Register the new image
-	m_pSurface = pImage;
-	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
-
-	m_width  = pImage->w;
-	m_height = pImage->h;
-
-	// Update colors
-	m_numSourceColors = CountUniqueColors();
+	SetDocumentSurface( pImage );
 }
 
 //------------------------------------------------------------------------------
@@ -1120,28 +1099,8 @@ void ImageDocument::PointSampleResize(int iNewWidth, int iNewHeight)
 		SDL_FreeSurface(pSource);
 	}
 
-	// unregister / free the m_image
-	if (m_image)
-	{
-		glDeleteTextures(1, &m_image);
-		m_image = 0;
-	}
-	// unregister / free the m_pSurface
-	if (m_pSurface)
-	{
-		SDL_FreeSurface(m_pSurface);
-		m_pSurface = nullptr;
-	}
-
-	// Set, and Register the new image
-	m_pSurface = pImage;
-	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
-
-	m_width  = pImage->w;
-	m_height = pImage->h;
-
-	// Update colors
-	m_numSourceColors = CountUniqueColors();
+	//--------------------------
+	SetDocumentSurface( pImage );
 }
 //------------------------------------------------------------------------------
 void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
@@ -1226,28 +1185,8 @@ void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 		delete pDestImage;
 		pDestImage = nullptr;
 //------------------------------------------
-		// unregister / free the m_image
-		if (m_image)
-		{
-			glDeleteTextures(1, &m_image);
-			m_image = 0;
-		}
-		// unregister / free the m_pSurface
-		if (m_pSurface)
-		{
-			SDL_FreeSurface(m_pSurface);
-			m_pSurface = nullptr;
-		}
 
-		// Set, and Register the new image
-		m_pSurface = pImage;
-		m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
-
-		m_width  = pImage->w;
-		m_height = pImage->h;
-
-		// Update colors
-		m_numSourceColors = CountUniqueColors();
+		SetDocumentSurface( pImage );
 
 	}
 }
@@ -1270,10 +1209,15 @@ void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
 												  sizeof(Uint32));  //RGBA 8888
 
 
-
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pNewPixels, iNewWidth, iNewHeight);
 
 		delete[] pNewPixels;
 		delete[] pPixels;
+
+		if (pSurface)
+		{
+			SetDocumentSurface( pSurface );
+		}
 	}
 }
 
@@ -1354,4 +1298,73 @@ Uint32* ImageDocument::SDL_SurfaceToUint32Array(SDL_Surface* pSurface)
 
 //------------------------------------------------------------------------------
 
+SDL_Surface* ImageDocument::SDL_SurfaceFromRawRGBA(Uint32* pPixels, int iWidth, int iHeight)
+{
+	SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iWidth, iHeight,
+											   32,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+								 0x000000FF,
+								 0x0000FF00, 0x00FF0000, 0xFF000000
+#else
+								 0xFF000000,
+								 0x00FF0000, 0x0000FF00, 0x000000FF
+#endif
+								 );
+
+	if (nullptr == pImage)
+		return nullptr;
+
+	if( SDL_MUSTLOCK(pImage) )
+		SDL_LockSurface(pImage);
+
+
+	Uint32 *pRGBA = pPixels;  // Start with the first pixel
+
+	for (int y = 0; y < iHeight; ++y)
+	{
+		for (int x = 0; x < iWidth; ++x)
+		{
+			Uint8* pPixel = (Uint8*)pImage->pixels;
+			pPixel += (y*pImage->pitch) + (x * sizeof(Uint32));
+
+			*((Uint32*)pPixel) = *pRGBA++;
+		}
+	}
+
+	if( SDL_MUSTLOCK(pImage) )
+		SDL_UnlockSurface(pImage);
+
+	return pImage;
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
+{
+	// Free up the source image, and opengl texture
+
+		// unregister / free the m_image
+		if (m_image)
+		{
+			glDeleteTextures(1, &m_image);
+			m_image = 0;
+		}
+		// unregister / free the m_pSurface
+		if (m_pSurface)
+		{
+			SDL_FreeSurface(m_pSurface);
+			m_pSurface = nullptr;
+		}
+
+		// Set, and Register the new image
+		m_pSurface = pSurface;
+		m_image = SDL_GL_LoadTexture(pSurface, m_image_uv);
+
+		m_width  = pSurface->w;
+		m_height = pSurface->h;
+
+		// Update colors
+		m_numSourceColors = CountUniqueColors();
+}
+//------------------------------------------------------------------------------
 
