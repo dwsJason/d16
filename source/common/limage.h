@@ -18,10 +18,10 @@ public:
 
 	FloatPixel(unsigned int rgba)
 	{
-		r = (rgba >> 0 ) & 0xFF;
-		g = (rgba >> 8 ) & 0xFF;
-		b = (rgba >> 16) & 0xFF;
-		a = (rgba >> 24) & 0xFF;
+		r = (float)((rgba >> 0 ) & 0xFF);
+		g = (float)((rgba >> 8 ) & 0xFF);
+		b = (float)((rgba >> 16) & 0xFF);
+		a = (float)((rgba >> 24) & 0xFF);
 	}
 
 	FloatPixel(float red, float green, float blue, float alpha)
