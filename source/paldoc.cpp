@@ -76,10 +76,12 @@ void PaletteDocument::Render()
 
 		if (ImGui::BeginDragDropSource())
 		{
-			if (ImGui::SetDragDropPayload("xPalette16", &m_colors[0], 4*16))
+			if (ImGui::SetDragDropPayload("xPalette16", &m_floatColors[0], 4*4*16))
 			{
+				// I don't really understand what I'm supposed to do here
 			}
 
+			// Drag Preview Content
 			ImGui::Text(m_filename.c_str());
 			ImGui::NewLine();
 

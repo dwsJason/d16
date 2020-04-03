@@ -396,6 +396,12 @@ void ImageDocument::Render()
 				memcpy((float*)&m_targetColors[idx], payload->Data, sizeof(float) * 3);
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
 				memcpy((float*)&m_targetColors[idx], payload->Data, sizeof(float) * 4);
+
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("xPalette16"))
+			{
+				memcpy((float*)&m_targetColors[0], payload->Data, sizeof(float) * 4 * 16);
+			}
+
 			ImGui::EndDragDropTarget();
 		}
 
