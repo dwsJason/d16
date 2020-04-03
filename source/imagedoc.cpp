@@ -749,9 +749,31 @@ void ImageDocument::Quant()
 
 	// Put the result colors back up in the tray, so we can see them
 	{
+		// take advantage, I know the locked colors all get grouped on the end of the result
+				// count the number of locked colors
+		int numLocked = 0;
+		for (int idx = 0; idx < m_bLocks.size(); ++idx)
+		{
+			if (m_bLocks[idx]) numLocked++;
+		}
+
+		// locked colors start at this index
+		int lockedBaseIndex = m_bLocks.size() - numLocked;
+
+		int lockedIndex = 0;
+		int palIndex = 0;
+
 		for (int idx = 0; idx < m_targetColors.size(); ++idx)
 		{
-			liq_color color = palette->entries[ idx ];
+			liq_color color;
+
+			if (m_bLocks[idx])
+			{
+				color = palette->entries[lockedBaseIndex + lockedIndex];
+				lockedIndex++;
+			}
+			else
+				color = palette->entries[ palIndex++ ];
 
 			m_targetColors[ idx ].x = color.r / 255.0f;
 			m_targetColors[ idx ].y = color.g / 255.0f;
