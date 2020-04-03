@@ -494,15 +494,7 @@ void ImageDocument::Render()
 
 		ImGui::Image(tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 
-		if (m_targetImage)
-		{
-			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
-
-			ImGui::SameLine();
-			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
-		}
-
-//-----------------------------  Context Menu ----------------------------------
+//----------------- Source Image Context Menu ----------------------------------
 
 		bool bOpenResizeModal = false;
 
@@ -513,6 +505,25 @@ void ImageDocument::Render()
 				bOpenResizeModal = true;
 			}
 		    ImGui::EndPopup();
+		}
+
+		if (m_targetImage)
+		{
+			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
+
+			ImGui::SameLine();
+			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
+
+//-------------------  Target Image Context Menu -------------------------------
+
+			if (ImGui::BeginPopupContextItem("Target"))
+			{
+				if (ImGui::MenuItem("Keep Image"))
+				{
+					SetDocumentSurface( SDL_SurfaceToRGBA(m_pTargetSurface) );
+				}
+				ImGui::EndPopup();
+			}
 		}
 
 //-------------------------------- Resize Image --------------------------------
@@ -1395,6 +1406,22 @@ SDL_Surface* ImageDocument::SDL_SurfaceFromRawRGBA(Uint32* pPixels, int iWidth, 
 
 void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
 {
+	// Free up the target, because it won't work right after a resize
+		if (m_targetImage)
+		{
+			glDeleteTextures(1, &m_targetImage);
+			m_targetImage = 0;
+		}
+
+		if (m_pTargetSurface)
+		{
+			// I want to accept the target here
+			if (pSurface != m_pTargetSurface)
+				SDL_FreeSurface(m_pTargetSurface);
+
+			m_pTargetSurface = nullptr;
+		}
+
 	// Free up the source image, and opengl texture
 
 		// unregister / free the m_image
