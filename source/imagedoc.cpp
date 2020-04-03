@@ -758,7 +758,7 @@ void ImageDocument::Quant()
 		}
 
 		// locked colors start at this index
-		int lockedBaseIndex = m_bLocks.size() - numLocked;
+		int lockedBaseIndex = (int)m_bLocks.size() - numLocked;
 
 		int lockedIndex = 0;
 		int palIndex = 0;
