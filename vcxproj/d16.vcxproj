@@ -238,6 +238,7 @@
     <ClCompile Include="..\libs\libimagequant-msvc\mempool.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\nearest.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\pam.c" />
+    <ClCompile Include="..\source\common\cursor.cpp" />
     <ClCompile Include="..\source\common\limage.cpp" />
     <ClCompile Include="..\source\common\log.cpp" />
     <ClCompile Include="..\source\icon.cpp" />
@@ -283,6 +284,7 @@
     <ClInclude Include="..\libs\vectormath\vec2d.hpp" />
     <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
     <ClInclude Include="..\source\common\concurrent_queue.h" />
+    <ClInclude Include="..\source\common\cursor.h" />
     <ClInclude Include="..\source\common\limage.h" />
     <ClInclude Include="..\source\common\log.h" />
     <ClInclude Include="..\source\imagedoc.h" />

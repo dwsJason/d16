@@ -62,6 +62,9 @@
     <ClCompile Include="..\source\common\limage.cpp">
       <Filter>source\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\common\cursor.cpp">
+      <Filter>source\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -186,6 +189,9 @@
     </ClInclude>
     <ClInclude Include="..\libs\avir\lancir.h">
       <Filter>libs\avir</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\common\cursor.h">
+      <Filter>source\common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
