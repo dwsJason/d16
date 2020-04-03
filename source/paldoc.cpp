@@ -72,7 +72,7 @@ PaletteDocument::~PaletteDocument()
 
 void PaletteDocument::Render()
 {
-	ImGui::BeginChild(m_filename.c_str(), ImVec2(500, 56), true, ImGuiWindowFlags_NoMove);
+	ImGui::BeginChild(m_filename.c_str(), ImVec2(340, 56), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
 
 		if (ImGui::BeginDragDropSource())
 		{
