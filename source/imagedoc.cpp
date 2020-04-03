@@ -664,39 +664,11 @@ void ImageDocument::Quant()
 
 	//-----------------------------------------------
 
-    SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, m_width, m_height,
-											   32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
-                                 0x000000FF,
-                                 0x0000FF00, 0x00FF0000, 0xFF000000
-#else
-                                 0xFF000000,
-                                 0x00FF0000, 0x0000FF00, 0x000000FF
-#endif
-											   );
+	SDL_Surface *pImage = SDL_SurfaceToRGBA(m_pSurface);
 
 	if (nullptr == pImage)
 	{
 		return;
-	}
-
-	// Copy the source image into 32bpp format
-	{
-		/* Save the alpha blending attributes */
-		SDL_Rect area;
-		SDL_BlendMode saved_mode;
-		SDL_GetSurfaceBlendMode(m_pSurface, &saved_mode);
-		SDL_SetSurfaceBlendMode(m_pSurface, SDL_BLENDMODE_NONE);
-
-		/* Copy the surface into the GL texture image */
-		area.x = 0;
-		area.y = 0;
-		area.w = m_pSurface->w;
-		area.h = m_pSurface->h;
-		SDL_BlitSurface(m_pSurface, &area, pImage, &area);
-
-		/* Restore the alpha blending attributes */
-		SDL_SetSurfaceBlendMode(m_pSurface, saved_mode);
 	}
 
     if( SDL_MUSTLOCK(pImage) )
@@ -774,6 +746,19 @@ void ImageDocument::Quant()
 	SDL_SetPaletteColors(pPalette, (const SDL_Color*)palette->entries, 0, 16);
 
 	SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+	// Put the result colors back up in the tray, so we can see them
+	{
+		for (int idx = 0; idx < m_targetColors.size(); ++idx)
+		{
+			liq_color color = palette->entries[ idx ];
+
+			m_targetColors[ idx ].x = color.r / 255.0f;
+			m_targetColors[ idx ].y = color.g / 255.0f;
+			m_targetColors[ idx ].z = color.b / 255.0f;
+			m_targetColors[ idx ].w = color.a / 255.0f;
+		}
+	}
 
 	GLfloat about_image_uv[4];
 	m_targetImage = SDL_GL_LoadTexture(pTargetSurface, about_image_uv);
