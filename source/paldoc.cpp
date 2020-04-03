@@ -74,6 +74,32 @@ void PaletteDocument::Render()
 {
 	ImGui::BeginChild(m_filename.c_str(), ImVec2(500, 56), true, ImGuiWindowFlags_NoMove);
 
+		if (ImGui::BeginDragDropSource())
+		{
+			if (ImGui::SetDragDropPayload("xPalette16", &m_colors[0], 4*16))
+			{
+			}
+
+			ImGui::Text(m_filename.c_str());
+			ImGui::NewLine();
+
+			ImVec2 buttonSize = ImVec2(20,20);
+
+			for (int idx = 0; idx < m_colors.size(); ++idx)
+			{
+				ImGui::SameLine(10.0f + (idx * buttonSize.x));
+
+				std::string colorId = m_filename + "##" + std::to_string(idx);
+				ImGui::ColorButton(colorId.c_str(), m_floatColors[idx],
+								   ImGuiColorEditFlags_NoLabel |
+								   ImGuiColorEditFlags_NoAlpha |
+								   ImGuiColorEditFlags_NoBorder, buttonSize );
+
+			}
+
+			ImGui::EndDragDropSource();                                                                    // only call EndDragDropSource() if BeginDragDropSource() returns true!
+		}
+
 		ImGui::Text(m_filename.c_str());
 		ImGui::NewLine();
 
@@ -88,6 +114,17 @@ void PaletteDocument::Render()
 							   ImGuiColorEditFlags_NoLabel |
 							   ImGuiColorEditFlags_NoAlpha |
 							   ImGuiColorEditFlags_NoBorder, buttonSize );
+
+			// Allow user to drop colors into each palette entry
+			// (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+					memcpy((float*)&m_floatColors[idx], payload->Data, sizeof(float) * 3);
+				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+					memcpy((float*)&m_floatColors[idx], payload->Data, sizeof(float) * 4);
+				ImGui::EndDragDropTarget();
+			}
 
 		}
 		ImGui::NewLine();

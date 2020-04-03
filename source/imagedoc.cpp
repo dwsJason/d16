@@ -387,6 +387,18 @@ void ImageDocument::Render()
 						   ImGuiColorEditFlags_NoAlpha |
 						   ImGuiColorEditFlags_NoBorder, buttonSize );
 
+
+		// Allow user to drop colors into each palette entry
+		// (Note that ColorButton is already a drag source by default, unless using ImGuiColorEditFlags_NoDragDrop)
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
+				memcpy((float*)&m_targetColors[idx], payload->Data, sizeof(float) * 3);
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
+				memcpy((float*)&m_targetColors[idx], payload->Data, sizeof(float) * 4);
+			ImGui::EndDragDropTarget();
+		}
+
 		static ImVec4 backup_color;
 
 		std::string pickerid = "picker##" + std::to_string(idx);
