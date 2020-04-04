@@ -14,6 +14,10 @@ public:
 	void Render();
 
 private:
+
+	unsigned int m_GLImage;
+	float m_UV[4];
+
 };
 
 #endif

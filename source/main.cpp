@@ -111,7 +111,7 @@ static int alphaSort(const struct dirent **a, const struct dirent **b)
 std::vector<ImageDocument*>   imageDocuments;
 std::vector<PaletteDocument*> paletteDocuments;
 
-Toolbar toolBar;
+Toolbar* pToolbar = nullptr; // need to create after stuff intialize
 
 //------------------------------------------------------------------------------
 
@@ -301,6 +301,10 @@ int main(int, char**)
 		}
 	}
 
+	// Get that toolbar created
+
+	pToolbar = new Toolbar();
+
     // Main loop
     bool done = false;
     while (!done)
@@ -345,8 +349,8 @@ int main(int, char**)
 
 			ImGui::PopStyleVar(2);
 
-			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+			//ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			//ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
 			if (ImGui::BeginMenuBar())
 			{
@@ -408,8 +412,11 @@ int main(int, char**)
 
 				//ImGui::Button("Pan/Zoom");
 				//ImGui::Button("Eye Dropper");
+				pToolbar->Render();
 
 				ImGui::EndMenuBar();
+
+
 			}
 
 			// display open file dialog
@@ -504,10 +511,7 @@ int main(int, char**)
 			  ImGuiFileDialog::Instance()->CloseDialog("OpenPaletteDlgKey");
 			}
 
-
 			ImGui::End();
-
-			toolBar.Render();
 		}
 
 		// Render the imageDocuments
