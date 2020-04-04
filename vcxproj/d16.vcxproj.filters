@@ -65,6 +65,9 @@
     <ClCompile Include="..\source\common\cursor.cpp">
       <Filter>source\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\toolbar.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -192,6 +195,9 @@
     </ClInclude>
     <ClInclude Include="..\source\common\cursor.h">
       <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\toolbar.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

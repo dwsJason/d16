@@ -14,6 +14,7 @@
 #include "imagedoc.h"
 #include "paldoc.h"
 #include "dirent.h"
+#include "toolbar.h"
 
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
@@ -109,6 +110,8 @@ static int alphaSort(const struct dirent **a, const struct dirent **b)
 //------------------------------------------------------------------------------
 std::vector<ImageDocument*>   imageDocuments;
 std::vector<PaletteDocument*> paletteDocuments;
+
+Toolbar toolBar;
 
 //------------------------------------------------------------------------------
 
@@ -503,6 +506,8 @@ int main(int, char**)
 
 
 			ImGui::End();
+
+			toolBar.Render();
 		}
 
 		// Render the imageDocuments
