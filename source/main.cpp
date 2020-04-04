@@ -349,8 +349,8 @@ int main(int, char**)
 
 			ImGui::PopStyleVar(2);
 
-			//ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-			//ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
 			if (ImGui::BeginMenuBar())
 			{
