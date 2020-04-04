@@ -798,8 +798,7 @@ void ImageDocument::Quant()
     //free(raw_8bit_pixels);  // The surface owns these now
 
 	// Tell SDL to free it for me
-	pTargetSurface->flags &= ~SDL_PREALLOC;
-
+	//pTargetSurface->flags &= ~SDL_PREALLOC;
 
 	//-----------------------------------------------
 
@@ -1431,7 +1430,13 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
 		{
 			// I want to accept the target here
 			if (pSurface != m_pTargetSurface)
+			{
+				// Free the pixels, because I allocated them?
+				if (pSurface->flags & SDL_PREALLOC)
+					free(pSurface->pixels);
+
 				SDL_FreeSurface(m_pTargetSurface);
+			}
 
 			m_pTargetSurface = nullptr;
 		}
