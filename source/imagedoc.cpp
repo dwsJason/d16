@@ -792,7 +792,14 @@ void ImageDocument::Quant()
     liq_image_destroy(input_image);
     liq_attr_destroy(handle);
 
-    free(raw_8bit_pixels);
+	// SDL_CreateRGBSurfaceWithFormatFrom, makes you manage the raw pixels buffer
+	// instead of make a copy of it, so I'm supposed to free it manually, after
+	// the surface is free!
+    //free(raw_8bit_pixels);  // The surface owns these now
+
+	// Tell SDL to free it for me
+	pTargetSurface->flags &= ~SDL_PREALLOC;
+
 
 	//-----------------------------------------------
 
