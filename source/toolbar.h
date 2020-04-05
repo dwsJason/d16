@@ -5,6 +5,18 @@
 #ifndef TOOLBAR_H_
 #define TOOLBAR_H_
 
+#include "imgui.h"
+
+enum ToolBarMode
+{
+	ePanZoom,
+	eEyeDropper,
+	eResizeImage,
+
+	eToolBarMode_COUNT
+};
+
+
 class Toolbar
 {
 public:
@@ -13,10 +25,25 @@ public:
 
 	void Render();
 
+	void SetCurrentMode(int toolBarMode);
+	int  GetCurrentMode()  { return m_currentMode; }
+	int  GetPreviousMode() { return m_previousMode; }
+	void SetPreviousMode() { SetCurrentMode(m_previousMode); }
+	static Toolbar* GToolbar;
+
 private:
+
+	void SetButtonImage(int x, int y);
 
 	unsigned int m_GLImage;
 	float m_UV[4];
+
+	int m_currentMode;
+	int m_previousMode;
+
+	// Some button stuff
+	ImVec2 m_uv0;
+	ImVec2 m_uv1;
 
 };
 

@@ -14,6 +14,8 @@
 #include "avir.h"
 #include "lancir.h"
 
+#include "toolbar.h"
+
 #include <map>
 #include <vector>
 
@@ -527,6 +529,14 @@ void ImageDocument::Render()
 		}
 
 //-------------------------------- Resize Image --------------------------------
+
+		// Glue for the Toolbar button
+		if (ImGui::IsWindowFocused())
+		if (eResizeImage == Toolbar::GToolbar->GetCurrentMode())
+		{
+			bOpenResizeModal = true;
+			Toolbar::GToolbar->SetPreviousMode();
+		}
 
 		if (bOpenResizeModal)
 		{
