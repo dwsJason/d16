@@ -95,7 +95,7 @@ void Toolbar::Render()
 	uv0.y = 6.0f*12.0f/256.0f;
 	uv1.y = uv0.y + 12.0f/256.0f;
 
-	float xpos = 128.0f;
+	float xpos = 4.0f;
 	ImGui::SameLine(xpos); xpos+=40.0f;
 	ImGui::ImageButton((ImTextureID)m_GLImage, buttonSize, uv0, uv1, 0, bg_color, tint_color);
 	

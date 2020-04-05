@@ -32,6 +32,9 @@
 
 void SetWindowIcon( SDL_Window* pIcon );
 void ShowLog();
+void DockSpaceUI();
+void ToolBarUI();
+void MainMenuBarUI();
 
 //------------------------------------------------------------------------------
 /* Quick utility function for texture creation */
@@ -112,6 +115,11 @@ std::vector<ImageDocument*>   imageDocuments;
 std::vector<PaletteDocument*> paletteDocuments;
 
 Toolbar* pToolbar = nullptr; // need to create after stuff intialize
+
+bool bAppDone = false; // Set true to quit App
+
+	bool show_log_window = true;
+	bool show_palette_window = true;
 
 //------------------------------------------------------------------------------
 
@@ -226,9 +234,6 @@ int main(int, char**)
     bool show_another_window = false;
 #endif
 
-	bool show_log_window = true;
-	bool show_palette_window = true;
-
     ImVec4 clear_color = ImVec4(0.18f, 0.208f, 0.38f, 1.00f);
 
 	//--------------------------------------------------------------------------
@@ -306,8 +311,8 @@ int main(int, char**)
 	pToolbar = new Toolbar();
 
     // Main loop
-    bool done = false;
-    while (!done)
+    bAppDone = false;
+    while (!bAppDone)
     {
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
@@ -319,9 +324,9 @@ int main(int, char**)
         {
             ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT)
-                done = true;
+                bAppDone = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
-                done = true;
+                bAppDone = true;
         }
 
         // Start the Dear ImGui frame
@@ -329,190 +334,10 @@ int main(int, char**)
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
 
+		MainMenuBarUI();
+		ToolBarUI();
 		// Put everything in a DockSpace, because it's just cool
-		{
-			static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-			ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->GetWorkPos());
-			ImGui::SetNextWindowSize(viewport->GetWorkSize());
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-			ImGui::Begin("DockSpace", nullptr, window_flags);
-			ImGui::PopStyleVar();
-
-			ImGui::PopStyleVar(2);
-
-			ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-
-			if (ImGui::BeginMenuBar())
-			{
-				if (ImGui::BeginMenu("File"))
-				{
-					// Disabling fullscreen would allow the window to be moved to the front of other windows,
-					// which we can't undo at the moment without finer window depth/z control.
-					//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
-
-					if (ImGui::MenuItem("Open Image"))
-					{
-						// Open File
-						ImGuiFileDialog::Instance()->OpenDialog("OpenImageDlgKey", "Open Image", "\0", ".", "", 0);
-					}
-
-					if (ImGui::MenuItem("Open Palette"))
-					{
-						ImGuiFileDialog::Instance()->OpenDialog("OpenPaletteDlgKey", "Open Palette", "\0", ".", "", 0);
-					}
-
-					ImGui::Separator();
-					if (ImGui::MenuItem("Save"))
-					{
-						// Save File
-					}
-					if (ImGui::MenuItem("Save As"))
-					{
-						// Save As
-					}
-					ImGui::Separator();
-					if (ImGui::MenuItem("Quit", "Alt+F4"))
-					{
-						// Quit the Application
-						done = true;
-					}
-					ImGui::EndMenu();
-				}
-
-				if (ImGui::BeginMenu("Windows"))
-				{
-					if (ImGui::MenuItem("About"))
-					{
-					}
-
-					ImGui::Separator();
-
-					if (ImGui::MenuItem("Palettes", nullptr, show_palette_window))
-					{
-						show_palette_window = !show_palette_window;
-					}
-
-					if (ImGui::MenuItem("Log", nullptr, show_log_window))
-					{
-						show_log_window = !show_log_window;
-					}
-
-					ImGui::EndMenu();
-				}
-
-				//ImGui::Button("Pan/Zoom");
-				//ImGui::Button("Eye Dropper");
-				pToolbar->Render();
-
-				ImGui::EndMenuBar();
-
-
-			}
-
-			// display open file dialog
-			if (ImGuiFileDialog::Instance()->FileDialog("OpenImageDlgKey")) 
-			{
-			  // action if OK
-			  if (ImGuiFileDialog::Instance()->IsOk == true)
-			  {
-				  //std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
-				  //std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				  //std::string filter = ImGuiFileDialog::Instance()->GetCurrentFilter();
-				  // here convert from string because a string was passed as a userDatas, but it can be what you want
-				  //auto userDatas = std::string((const char*)ImGuiFileDialog::Instance()->GetUserDatas()); 
-				  //auto selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
-
-				  std::map<std::string, std::string> selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
-
-				  // action
-				  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
-				  {
-					  //LOG("%s - %s\n", it->first.c_str(), it->second.c_str());
-
-					  SDL_Surface *image;
-					  image=IMG_Load(it->second.c_str());
-
-					  if (image)
-					  {
-						  LOG("Loaded %s\n", it->second.c_str());
-
-						  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
-					  }
-					  else
-					  {
-						  LOG("Failed %s\n", it->second.c_str());
-					  }
-
-				  }
-			  }
-			  // close
-			  ImGuiFileDialog::Instance()->CloseDialog("OpenImageDlgKey");
-			}
-
-
-			// display open file dialog
-			if (ImGuiFileDialog::Instance()->FileDialog("OpenPaletteDlgKey")) 
-			{
-			  // action if OK
-			  if (ImGuiFileDialog::Instance()->IsOk == true)
-			  {
-				  //std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
-				  //std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-				  //std::string filter = ImGuiFileDialog::Instance()->GetCurrentFilter();
-				  // here convert from string because a string was passed as a userDatas, but it can be what you want
-				  //auto userDatas = std::string((const char*)ImGuiFileDialog::Instance()->GetUserDatas()); 
-				  std::map<std::string, std::string> selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
-
-				  // action
-				  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
-				  {
-					  LOG("Open PAL: %s, %s\n", it->first.c_str(), it->second.c_str());
-
-					  // Eventually, support opening any type of image, and extracting
-					  // the palette, for now, lets just open the file, if it has a
-					  // .pal extension
-					  std::string filename = it->first;
-					  std::string& fullpath = it->second;
-
-					  std::string extension = ".pal";
-
-					  if (fullpath.length() > extension.length())
-					  {
-						  size_t fullpath_offset = fullpath.length() - extension.length();
-
-						  for (int idx = 0; idx < extension.length(); ++idx)
-						  {
-							  if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
-							  {
-								  LOG("FAILED %s\n", filename.c_str());
-							  }
-						  }
-
-						  paletteDocuments.push_back(new PaletteDocument(filename, fullpath));
-					  }
-					  else
-					  {
-						  LOG("FAILED %s\n", filename.c_str());
-					  }
-
-				  }
-			  }
-			  // close
-			  ImGuiFileDialog::Instance()->CloseDialog("OpenPaletteDlgKey");
-			}
-
-			ImGui::End();
-		}
+		DockSpaceUI();
 
 		// Render the imageDocuments
 
@@ -635,4 +460,221 @@ void ShowLog()
 
 
 //------------------------------------------------------------------------------
+const float toolbarSize = 32;
 
+void DockSpaceUI()
+{
+	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+	ImGuiWindowFlags window_flags = /*ImGuiWindowFlags_MenuBar |*/ ImGuiWindowFlags_NoDocking;
+
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImVec2 WorkPos = viewport->GetWorkPos();
+	WorkPos.y += toolbarSize;
+	ImVec2 WorkSize = viewport->GetWorkSize();
+	WorkSize.y -= toolbarSize;
+
+	ImGui::SetNextWindowPos(WorkPos);
+	ImGui::SetNextWindowSize(WorkSize);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::Begin("DockSpace", nullptr, window_flags);
+	ImGui::PopStyleVar();
+
+	ImGui::PopStyleVar(2);
+
+	ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+//---
+	ImGui::End();
+
+}
+
+void ToolBarUI()
+{
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->GetWorkPos());
+	ImVec2 WorkSize = viewport->GetWorkSize();
+	WorkSize.y = toolbarSize;
+	ImGui::SetNextWindowSize(WorkSize);
+	ImGui::SetNextWindowViewport(viewport->ID);
+
+	ImGuiWindowFlags window_flags = 0
+		| ImGuiWindowFlags_NoDocking 
+		| ImGuiWindowFlags_NoTitleBar 
+		| ImGuiWindowFlags_NoResize 
+		| ImGuiWindowFlags_NoMove 
+		| ImGuiWindowFlags_NoScrollbar 
+		| ImGuiWindowFlags_NoSavedSettings
+		;
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+	ImGui::Begin("TOOLBAR", NULL, window_flags);
+	ImGui::PopStyleVar(2);
+  
+	// Put the buttons on there
+	pToolbar->Render();
+
+	ImGui::End();
+}
+
+void MainMenuBarUI()
+{
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			// Disabling fullscreen would allow the window to be moved to the front of other windows,
+			// which we can't undo at the moment without finer window depth/z control.
+			//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
+
+			if (ImGui::MenuItem("Open Image"))
+			{
+				// Open File
+				ImGuiFileDialog::Instance()->OpenDialog("OpenImageDlgKey", "Open Image", "\0", ".", "", 0);
+			}
+
+			if (ImGui::MenuItem("Open Palette"))
+			{
+				ImGuiFileDialog::Instance()->OpenDialog("OpenPaletteDlgKey", "Open Palette", "\0", ".", "", 0);
+			}
+
+			ImGui::Separator();
+			if (ImGui::MenuItem("Save"))
+			{
+				// Save File
+			}
+			if (ImGui::MenuItem("Save As"))
+			{
+				// Save As
+			}
+			ImGui::Separator();
+			if (ImGui::MenuItem("Quit", "Alt+F4"))
+			{
+				// Quit the Application
+				bAppDone = true;
+			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Windows"))
+		{
+			if (ImGui::MenuItem("About"))
+			{
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Palettes", nullptr, show_palette_window))
+			{
+				show_palette_window = !show_palette_window;
+			}
+
+			if (ImGui::MenuItem("Log", nullptr, show_log_window))
+			{
+				show_log_window = !show_log_window;
+			}
+
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	// display open file dialog
+	if (ImGuiFileDialog::Instance()->FileDialog("OpenImageDlgKey")) 
+	{
+	  // action if OK
+	  if (ImGuiFileDialog::Instance()->IsOk == true)
+	  {
+		  //std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+		  //std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+		  //std::string filter = ImGuiFileDialog::Instance()->GetCurrentFilter();
+		  // here convert from string because a string was passed as a userDatas, but it can be what you want
+		  //auto userDatas = std::string((const char*)ImGuiFileDialog::Instance()->GetUserDatas()); 
+		  //auto selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
+
+		  std::map<std::string, std::string> selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
+
+		  // action
+		  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
+		  {
+			  //LOG("%s - %s\n", it->first.c_str(), it->second.c_str());
+
+			  SDL_Surface *image;
+			  image=IMG_Load(it->second.c_str());
+
+			  if (image)
+			  {
+				  LOG("Loaded %s\n", it->second.c_str());
+
+				  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
+			  }
+			  else
+			  {
+				  LOG("Failed %s\n", it->second.c_str());
+			  }
+
+		  }
+	  }
+	  // close
+	  ImGuiFileDialog::Instance()->CloseDialog("OpenImageDlgKey");
+	}
+
+
+	// display open file dialog
+	if (ImGuiFileDialog::Instance()->FileDialog("OpenPaletteDlgKey")) 
+	{
+	  // action if OK
+	  if (ImGuiFileDialog::Instance()->IsOk == true)
+	  {
+		  //std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
+		  //std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
+		  //std::string filter = ImGuiFileDialog::Instance()->GetCurrentFilter();
+		  // here convert from string because a string was passed as a userDatas, but it can be what you want
+		  //auto userDatas = std::string((const char*)ImGuiFileDialog::Instance()->GetUserDatas()); 
+		  std::map<std::string, std::string> selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
+
+		  // action
+		  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
+		  {
+			  LOG("Open PAL: %s, %s\n", it->first.c_str(), it->second.c_str());
+
+			  // Eventually, support opening any type of image, and extracting
+			  // the palette, for now, lets just open the file, if it has a
+			  // .pal extension
+			  std::string filename = it->first;
+			  std::string& fullpath = it->second;
+
+			  std::string extension = ".pal";
+
+			  if (fullpath.length() > extension.length())
+			  {
+				  size_t fullpath_offset = fullpath.length() - extension.length();
+
+				  for (int idx = 0; idx < extension.length(); ++idx)
+				  {
+					  if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
+					  {
+						  LOG("FAILED %s\n", filename.c_str());
+					  }
+				  }
+
+				  paletteDocuments.push_back(new PaletteDocument(filename, fullpath));
+			  }
+			  else
+			  {
+				  LOG("FAILED %s\n", filename.c_str());
+			  }
+
+		  }
+	  }
+	  // close
+	  ImGuiFileDialog::Instance()->CloseDialog("OpenPaletteDlgKey");
+	}
+}
