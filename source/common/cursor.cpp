@@ -53,11 +53,11 @@ SDL_Cursor* SDL_CursorFromXPM(const char *image[])
         data[i] = mask[i] = 0;
       }
       switch (image[4+row][col]) {
-        case 'X':
+        case '.':
           data[i] |= 0x01;
           mask[i] |= 0x01;
           break;
-        case '.':
+        case 'X':
           mask[i] |= 0x01;
           break;
         case ' ':

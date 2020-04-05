@@ -142,6 +142,7 @@ static int lastHovered = -1;
 							   bg_color, tint_color))
 		{
 			SetCurrentMode( idx );
+			ImGui::SetWindowFocus(m_focusWindow.c_str());
 		}
 
 		ImGui::PopID();
@@ -172,5 +173,10 @@ void Toolbar::SetButtonImage(int x, int y)
 	m_uv1.y = m_uv0.y + 12.0f/256.0f;
 }
 
+//------------------------------------------------------------------------------
+void Toolbar::SetFocusWindow(const char* pFocusID)
+{
+	m_focusWindow = pFocusID;
+}
 //------------------------------------------------------------------------------
 

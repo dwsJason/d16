@@ -511,6 +511,7 @@ void ToolBarUI()
 		| ImGuiWindowFlags_NoMove 
 		| ImGuiWindowFlags_NoScrollbar 
 		| ImGuiWindowFlags_NoSavedSettings
+		| ImGuiWindowFlags_NoBringToFrontOnFocus
 		;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 4.0f));
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);

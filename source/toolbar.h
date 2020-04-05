@@ -6,6 +6,7 @@
 #define TOOLBAR_H_
 
 #include "imgui.h"
+#include <string>
 
 enum ToolBarMode
 {
@@ -29,9 +30,14 @@ public:
 	int  GetCurrentMode()  { return m_currentMode; }
 	int  GetPreviousMode() { return m_previousMode; }
 	void SetPreviousMode() { SetCurrentMode(m_previousMode); }
+
+	void SetFocusWindow(const char* pFocusID);
+
 	static Toolbar* GToolbar;
 
 private:
+
+	std::string m_focusWindow;
 
 	void SetButtonImage(int x, int y);
 

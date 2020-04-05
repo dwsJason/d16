@@ -15,6 +15,7 @@
 #include "lancir.h"
 
 #include "toolbar.h"
+#include "cursor.h"
 
 #include <map>
 #include <vector>
@@ -35,6 +36,8 @@
 
 // Statics
 int ImageDocument::s_uniqueId = 0;
+
+static SDL_Cursor* pEyeDropperCursor = nullptr;
 
 // Prototype for helper function, that should live in a some sort of helper
 // module, but so far does not
@@ -83,6 +86,11 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	{
 		m_targetColors.push_back(ImVec4(idx/15.0f,idx/15.0f,idx/15.0f, 1.0f));
 		m_bLocks.push_back(0);
+	}
+
+	if (nullptr == pEyeDropperCursor)
+	{
+		pEyeDropperCursor = SDL_CreateEyeDropperCursor();
 	}
 
 }
@@ -268,6 +276,13 @@ void ImageDocument::Render()
 	ImGui::SetNextWindowSize(ImVec2((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h), ImGuiCond_FirstUseEver);
 
 	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
+
+	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+	{
+		// Make sure the toolbar gives us focus
+		Toolbar::GToolbar->SetFocusWindow(m_windowName.c_str());
+	}
+
 
 //	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
@@ -556,8 +571,24 @@ void ImageDocument::Render()
 		}
 		else
 		{
+			if (eEyeDropper == Toolbar::GToolbar->GetCurrentMode())
+			{
+				bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+
+				bHasFocus = bHasFocus && ImGui::IsWindowHovered();
+
+				if (bHasFocus)
+				{
+					//ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+					SDL_SetCursor(pEyeDropperCursor);
+				}
+
+			}
+			else
+			{
 //---------------------------------- Pan Image ---------------------------------
-			RenderPanAndZoom();
+				RenderPanAndZoom();
+			}
 		}
 
 	ImGui::EndChild();
