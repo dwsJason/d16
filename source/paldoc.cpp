@@ -76,7 +76,7 @@ void PaletteDocument::Render()
 
 		if (ImGui::BeginDragDropSource())
 		{
-			if (ImGui::SetDragDropPayload("xPalette16", &m_floatColors[0], 4*4*16))
+			if (ImGui::SetDragDropPayload("xPalette16", &m_floatColors[0], 4*4*16, ImGuiCond_Once))
 			{
 				// I don't really understand what I'm supposed to do here
 			}

@@ -3,6 +3,8 @@
 #include "imagedoc.h"
 
 #include "imgui.h"
+// Including internal for the eyedropper
+#include "imgui_internal.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
@@ -60,6 +62,14 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_bPanActive(false)
 	, m_bShowResizeUI(false)
 {
+	// Make sure the surface is in a supported format for eyedropper
+	if (SDL_PIXELFORMAT_RGBA8888 != pImage->format->format)
+	{
+		m_pSurface = SDL_SurfaceToRGBA( pImage );
+		SDL_FreeSurface( pImage );
+		pImage = m_pSurface;
+	}
+
 	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
 
 	m_width  = pImage->w;
@@ -92,7 +102,6 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	{
 		pEyeDropperCursor = SDL_CreateEyeDropperCursor();
 	}
-
 }
 
 ImageDocument::~ImageDocument()
@@ -579,8 +588,59 @@ void ImageDocument::Render()
 
 				if (bHasFocus)
 				{
-					//ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 					SDL_SetCursor(pEyeDropperCursor);
+
+					//ImGui::BeginTooltip();
+					//ImGui::EndTooltip();
+					static float pColor[4] = { 1,1,1,1 };
+
+					ImGuiIO& io = ImGui::GetIO();
+
+					ImVec2 winPos = ImGui::GetWindowPos();
+					float scrollX = ImGui::GetScrollX();
+					float scrollY = ImGui::GetScrollY();
+					float cursorX = io.MousePos.x - winPos.x;
+					float cursorY = io.MousePos.y - winPos.y;
+
+					// Which pixel on the canvas is the mouse over?
+					float px = cursorX/m_zoom + scrollX/m_zoom;
+					float py = cursorY/m_zoom + scrollY/m_zoom;
+
+					Uint32 pixel = SDL_GetPixel(m_pSurface, (int)px, (int)py);
+
+					pColor[0] = (pixel&0xFF) / 255.0f;
+					pColor[1] = ((pixel>>8)&0xFF) / 255.0f;
+					pColor[2] = ((pixel>>16)&0xFF) / 255.0f;
+					pColor[3] = 1.0f;
+
+					ImGui::PushID( 0x1234 );
+
+					// Tip String
+					std::string tipString = m_filename
+											+ "    x="
+										    + std::to_string((int)px)
+											+ " y="
+											+ std::to_string((int)py);
+
+					ImGui::ColorTooltip(tipString.c_str(),
+										(float*)pColor,
+										ImGuiColorEditFlags_NoAlpha);
+
+					if (ImGui::BeginDragDropSource())
+					{
+						ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F, pColor, sizeof(float) * 3, ImGuiCond_Once);
+						ImGui::ColorButton(m_windowName.c_str(), ImVec4(pColor[0],pColor[1],pColor[2],pColor[3]),
+									ImGuiColorEditFlags_NoLabel |
+									ImGuiColorEditFlags_NoAlpha |
+									ImGuiColorEditFlags_NoBorder
+									);
+						ImGui::SameLine();
+						ImGui::Text("Color");
+						ImGui::EndDragDropSource();
+					}
+
+					ImGui::PopID();
+
 				}
 
 			}
@@ -1507,5 +1567,37 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
 		// Update colors
 		m_numSourceColors = CountUniqueColors();
 }
+//------------------------------------------------------------------------------
+
+Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
+{
+	Uint32 color = 0;
+
+	if (pSurface)
+	{
+		if (SDL_PIXELFORMAT_RGBA8888 == pSurface->format->format)
+		{
+			if (x < 0) x = 0;
+			if (x >= pSurface->w) x = pSurface->w-1;
+			if (y < 0) y = 0;
+			if (y >= pSurface->h) y = pSurface->h-1;
+
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_LockSurface(pSurface);
+
+			Uint8 * pixel = (Uint8*)pSurface->pixels;
+			pixel += (y * pSurface->pitch) + (x * sizeof(Uint32));
+
+			color = *((Uint32*)pixel);
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_UnlockSurface(pSurface);
+		}
+	}
+
+	return color;
+}
+
 //------------------------------------------------------------------------------
 
