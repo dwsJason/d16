@@ -557,7 +557,7 @@ void ImageDocument::Render()
 //-------------------------------- Resize Image --------------------------------
 
 		// Glue for the Toolbar button
-		if (ImGui::IsWindowFocused())
+		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 		if (eResizeImage == Toolbar::GToolbar->GetCurrentMode())
 		{
 			bOpenResizeModal = true;
