@@ -110,6 +110,7 @@ private:
 	bool m_bOpen;
 	bool m_bPanActive;
 	bool m_bShowResizeUI;
+	bool m_bEyeDropDrag;
 
 static int s_uniqueId;
 

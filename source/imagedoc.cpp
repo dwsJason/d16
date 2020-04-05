@@ -61,9 +61,11 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_bOpen(true)
 	, m_bPanActive(false)
 	, m_bShowResizeUI(false)
+	, m_bEyeDropDrag(false)
 {
 	// Make sure the surface is in a supported format for eyedropper
-	if (SDL_PIXELFORMAT_RGBA8888 != pImage->format->format)
+	//if (SDL_PIXELFORMAT_RGBA8888 != pImage->format->format)
+	if (4 != pImage->format->BytesPerPixel)
 	{
 		m_pSurface = SDL_SurfaceToRGBA( pImage );
 		SDL_FreeSurface( pImage );
@@ -586,13 +588,15 @@ void ImageDocument::Render()
 
 				bHasFocus = bHasFocus && ImGui::IsWindowHovered();
 
-				if (bHasFocus)
+				if (bHasFocus || m_bEyeDropDrag)
 				{
 					SDL_SetCursor(pEyeDropperCursor);
 
+					ImGui::PushID("EyeDropper");
 					//ImGui::BeginTooltip();
 					//ImGui::EndTooltip();
-					static float pColor[4] = { 1,1,1,1 };
+					static ImVec4 eyeColor = ImVec4(1,1,1,1);
+
 
 					ImGuiIO& io = ImGui::GetIO();
 
@@ -606,14 +610,15 @@ void ImageDocument::Render()
 					float px = cursorX/m_zoom + scrollX/m_zoom;
 					float py = cursorY/m_zoom + scrollY/m_zoom;
 
+
 					Uint32 pixel = SDL_GetPixel(m_pSurface, (int)px, (int)py);
 
-					pColor[0] = (pixel&0xFF) / 255.0f;
-					pColor[1] = ((pixel>>8)&0xFF) / 255.0f;
-					pColor[2] = ((pixel>>16)&0xFF) / 255.0f;
-					pColor[3] = 1.0f;
+					if (!m_bEyeDropDrag)
+					{
+						eyeColor.x = (pixel & 0xFF) / 255.0f;
+						eyeColor.y = ((pixel>>8)&0xFF) / 255.0f;
+						eyeColor.z = ((pixel>>16)&0xFF) / 255.0f;
 
-					ImGui::PushID( 0x1234 );
 
 					// Tip String
 					std::string tipString = m_filename
@@ -623,13 +628,19 @@ void ImageDocument::Render()
 											+ std::to_string((int)py);
 
 					ImGui::ColorTooltip(tipString.c_str(),
-										(float*)pColor,
+										(float*)&eyeColor,
 										ImGuiColorEditFlags_NoAlpha);
 
-					if (ImGui::BeginDragDropSource())
+					}
+
+					m_bEyeDropDrag = false;
+
+					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
 					{
-						ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F, pColor, sizeof(float) * 3, ImGuiCond_Once);
-						ImGui::ColorButton(m_windowName.c_str(), ImVec4(pColor[0],pColor[1],pColor[2],pColor[3]),
+						m_bEyeDropDrag = true;
+
+						ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F, (float*)&eyeColor, sizeof(float) * 3, ImGuiCond_Once);
+						ImGui::ColorButton(m_windowName.c_str(), eyeColor,
 									ImGuiColorEditFlags_NoLabel |
 									ImGuiColorEditFlags_NoAlpha |
 									ImGuiColorEditFlags_NoBorder
@@ -1413,27 +1424,38 @@ void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither
 //------------------------------------------------------------------------------
 SDL_Surface* ImageDocument::SDL_SurfaceToRGBA(SDL_Surface* pSurface)
 {
-	SDL_PixelFormat format;
-
-	memset(&format, 0, sizeof(SDL_PixelFormat));
-
-	format.format = SDL_PIXELFORMAT_RGBA8888;
-	format.BitsPerPixel = 32;
-	format.BytesPerPixel = 4;
-
+    SDL_Surface* pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, pSurface->w, pSurface->h, 32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
-    format.Rmask = 0x000000FF;
-    format.Gmask = 0x0000FF00;
-	format.Bmask = 0x00FF0000;
-	format.Amask = 0xFF000000;
+                                 0x000000FF,
+                                 0x0000FF00, 0x00FF0000, 0xFF000000
 #else
-	format.Rmask = 0xFF000000;
-	format.Gmask = 0x00FF0000;
-	format.Bmask = 0x0000FF00;
-	format.Amask = 0x000000FF;
+                                 0xFF000000,
+                                 0x00FF0000, 0x0000FF00, 0x000000FF
 #endif
+        );
 
-	return SDL_ConvertSurface(pSurface, &format, 0);
+	if (nullptr != pImage)
+	{
+		SDL_Rect area;
+		SDL_BlendMode saved_mode;
+
+		/* Save the alpha blending attributes */
+		SDL_GetSurfaceBlendMode(pSurface, &saved_mode);
+		SDL_SetSurfaceBlendMode(pSurface, SDL_BLENDMODE_NONE);
+
+		/* Copy the surface into the GL texture image */
+		area.x = 0;
+		area.y = 0;
+		area.w = pSurface->w;
+		area.h = pSurface->h;
+		SDL_BlitSurface(pSurface, &area, pImage, &area);
+
+		/* Restore the alpha blending attributes */
+		SDL_SetSurfaceBlendMode(pSurface, saved_mode);
+
+	}
+
+	return pImage;
 }
 //------------------------------------------------------------------------------
 
@@ -1575,7 +1597,8 @@ Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
 
 	if (pSurface)
 	{
-		if (SDL_PIXELFORMAT_RGBA8888 == pSurface->format->format)
+		//if (SDL_PIXELFORMAT_RGBA8888 == pSurface->format->format)
+		//if (32 != pSurface->format->BitsPerPixel)
 		{
 			if (x < 0) x = 0;
 			if (x >= pSurface->w) x = pSurface->w-1;
