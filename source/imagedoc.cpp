@@ -517,6 +517,32 @@ void ImageDocument::Render()
 						  ImGuiWindowFlags_NoScrollWithMouse |
 						  ImGuiWindowFlags_AlwaysAutoResize);
 
+//-------------------------------- Resize Image --------------------------------
+
+		if (m_bShowResizeUI)
+		{
+			if (ImGui::BeginPopupModal("Resize Image##modal", &m_bShowResizeUI,
+						 ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				RenderResizeDialog();
+				ImGui::EndPopup();
+			}
+
+		}
+		else
+		{
+			if (eEyeDropper == Toolbar::GToolbar->GetCurrentMode())
+			{
+//---------------------------------- EyeDropper Image ---------------------------------
+				RenderEyeDropper();
+			}
+			else
+			{
+//---------------------------------- Pan Image ---------------------------------
+				//RenderPanAndZoom();
+			}
+		}
+
 //------------------------------------------------------------------------------
 // Render Images
 
@@ -554,7 +580,6 @@ void ImageDocument::Render()
 			}
 		}
 
-//-------------------------------- Resize Image --------------------------------
 
 		// Glue for the Toolbar button
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
@@ -570,14 +595,16 @@ void ImageDocument::Render()
 			ImGui::OpenPopup("Resize Image##modal");
 		}
 
+//-------------------------------- Resize Image --------------------------------
+
 		if (m_bShowResizeUI)
 		{
-			if (ImGui::BeginPopupModal("Resize Image##modal", &m_bShowResizeUI,
-						 ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				RenderResizeDialog();
-				ImGui::EndPopup();
-			}
+			//if (ImGui::BeginPopupModal("Resize Image##modal", &m_bShowResizeUI,
+			//			 ImGuiWindowFlags_AlwaysAutoResize))
+			//{
+			//	RenderResizeDialog();
+			//	ImGui::EndPopup();
+			//}
 
 		}
 		else
@@ -585,7 +612,7 @@ void ImageDocument::Render()
 			if (eEyeDropper == Toolbar::GToolbar->GetCurrentMode())
 			{
 //---------------------------------- EyeDropper Image ---------------------------------
-				RenderEyeDropper();
+				//RenderEyeDropper();
 			}
 			else
 			{
@@ -593,6 +620,9 @@ void ImageDocument::Render()
 				RenderPanAndZoom();
 			}
 		}
+//------------------------------------------------------------------------------
+
+
 
 	ImGui::EndChild();
 
