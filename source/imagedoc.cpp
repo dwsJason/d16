@@ -584,76 +584,8 @@ void ImageDocument::Render()
 		{
 			if (eEyeDropper == Toolbar::GToolbar->GetCurrentMode())
 			{
-				bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-
-				bHasFocus = bHasFocus && ImGui::IsWindowHovered();
-
-				if (bHasFocus || m_bEyeDropDrag)
-				{
-					SDL_SetCursor(pEyeDropperCursor);
-
-					ImGui::PushID("EyeDropper");
-					//ImGui::BeginTooltip();
-					//ImGui::EndTooltip();
-					static ImVec4 eyeColor = ImVec4(1,1,1,1);
-
-
-					ImGuiIO& io = ImGui::GetIO();
-
-					ImVec2 winPos = ImGui::GetWindowPos();
-					float scrollX = ImGui::GetScrollX();
-					float scrollY = ImGui::GetScrollY();
-					float cursorX = io.MousePos.x - winPos.x;
-					float cursorY = io.MousePos.y - winPos.y;
-
-					// Which pixel on the canvas is the mouse over?
-					float px = cursorX/m_zoom + scrollX/m_zoom;
-					float py = cursorY/m_zoom + scrollY/m_zoom;
-
-
-					Uint32 pixel = SDL_GetPixel(m_pSurface, (int)px, (int)py);
-
-					if (!m_bEyeDropDrag)
-					{
-						eyeColor.x = (pixel & 0xFF) / 255.0f;
-						eyeColor.y = ((pixel>>8)&0xFF) / 255.0f;
-						eyeColor.z = ((pixel>>16)&0xFF) / 255.0f;
-
-
-					// Tip String
-					std::string tipString = m_filename
-											+ "    x="
-										    + std::to_string((int)px)
-											+ " y="
-											+ std::to_string((int)py);
-
-					ImGui::ColorTooltip(tipString.c_str(),
-										(float*)&eyeColor,
-										ImGuiColorEditFlags_NoAlpha);
-
-					}
-
-					m_bEyeDropDrag = false;
-
-					if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-					{
-						m_bEyeDropDrag = true;
-
-						ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F, (float*)&eyeColor, sizeof(float) * 3, ImGuiCond_Once);
-						ImGui::ColorButton(m_windowName.c_str(), eyeColor,
-									ImGuiColorEditFlags_NoLabel |
-									ImGuiColorEditFlags_NoAlpha |
-									ImGuiColorEditFlags_NoBorder
-									);
-						ImGui::SameLine();
-						ImGui::Text("Color");
-						ImGui::EndDragDropSource();
-					}
-
-					ImGui::PopID();
-
-				}
-
+//---------------------------------- EyeDropper Image ---------------------------------
+				RenderEyeDropper();
 			}
 			else
 			{
@@ -667,6 +599,79 @@ void ImageDocument::Render()
 	ImGui::End();
 }
 
+//------------------------------------------------------------------------------
+void ImageDocument::RenderEyeDropper()
+{
+	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
+
+	bHasFocus = bHasFocus && ImGui::IsWindowHovered();
+
+	if (bHasFocus || m_bEyeDropDrag)
+	{
+		SDL_SetCursor(pEyeDropperCursor);
+
+		ImGui::PushID("EyeDropper");
+		//ImGui::BeginTooltip();
+		//ImGui::EndTooltip();
+		static ImVec4 eyeColor = ImVec4(1,1,1,1);
+
+
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImVec2 winPos = ImGui::GetWindowPos();
+		float scrollX = ImGui::GetScrollX();
+		float scrollY = ImGui::GetScrollY();
+		float cursorX = io.MousePos.x - winPos.x;
+		float cursorY = io.MousePos.y - winPos.y;
+
+		// Which pixel on the canvas is the mouse over?
+		float px = cursorX/m_zoom + scrollX/m_zoom;
+		float py = cursorY/m_zoom + scrollY/m_zoom;
+
+
+		Uint32 pixel = SDL_GetPixel(m_pSurface, (int)px, (int)py);
+
+		if (!m_bEyeDropDrag)
+		{
+			eyeColor.x = (pixel & 0xFF) / 255.0f;
+			eyeColor.y = ((pixel>>8)&0xFF) / 255.0f;
+			eyeColor.z = ((pixel>>16)&0xFF) / 255.0f;
+
+
+		// Tip String
+		std::string tipString = m_filename
+								+ "    x="
+								+ std::to_string((int)px)
+								+ " y="
+								+ std::to_string((int)py);
+
+		ImGui::ColorTooltip(tipString.c_str(),
+							(float*)&eyeColor,
+							ImGuiColorEditFlags_NoAlpha);
+
+		}
+
+		m_bEyeDropDrag = false;
+
+		if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+		{
+			m_bEyeDropDrag = true;
+
+			ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F, (float*)&eyeColor, sizeof(float) * 3, ImGuiCond_Once);
+			ImGui::ColorButton(m_windowName.c_str(), eyeColor,
+						ImGuiColorEditFlags_NoLabel |
+						ImGuiColorEditFlags_NoAlpha |
+						ImGuiColorEditFlags_NoBorder
+						);
+			ImGui::SameLine();
+			ImGui::Text("Color");
+			ImGui::EndDragDropSource();
+		}
+
+		ImGui::PopID();
+
+	}
+}
 //------------------------------------------------------------------------------
 void ImageDocument::RenderPanAndZoom()
 {

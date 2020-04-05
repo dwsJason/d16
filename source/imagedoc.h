@@ -70,6 +70,7 @@ private:
 	void LanczosResize(int iNewWidth, int iNewHeight);
 	void AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither);
 
+	void RenderEyeDropper();
 	void RenderPanAndZoom();
 	void RenderResizeDialog();
 
