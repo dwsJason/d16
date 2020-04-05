@@ -69,6 +69,8 @@ Toolbar::~Toolbar()
 
 void Toolbar::Render()
 {
+	static int mode = 0;
+
 	// Don't bother, if we don't have the icons
 	if (!m_GLImage) return;
 
@@ -88,16 +90,29 @@ void Toolbar::Render()
 	ImVec2 uv1 = ImVec2(20.0f/256.0f,12.0f/256.0f);
 	//ImVec4 tintColor = ImVec4(1,1,1,1);
 
+	float pressed_offset = 20.0f/256.0f;
 
-	uv0.x = 1.0f*20.0f/256.0f;
+
+	uv0.x = 0.0f*20.0f/256.0f;
 	uv1.x = uv0.x + 20.0f/256.0f;
 
 	uv0.y = 6.0f*12.0f/256.0f;
 	uv1.y = uv0.y + 12.0f/256.0f;
 
+	if (0 == mode)
+	{
+		uv0.x += pressed_offset;
+		uv1.x += pressed_offset;
+	}
+
 	float xpos = 4.0f;
 	ImGui::SameLine(xpos); xpos+=40.0f;
-	ImGui::ImageButton((ImTextureID)m_GLImage, buttonSize, uv0, uv1, 0, bg_color, tint_color);
+	ImGui::PushID(0);
+	if (ImGui::ImageButton((ImTextureID)(m_GLImage), buttonSize, uv0, uv1, 0))
+	{
+		mode = 0;
+	}
+	ImGui::PopID();
 	
 	if (ImGui::IsItemHovered())
 	{
@@ -112,9 +127,20 @@ void Toolbar::Render()
 
 	uv0.y = 8.0f*12.0f/256.0f;
 	uv1.y = uv0.y + 12.0f/256.0f;
-		
+	
+	if (1 == mode)
+	{
+		uv0.x += pressed_offset;
+		uv1.x += pressed_offset;
+	}
+
 	ImGui::SameLine(xpos); xpos+=40.0f;
-	ImGui::ImageButton((ImTextureID)m_GLImage, buttonSize, uv0, uv1, 0);
+	ImGui::PushID(1);
+	if (ImGui::ImageButton((ImTextureID)m_GLImage, buttonSize, uv0, uv1, 0))
+	{
+		mode = 1;
+	}
+	ImGui::PopID();
 
 	if (ImGui::IsItemHovered())
 	{
@@ -127,9 +153,19 @@ void Toolbar::Render()
 	uv1.x = uv0.x + 20.0f/256.0f;
 	uv0.y = 9.0f*12.0f/256.0f;
 	uv1.y = uv0.y + 12.0f/256.0f;
-		
+	 
+	if (2 == mode)
+	{
+		uv0.x += pressed_offset;
+		uv1.x += pressed_offset;
+	}
 	ImGui::SameLine(xpos); xpos+=40.0f;
-	ImGui::ImageButton((ImTextureID)m_GLImage, buttonSize, uv0, uv1, 0);
+	ImGui::PushID(2);
+	if (ImGui::ImageButton((ImTextureID)m_GLImage, buttonSize, uv0, uv1, 0))
+	{
+		mode = 2;
+	}
+	ImGui::PopID();
 
 	if (ImGui::IsItemHovered())
 	{
