@@ -71,7 +71,7 @@ private:
 	void AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither);
 
 	void RenderEyeDropper();
-	void RenderPanAndZoom();
+	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
 
 	void SetDocumentSurface(SDL_Surface* pSurface);

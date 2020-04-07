@@ -534,7 +534,8 @@ void ImageDocument::Render()
 			if (eEyeDropper == Toolbar::GToolbar->GetCurrentMode())
 			{
 //---------------------------------- EyeDropper Image ---------------------------------
-				RenderEyeDropper();
+				if (!m_bPanActive)
+					RenderEyeDropper();
 			}
 			else
 			{
@@ -612,7 +613,8 @@ void ImageDocument::Render()
 			if (eEyeDropper == Toolbar::GToolbar->GetCurrentMode())
 			{
 //---------------------------------- EyeDropper Image ---------------------------------
-				//RenderEyeDropper();
+				if (!m_bEyeDropDrag)
+					RenderPanAndZoom(2); // Allow pan and zoom on button 2
 			}
 			else
 			{
@@ -703,14 +705,14 @@ void ImageDocument::RenderEyeDropper()
 	}
 }
 //------------------------------------------------------------------------------
-void ImageDocument::RenderPanAndZoom()
+void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 {
 	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
 	bHasFocus = bHasFocus && ImGui::IsWindowHovered();
 
 	// Show the Hand Cursor
-	if (bHasFocus || m_bPanActive)
+	if ((bHasFocus&&!iButtonIndex) || m_bPanActive)
 		ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
 
 	// Scroll the window around using mouse
@@ -776,17 +778,17 @@ void ImageDocument::RenderPanAndZoom()
 		}
 	}
 
-	if (io.MouseClicked[0] && bHasFocus)
+	if (io.MouseClicked[ iButtonIndex ] && bHasFocus)
 	{
 		OriginalScrollX = ImGui::GetScrollX();
 		OriginalScrollY = ImGui::GetScrollY();
 		m_bPanActive = true;
 	}
 
-	if (io.MouseDown[0] && m_bPanActive)
+	if (io.MouseDown[ iButtonIndex ] && m_bPanActive)
 	{
-		float dx = io.MouseClickedPos[0].x - io.MousePos.x;
-		float dy = io.MouseClickedPos[0].y - io.MousePos.y;
+		float dx = io.MouseClickedPos[ iButtonIndex ].x - io.MousePos.x;
+		float dy = io.MouseClickedPos[ iButtonIndex ].y - io.MousePos.y;
 
 		ImGui::SetScrollX(OriginalScrollX + dx);
 		ImGui::SetScrollY(OriginalScrollY + dy);
