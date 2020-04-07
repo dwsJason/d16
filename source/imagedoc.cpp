@@ -656,10 +656,22 @@ void ImageDocument::RenderEyeDropper()
 		float cursorX = io.MousePos.x - winPos.x;
 		float cursorY = io.MousePos.y - winPos.y;
 
+		// There's a 1 pixel border around the image
+		cursorX-=1.0f;
+		cursorY-=1.0f;
+
 		// Which pixel on the canvas is the mouse over?
 		float px = cursorX/m_zoom + scrollX/m_zoom;
 		float py = cursorY/m_zoom + scrollY/m_zoom;
 
+		px = floor(px);
+		py = floor(py);
+
+		if ((px >= m_pSurface->w) || (py >= m_pSurface->h))
+		{
+			ImGui::PopID();
+			return;	// Bail out if we're in a case that just doesn't work
+		}
 
 		Uint32 pixel = SDL_GetPixel(m_pSurface, (int)px, (int)py);
 
