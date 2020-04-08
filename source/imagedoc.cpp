@@ -7,6 +7,9 @@
 #include "imgui_internal.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
+
+#include "ImGuiFileDialog.h"
+
 #include <stdio.h>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -589,11 +592,23 @@ void ImageDocument::Render()
 				}
 				if (ImGui::MenuItem("Save as $C1"))
 				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+						defaultFilename += ".c1";
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveC1Key", "Save as $C1", "c1\0\0",
+														   ".",
+															defaultFilename);
+
 				}
-				if (ImGui::MenuItem("Save as Color Indexed PNG"))
+				if (ImGui::MenuItem("Save as (32Bpp)PNG+PAL"))
 				{
 				}
-				if (ImGui::MenuItem("Save as True Color PNG"))
+				if (ImGui::MenuItem("Save as (32Bpp)PNG"))
 				{
 				}
 				ImGui::EndPopup();
@@ -648,6 +663,15 @@ void ImageDocument::Render()
 	ImGui::EndChild();
 
 	ImGui::End();
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveC1Key"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveC1Key");
+	}
 }
 
 //------------------------------------------------------------------------------
