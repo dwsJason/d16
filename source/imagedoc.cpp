@@ -597,10 +597,9 @@ void ImageDocument::Render()
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
-						defaultFilename += ".c1";
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveC1Key", "Save as $C1", "c1\0\0",
+					ImGuiFileDialog::Instance()->OpenModal("SaveC1Key", "Save as $C1", "#C10000\0.c1\0\0",
 														   ".",
 															defaultFilename);
 
@@ -1690,14 +1689,27 @@ Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
 
 	if (pSurface)
 	{
-		//if (SDL_PIXELFORMAT_RGBA8888 == pSurface->format->format)
-		//if (32 != pSurface->format->BitsPerPixel)
-		{
-			if (x < 0) x = 0;
-			if (x >= pSurface->w) x = pSurface->w-1;
-			if (y < 0) y = 0;
-			if (y >= pSurface->h) y = pSurface->h-1;
+		// Keep x and y legitimate
+		if (x < 0) x = 0;
+		if (x >= pSurface->w) x = pSurface->w-1;
+		if (y < 0) y = 0;
+		if (y >= pSurface->h) y = pSurface->h-1;
 
+		if (pSurface->flags & SDL_PREALLOC)
+		{
+			// This is only true if I allocated the pixels
+			// which means this has to be 8 bit indexed
+			Uint8* pPixel = (Uint8*)pSurface->pixels;
+			pPixel += (y * pSurface->pitch) + x;
+
+			int index = *pPixel;
+
+			color = *((Uint32*)&pSurface->format->palette->colors[ index ]);
+
+		}
+		else
+		{
+			// Better be 32 bit per pixel
 
 			if( SDL_MUSTLOCK(pSurface) )
 				SDL_LockSurface(pSurface);
@@ -1777,9 +1789,9 @@ void ImageDocument::SaveC1(std::string filenamepath)
 	{
 		const ImVec4& floatColor = m_targetColors[ idx ];
 
-		float red   = floatColor.x / 255.0f;
-		float green = floatColor.y / 255.0f;
-		float blue  = floatColor.z / 255.0f;
+		float red   = floatColor.x * 255.0f;
+		float green = floatColor.y * 255.0f;
+		float blue  = floatColor.z * 255.0f;
 
 		Uint32 color = 0xFF000000;   					// A = 1.0
 		color       |= (((Uint32)blue)&0xFF)  << 16;
@@ -1812,10 +1824,10 @@ void ImageDocument::SaveC1(std::string filenamepath)
 	for (int idx = 0; idx < 16; ++idx)
 	{
 		Uint32 sourceColor = pClut[ idx ];
-		Uint16 targetColor = (Uint16)(sourceColor>>4) & 0xF;     // Red
+		Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
 
 		targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
-		targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 8); // Blue
+		targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
 
 		pPal[ idx ] = targetColor;
 	}
