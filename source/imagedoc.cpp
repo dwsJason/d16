@@ -313,6 +313,16 @@ void ImageDocument::Render()
 
 	bool bHasTip = false;
 
+	if (ImGui::IsItemHovered() && !bHasTip)
+	{
+		bHasTip = true;
+		ImGui::BeginTooltip();
+			ImGui::Text("Hover Image");
+			ImGui::Text("Use Mouse Wheel");
+		ImGui::EndTooltip();
+	}
+
+
 	for (int idx = 0; idx < m_bLocks.size(); ++idx)
 	{
 		ImGui::SameLine(320.0f + (idx * 20.0f));
@@ -576,6 +586,15 @@ void ImageDocument::Render()
 				if (ImGui::MenuItem("Keep Image"))
 				{
 					SetDocumentSurface( SDL_SurfaceToRGBA(m_pTargetSurface) );
+				}
+				if (ImGui::MenuItem("Save as $C1"))
+				{
+				}
+				if (ImGui::MenuItem("Save as Color Indexed PNG"))
+				{
+				}
+				if (ImGui::MenuItem("Save as True Color PNG"))
+				{
 				}
 				ImGui::EndPopup();
 			}
