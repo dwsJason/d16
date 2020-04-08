@@ -74,6 +74,8 @@ private:
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
 
+	void SaveC1(std::string filenamepath);
+
 	void SetDocumentSurface(SDL_Surface* pSurface);
 
 	SDL_Surface* SDL_SurfaceToRGBA(SDL_Surface* pSurface);

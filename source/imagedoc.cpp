@@ -668,6 +668,7 @@ void ImageDocument::Render()
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
+			SaveC1( ImGuiFileDialog::Instance()->GetFilepathName() );
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveC1Key");
@@ -1714,5 +1715,121 @@ Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
 	return color;
 }
 
+//------------------------------------------------------------------------------
+// Just return the index, that has the closest match to the passed in color
+static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor)
+{
+	int closestIndex = 0;
+	long closestDistance;
+	Uint32 color = pClut[0];
+	int red,green,blue;
+	int targetRed, targetGreen, targetBlue;
+	int deltaRed, deltaGreen, deltaBlue;
+
+	targetRed   = (uColor >> 0) & 0xFF;
+	targetGreen = (uColor >> 8) & 0xFF;
+	targetBlue  = (uColor >>16) & 0xFF;
+
+	red   = (color >> 0) & 0xFF;
+	green = (color >> 8) & 0xFF;
+	blue  = (color >>16) & 0xFF;
+
+	deltaRed   = red - targetRed;
+	deltaGreen = green - targetGreen;
+	deltaBlue  = blue - targetBlue;
+
+	closestDistance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
+
+	for (int idx = 1; idx < 16; ++idx)
+	{
+		color = pClut[ idx ];
+
+		red   = (color >> 0) & 0xFF;
+		green = (color >> 8) & 0xFF;
+		blue  = (color >>16) & 0xFF;
+
+		deltaRed   = red - targetRed;
+		deltaGreen = green - targetGreen;
+		deltaBlue  = blue - targetBlue;
+
+		long distance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
+
+		if (distance < closestDistance)
+		{
+			closestDistance = distance;
+			closestIndex = idx;
+		}
+	}
+
+	return closestIndex;
+}
+
+void ImageDocument::SaveC1(std::string filenamepath)
+{
+// Copy of the C1 memory
+	unsigned char c1data[ 0x8000 ];
+	memset(c1data, 0, 0x8000 );
+
+// Get a copy of the clut
+	Uint32 pClut[ 16 ];
+
+	for (int idx = 0; idx < m_targetColors.size(); ++idx)
+	{
+		const ImVec4& floatColor = m_targetColors[ idx ];
+
+		float red   = floatColor.x / 255.0f;
+		float green = floatColor.y / 255.0f;
+		float blue  = floatColor.z / 255.0f;
+
+		Uint32 color = 0xFF000000;   					// A = 1.0
+		color       |= (((Uint32)blue)&0xFF)  << 16;
+		color       |= (((Uint32)green)&0xFF) << 8;
+		color       |= (((Uint32)red)&0xFF)   << 0;
+		
+		pClut[idx] = color;
+	}
+
+// Choose a surface to save
+	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurface;
+
+	// Nibblized pixel data
+	for (int y = 0; y < 200; ++y)
+	{
+		for (int x = 0; x < 320; x+=2)
+		{
+			Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+			Uint32 index0 = ClosestIndex(pClut, pixel0);
+			Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+			Uint32 index1 = ClosestIndex(pClut, pixel1);
+
+			c1data[ (y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+		}
+	}
+
+	// Color Data, just doing a floor conversion
+
+	Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+	for (int idx = 0; idx < 16; ++idx)
+	{
+		Uint32 sourceColor = pClut[ idx ];
+		Uint16 targetColor = (Uint16)(sourceColor>>4) & 0xF;     // Red
+
+		targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+		targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 8); // Blue
+
+		pPal[ idx ] = targetColor;
+	}
+
+
+	// Serialize to disk
+	{
+		FILE* file = fopen(filenamepath.c_str(), "wb");
+
+		fwrite(c1data, 1, 0x8000, file);
+
+		fclose(file);
+	}
+
+}
 //------------------------------------------------------------------------------
 
