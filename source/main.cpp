@@ -112,7 +112,6 @@ static int alphaSort(const struct dirent **a, const struct dirent **b)
 }
 //------------------------------------------------------------------------------
 std::vector<ImageDocument*>   imageDocuments;
-std::vector<PaletteDocument*> paletteDocuments;
 
 Toolbar* pToolbar = nullptr; // need to create after stuff intialize
 
@@ -296,7 +295,7 @@ int main(int, char**)
 								{
 									LOG("%s\n", filename.c_str());
 
-									paletteDocuments.push_back(new PaletteDocument(filename, vPath+"\\"+filename ));
+									PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, vPath+"\\"+filename ));
 								}
 							}
 						}
@@ -360,8 +359,7 @@ int main(int, char**)
 		{
 			ImGui::Begin("Palettes", &show_palette_window);
 
-			for (int idx = 0; idx < paletteDocuments.size(); ++idx)
-				paletteDocuments[ idx ]->Render();
+			PaletteDocument::GRender();
 
 			ImGui::End();
 		}
@@ -666,7 +664,7 @@ void MainMenuBarUI()
 					  }
 				  }
 
-				  paletteDocuments.push_back(new PaletteDocument(filename, fullpath));
+				  PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, fullpath));
 			  }
 			  else
 			  {

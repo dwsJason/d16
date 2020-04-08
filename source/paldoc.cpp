@@ -28,6 +28,12 @@
 #endif
 
 //------------------------------------------------------------------------------
+// Statics
+std::vector<PaletteDocument*> PaletteDocument::GDocuments;
+// Private Statics
+PaletteDocument* PaletteDocument::g_pDoc;  // Document to do a command upon
+int PaletteDocument::g_iCommand;		     // enum, which command
+//------------------------------------------------------------------------------
 
 PaletteDocument::PaletteDocument(std::string filename, std::string pathname)
 	: m_filename(filename)
@@ -72,7 +78,71 @@ PaletteDocument::~PaletteDocument()
 
 void PaletteDocument::Render()
 {
-	ImGui::BeginChild(m_filename.c_str(), ImVec2(340, 56), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
+	ImGui::BeginChild(m_filename.c_str(), ImVec2(340, 56), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+
+
+		if (ImGui::BeginPopupContextWindow(nullptr))
+		{
+			ImGui::Text(m_filename.c_str());
+			ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Duplicate"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_DUPLICATE;
+			}
+
+			ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Move Up"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_MOVE_UP;
+			}
+			if (ImGui::MenuItem("Move Down"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_MOVE_DOWN;
+			}
+			if (ImGui::MenuItem("Move Top"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_MOVE_TOP;
+			}
+			if (ImGui::MenuItem("Move Bottom"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_MOVE_BOTTOM;
+			}
+
+			ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Rename"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_RENAME;
+			}
+			if (ImGui::MenuItem("Save as..."))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_SAVE_AS;
+			}
+
+			ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Close"))
+			{
+				g_pDoc = this;
+				g_iCommand = CMD_CLOSE;
+			}
+			ImGui::EndPopup();
+		}
+
+
 
 		if (ImGui::BeginDragDropSource())
 		{
@@ -135,6 +205,95 @@ void PaletteDocument::Render()
 }
 
 //------------------------------------------------------------------------------
+//
+//  I want this in here, so that I can hide all the list manipulation
+//  over here, instead of in the main.cpp
+//
+/*static*/ void PaletteDocument::GRender()
+{
+	for (int idx = 0; idx < PaletteDocument::GDocuments.size(); ++idx)
+		GDocuments[ idx ]->Render();
+
+	// Support for the Context menu commands
+	if (g_pDoc)
+	{
+		PaletteDocument* pDoc = g_pDoc;
+		g_pDoc = nullptr;
+
+		int docIndex = IndexOf( pDoc );
+
+		// Basically, do we have a valid document
+		if (docIndex >= 0)
+		{
+			switch (g_iCommand)
+			{
+			case CMD_DUPLICATE:
+				break;
+
+			case CMD_MOVE_UP:
+				if (docIndex > 0)
+				{
+					GDocuments[ docIndex ] = GDocuments[ docIndex - 1 ];
+					GDocuments[ docIndex - 1 ] = pDoc;
+				}
+				break;
+
+			case CMD_MOVE_DOWN:
+				if (docIndex < (GDocuments.size() - 1))
+				{
+					GDocuments[ docIndex ] = GDocuments[ docIndex + 1 ];
+					GDocuments[ docIndex + 1 ] = pDoc;
+				}
+				break;
+
+			case CMD_MOVE_TOP:
+				if (docIndex > 0)
+				{
+					GDocuments.erase(GDocuments.begin() + docIndex);
+					GDocuments.insert(GDocuments.begin(), pDoc);
+				}
+				break;
+			case CMD_MOVE_BOTTOM:
+				if (docIndex < (GDocuments.size() - 1))
+				{
+					GDocuments.erase(GDocuments.begin() + docIndex);
+					GDocuments.insert(GDocuments.end(), pDoc);
+				}
+				break;
+
+			case CMD_RENAME:
+			case CMD_SAVE_AS:
+				break;
+
+			case CMD_CLOSE:
+				{
+					GDocuments.erase(GDocuments.begin() + docIndex);
+					delete pDoc;
+					pDoc = nullptr;
+				}
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+
+/*static*/ int PaletteDocument::IndexOf(PaletteDocument* pDoc)
+{
+	for (int idx = 0; idx < GDocuments.size(); ++idx)
+	{
+		if (GDocuments[ idx ] == pDoc)
+		{
+			return idx;
+		}
+	}
+
+	return -1;
+}
 
 //------------------------------------------------------------------------------
 
