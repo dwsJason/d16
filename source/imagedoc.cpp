@@ -604,11 +604,22 @@ void ImageDocument::Render()
 															defaultFilename);
 
 				}
-				if (ImGui::MenuItem("Save as (32Bpp)PNG+PAL"))
+				//if (ImGui::MenuItem("Save as (32Bpp)PNG+PAL"))
+				//{
+				//}
+				if (ImGui::MenuItem("Save as PNG"))
 				{
-				}
-				if (ImGui::MenuItem("Save as (32Bpp)PNG"))
-				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SavePNGKey", "Save as PNG", ".png\0\0",
+														   ".",
+															defaultFilename);
+
 				}
 				ImGui::EndPopup();
 			}
@@ -663,6 +674,8 @@ void ImageDocument::Render()
 
 	ImGui::End();
 
+// Save File Dialog Stuff
+
 	if (ImGuiFileDialog::Instance()->FileDialog("SaveC1Key"))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
@@ -672,6 +685,17 @@ void ImageDocument::Render()
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveC1Key");
 	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SavePNGKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SavePNG( ImGuiFileDialog::Instance()->GetFilepathName() );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SavePNGKey");
+	}
+
 }
 
 //------------------------------------------------------------------------------
@@ -1843,5 +1867,18 @@ void ImageDocument::SaveC1(std::string filenamepath)
 	}
 
 }
+//------------------------------------------------------------------------------
+
+// For now, I'm just making this easy
+// and using what SDL gave me
+
+void ImageDocument::SavePNG(std::string filenamepath)
+{
+// Choose a surface to save
+	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurface;
+
+	IMG_SavePNG(pImage, filenamepath.c_str());
+}
+
 //------------------------------------------------------------------------------
 

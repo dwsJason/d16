@@ -75,6 +75,7 @@ private:
 	void RenderResizeDialog();
 
 	void SaveC1(std::string filenamepath);
+	void SavePNG(std::string filenamepath);
 
 	void SetDocumentSurface(SDL_Surface* pSurface);
 
