@@ -544,14 +544,19 @@ void MainMenuBarUI()
 			}
 
 			ImGui::Separator();
+			#if 0 // Show them disabled, until I implement them
 			if (ImGui::MenuItem("Save"))
 			{
 				// Save File
 			}
-			if (ImGui::MenuItem("Save As"))
+			if (ImGui::MenuItem("Save as..."))
 			{
 				// Save As
 			}
+			#else
+			ImGui::TextDisabled("Save");
+			ImGui::TextDisabled("Save as...");
+			#endif
 			ImGui::Separator();
 			if (ImGui::MenuItem("Quit", "Alt+F4"))
 			{
@@ -563,9 +568,10 @@ void MainMenuBarUI()
 
 		if (ImGui::BeginMenu("Windows"))
 		{
-			if (ImGui::MenuItem("About"))
-			{
-			}
+			ImGui::TextDisabled("About");
+			//if (ImGui::MenuItem("About"))
+			//{
+			//}
 
 			ImGui::Separator();
 

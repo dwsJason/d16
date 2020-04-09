@@ -87,11 +87,14 @@ void PaletteDocument::Render()
 			ImGui::Separator();
 			ImGui::Separator();
 
+			ImGui::TextDisabled("Duplicate");
+			#if 0
 			if (ImGui::MenuItem("Duplicate"))
 			{
 				g_pDoc = this;
 				g_iCommand = CMD_DUPLICATE;
 			}
+			#endif
 
 			ImGui::Separator();
 			ImGui::Separator();
@@ -119,6 +122,10 @@ void PaletteDocument::Render()
 
 			ImGui::Separator();
 			ImGui::Separator();
+			#if 1
+			ImGui::TextDisabled("Rename");
+			ImGui::TextDisabled("Save as...");
+			#else
 
 			if (ImGui::MenuItem("Rename"))
 			{
@@ -130,6 +137,7 @@ void PaletteDocument::Render()
 				g_pDoc = this;
 				g_iCommand = CMD_SAVE_AS;
 			}
+			#endif
 
 			ImGui::Separator();
 			ImGui::Separator();
