@@ -291,9 +291,16 @@
     <ClInclude Include="..\source\imagedoc.h" />
     <ClInclude Include="..\source\paldoc.h" />
     <ClInclude Include="..\source\toolbar.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libs\imgui\misc\natvis\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="d16.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\data\icon32.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -199,6 +199,9 @@
     <ClInclude Include="..\source\toolbar.h">
       <Filter>source</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">
@@ -231,10 +234,23 @@
     <Filter Include="libs\avir">
       <UniqueIdentifier>{bd150040-da32-4d3a-826b-ce06aa2eeab7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{f9cd2e21-876b-4474-b763-de17bc6ec850}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libs\imgui\misc\natvis\imgui.natvis">
       <Filter>libs\imgui</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="d16.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\data\icon32.ico">
+      <Filter>resources</Filter>
+    </Image>
   </ItemGroup>
 </Project>
