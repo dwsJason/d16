@@ -7,6 +7,7 @@
 #include "imgui.h"
 
 #define LOG(...) Log::GLog.AddLog( __VA_ARGS__ )
+#define SYSERROR(...) Log::NativeError( __VA_ARGS__ )
 
 class Log
 {
@@ -129,6 +130,8 @@ public:
         ImGui::EndChild();
         ImGui::End();
     }
+
+	static void NativeError(const char* format, ... );
 
 };
 

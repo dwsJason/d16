@@ -16,6 +16,8 @@
 #include "dirent.h"
 #include "toolbar.h"
 
+#include "d16.h"
+
 // About Desktop OpenGL function loaders:
 //  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
 //  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
@@ -130,7 +132,7 @@ int main(int, char**)
     // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
-        printf("Error: %s\n", SDL_GetError());
+        SYSERROR("Error: %s\n", SDL_GetError());
         return -1;
     }
 
@@ -139,8 +141,8 @@ int main(int, char**)
 	int initted=IMG_Init(flags);
 	if((initted&flags) != flags)
 	{
-		printf("IMG_Init: Failed to init required jpg and png support!\n");
-		printf("IMG_Init: %s\n", IMG_GetError());
+		SYSERROR("IMG_Init: Failed to init required jpg and png support!\n"
+		         "IMG_Init: %s\n", IMG_GetError());
 		// handle error
 	}
 
@@ -187,7 +189,7 @@ int main(int, char**)
 #endif
     if (err)
     {
-        fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+        SYSERROR("Failed to initialize OpenGL loader!\nOpenGL 3 or above required");
         return 1;
     }
 
