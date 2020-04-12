@@ -905,6 +905,42 @@ void ImageDocument::Quant()
 	raw_rgba_pixels = (unsigned char*) pImage->pixels;
 
 	//-----------------------------------------------
+	// Since I'm not supporting Alpha, now is the time
+	// to pre-multiply Alpha, and set the alpha to 1
+
+	{
+		for (int y = 0; y < pImage->h; ++y)
+		{
+			unsigned char *pPixel = raw_rgba_pixels + (y * pImage->pitch);
+
+			for (int x = 0; x < pImage->w; ++x)
+			{
+				unsigned int a = pPixel[3];
+
+				if (a != 0xFF)
+				{
+					unsigned int r = pPixel[0];
+					unsigned int g = pPixel[1];
+					unsigned int b = pPixel[2];
+
+					r *= a; r>>=8;
+					g *= a; g>>=8;
+					b *= a; b>>=8;
+
+					a = 255;
+
+					pPixel[0] = (unsigned char)r;
+					pPixel[1] = (unsigned char)g;
+					pPixel[2] = (unsigned char)b;
+					pPixel[3] = (unsigned char)a;
+				}
+
+				pPixel+=4;
+			}
+		}
+	}
+
+	//-----------------------------------------------
 
     liq_attr *handle = liq_attr_create();
 
@@ -950,7 +986,7 @@ void ImageDocument::Quant()
 	// You could set more options here, like liq_set_quality
     liq_result *quantization_result;
     if (liq_image_quantize(input_image, handle, &quantization_result) != LIQ_OK) {
-        LOG("Quantization failed\n");
+        LOG("Quantization failed, memory leaked\n");
 		return;
     }
 
