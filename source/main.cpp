@@ -250,6 +250,7 @@ int main(int, char**)
 	ImGuiFileDialog::Instance()->SetFilterColor(".tga", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".gif", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".jpg", ImVec4(0,1,0,1));
+	ImGuiFileDialog::Instance()->SetFilterColor(".jfif", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".lbm", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".bmp", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".webp", ImVec4(0,1,0,1));
@@ -260,6 +261,7 @@ int main(int, char**)
 	ImGuiFileDialog::Instance()->SetFilterColor(".TGA", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".GIF", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".JPG", ImVec4(0,1,0,1));
+	ImGuiFileDialog::Instance()->SetFilterColor(".JFIF", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".LBM", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".BMP", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".WEBP", ImVec4(0,1,0,1));
