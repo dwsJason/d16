@@ -412,9 +412,6 @@ void ImageDocument::Render()
 	{
 		// Make it 16 colors
 		Quant();
-		//Quant3200();
-		//Quant3201();
-		//Quant3202();
 	}
 
 	if (ImGui::IsItemHovered())
@@ -2418,13 +2415,104 @@ void ImageDocument::Quant3202()
 	liq_set_min_posterization(pAttr, min_posterize);
 //------------------------------------------------------------------------------
 
+	std::vector<liq_palette> pals;
+
+	// We want to sample from an area the is 1 to (2 * m_iColorNeighbors) Tall
+	// to generate out Clut
+
+	// then we want to feed that clut into, the quantizer / remapper as fixed
+	// colors, and remap and area that is 1 to (2 * m_iDitherNeighbors) Tall
+	// then just pull the single line of data that we care about (presumably)
+	// dithered with error above and below our location
+
+	// Here we will create 16 common colors in a block of lines
+
 	for (int yIndex = 0; yIndex < height; ++yIndex)
 	{
-		unsigned char* pSourcePixelsRow = pSourcePixels + (yIndex * pSource->pitch);
+		int yTopIndex    = yIndex - m_iColorNeighbors;
+		int sampleHeight = (m_iColorNeighbors * 2) + 1;
+
+		// clamp the sampler box at the top of the image
+		if (yTopIndex < 0)
+		{
+			sampleHeight += yTopIndex;
+			if (sampleHeight < 1) sampleHeight = 1;
+			yTopIndex = 0;
+		}
+
+		// clamp the sampler box at the bottom of the image
+		if ((yTopIndex + sampleHeight) > height)
+		{
+			sampleHeight = height - yTopIndex;
+		}
+
+
+		unsigned char* pSourcePixelsRow = pSourcePixels + (yTopIndex * pSource->pitch);
+
+		// look for 16 colors in the block of pixels
+		liq_image *input_image = liq_image_create_rgba(pAttr, pSourcePixelsRow,
+													   width, sampleHeight, 0);
+
+		liq_result *quantization_result;
+
+		if (liq_image_quantize(input_image, pAttr, &quantization_result) != LIQ_OK)
+		{
+			LOG("Quantization failed, memory leaked\n");
+			return;
+		}
+
+		pals.push_back(*liq_get_palette(quantization_result));
+
+		liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+		liq_image_destroy(input_image);
+	}
+
+//------------------------------------------------------------------------------
+//
+// then we want to feed that clut into, the quantizer / remapper as fixed
+// colors, and remap and area that is 1 to (2 * m_iDitherNeighbors) Tall
+// then just pull the single line of data that we care about (presumably)
+// dithered with error above and below our location
+//
+// This stage has the opportunity to add colors, if for some reason the previous
+// stage used less than 16
+//
+
+	for (int yIndex = 0; yIndex < height; ++yIndex)
+	{
+		int yTopIndex     = yIndex - m_iDitherNeighbors;
+		int ditherHeight  = (m_iDitherNeighbors * 2) + 1;
+
+		// The Y line in the result block, that has the pixels we want to copy
+		int ditherResultY = yIndex - yTopIndex;
+
+		// clamp the sampler box at the top of the image
+		if (yTopIndex < 0)
+		{
+			ditherHeight  += yTopIndex; // Reduce the height
+			ditherResultY += yTopIndex; // Adjust the result position
+			if (ditherHeight < 1) ditherHeight = 1;
+			yTopIndex = 0;
+		}
+
+		// clamp the sampler box at the bottom of the image
+		if ((yTopIndex + ditherHeight) > height)
+		{
+			ditherHeight = height - yTopIndex;
+		}
+
+		unsigned char* pSourcePixelsRow = pSourcePixels + (yTopIndex * pSource->pitch);
 		unsigned char* pTargetPixelsRow = pTargetPixels + (yIndex * pTarget->pitch);
 
+		liq_palette& fixedColors = pals[ yIndex ];
+
 		liq_image *input_image = liq_image_create_rgba(pAttr, pSourcePixelsRow,
-													   width, 1 + m_iColorNeighbors, 0);
+													   width, ditherHeight, 0);
+
+		for (int idx = 0; idx < fixedColors.count; ++idx)
+		{
+			liq_image_add_fixed_color(input_image, fixedColors.entries[ idx ]);
+		}
 
 		liq_result *quantization_result;
 
@@ -2435,7 +2523,7 @@ void ImageDocument::Quant3202()
 		}
 //------------------------------------------------------------------------------
 
-		size_t pixels_size = width * 1;  // width * height
+		size_t pixels_size = width * ditherHeight;  // width * height
 		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
 		liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
 
@@ -2444,9 +2532,11 @@ void ImageDocument::Quant3202()
 
 		// Copy the result back into the output surface
 
+		unsigned char* pResultPixels = raw_8bit_pixels + (ditherResultY * width);
+
 		for (int xIndex = 0; xIndex < width; ++xIndex)
 		{
-			int colorIndex = raw_8bit_pixels[ xIndex ];
+			int colorIndex = pResultPixels[ xIndex ];
 			liq_color p = palette->entries[ colorIndex ];
 
 			pTargetPixelsRow[0] = p.r;
