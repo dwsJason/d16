@@ -66,6 +66,7 @@ private:
 	void Quant();
 	void Quant3200();
 	void Quant3201();
+	void Quant3202();
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
@@ -108,6 +109,10 @@ private:
 
 	int m_iDither;
 	int m_iPosterize;
+
+	// for the 3202 quantizer
+	int m_iColorNeighbors;
+	int m_iDitherNeighbors;
 
 	std::vector<int>   m_bLocks;
 	std::vector<ImVec4> m_targetColors;
