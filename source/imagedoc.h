@@ -64,6 +64,8 @@ private:
 	int CountUniqueColors();
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant();
+	void Quant3200();
+	void Quant3201();
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);

@@ -406,7 +406,9 @@ void ImageDocument::Render()
 	if (ImGui::Button("Quantize Image"))
 	{
 		// Make it 16 colors
-		Quant();
+		//Quant();
+		//Quant3200();
+		Quant3201();
 	}
 
 	if (ImGui::IsItemHovered())
@@ -878,6 +880,388 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 	}
 
 }
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::Quant3201()
+{
+	LOG("Quant3201\n");
+
+    unsigned int width=(unsigned int)m_width;
+	unsigned int height=(unsigned int)m_height;
+
+	//-----------------------------------------------
+
+	SDL_Surface *pSource = SDL_SurfaceToRGBA(m_pSurface);
+	SDL_Surface *pTarget = SDL_SurfaceToRGBA(m_pSurface);
+
+	if (nullptr == pSource)  return;
+	if (nullptr == pTarget) return;
+
+    if( SDL_MUSTLOCK(pSource) )
+        SDL_LockSurface(pSource);
+
+    if( SDL_MUSTLOCK(pTarget) )
+        SDL_LockSurface(pTarget);
+
+
+	unsigned char* pSourcePixels = (unsigned char*) pSource->pixels;
+	unsigned char* pTargetPixels = (unsigned char*) pTarget->pixels;
+
+	//-----------------------------------------------
+	// Since I'm not supporting Alpha, now is the time
+	// to pre-multiply Alpha, and set the alpha to 1
+
+	{
+		for (int y = 0; y < height; ++y)
+		{
+			unsigned char *pPixel = pSourcePixels + (y * pSource->pitch);
+
+			for (int x = 0; x < width; ++x)
+			{
+				unsigned int a = pPixel[3];
+
+				if (a != 0xFF)
+				{
+					unsigned int r = pPixel[0];
+					unsigned int g = pPixel[1];
+					unsigned int b = pPixel[2];
+
+					r *= a; r>>=8;
+					g *= a; g>>=8;
+					b *= a; b>>=8;
+
+					a = 255;
+
+					pPixel[0] = (unsigned char)r;
+					pPixel[1] = (unsigned char)g;
+					pPixel[2] = (unsigned char)b;
+					pPixel[3] = (unsigned char)a;
+				}
+
+				pPixel+=4;
+			}
+		}
+	}
+
+//------------------------------------------------------------------------------
+//
+//   We're going to generate a 16 color palette, per scanline
+//
+
+// Then we'll cobble the images back together
+
+    liq_attr* pAttr = liq_attr_create();
+
+	liq_set_max_colors(pAttr, 5);
+	liq_set_speed(pAttr, 1);   // 1-10  (1 best quality)
+
+	int min_posterize = 4;
+	switch (m_iPosterize)
+	{
+	case ePosterize444:
+		min_posterize = 4;
+		break;
+	case ePosterize555:
+		min_posterize = 3;
+		break;
+	case ePosterize888:
+		min_posterize = 0;
+		break;
+	}
+
+	liq_set_min_posterization(pAttr, min_posterize);
+//------------------------------------------------------------------------------
+
+	std::vector<liq_palette> pals;
+
+	// Here we will create 8 common colors between neighboring lines
+
+	for (int yIndex = 0; yIndex < height; ++yIndex)
+	{
+		unsigned char* pSourcePixelsRow = pSourcePixels + (yIndex * pSource->pitch);
+
+		// look for 8 colors, in 2 lines, that we're going to keep
+		liq_image *input_image = liq_image_create_rgba(pAttr, pSourcePixelsRow,
+													   width, 2, 0);
+
+		liq_result *quantization_result;
+
+		if (liq_image_quantize(input_image, pAttr, &quantization_result) != LIQ_OK)
+		{
+			LOG("Quantization failed, memory leaked\n");
+			return;
+		}
+
+		pals.push_back(*liq_get_palette(quantization_result));
+
+		liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+		liq_image_destroy(input_image);
+	}
+
+//------------------------------------------------------------------------------
+
+	#if 1
+	// Coalesce the neighboring palettes
+	for (int palIndex = 0; palIndex < (pals.size()-1); ++palIndex)
+	{
+		liq_palette& target = pals[palIndex];
+		liq_palette& source = pals[palIndex+1];
+
+		for (int colorIndex = 0; colorIndex < source.count; ++colorIndex)
+		{
+			liq_color color = source.entries[ colorIndex ];
+
+			bool bAdd = true;
+
+			for (int destIndex = 0; destIndex < target.count; ++destIndex)
+			{
+				liq_color destColor = target.entries[ destIndex ];
+
+				if (destColor.r == color.r)
+				if (destColor.g == color.g)
+				if (destColor.b == color.b)
+				if (destColor.a == color.a)
+				{
+					bAdd = false;
+				}
+			}
+
+			if (bAdd)
+			{
+				target.entries[ target.count++ ] = color;
+			}
+		}
+	}
+	#endif
+
+//------------------------------------------------------------------------------
+
+	liq_set_max_colors(pAttr, 16);
+
+	for (int yIndex = 0; yIndex < height; ++yIndex)
+	{
+		unsigned char* pSourcePixelsRow = pSourcePixels + (yIndex * pSource->pitch);
+		unsigned char* pTargetPixelsRow = pTargetPixels + (yIndex * pTarget->pitch);
+
+		liq_palette& fixedColors = pals[ yIndex ];
+
+		// look for 16 colors, in 1 lines, that we're going to keep
+		liq_image *input_image = liq_image_create_rgba(pAttr, pSourcePixelsRow,
+													   width, 1, 0);
+
+		for (int idx = 0; idx < fixedColors.count; ++idx)
+		{
+			liq_image_add_fixed_color(input_image, fixedColors.entries[ idx ]);
+		}
+
+		liq_result *quantization_result;
+
+		if (liq_image_quantize(input_image, pAttr, &quantization_result) != LIQ_OK)
+		{
+			LOG("Quantization failed, memory leaked\n");
+			return;
+		}
+
+		size_t pixels_size = width * 1;  // width * height
+		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
+		liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
+
+		liq_write_remapped_image(quantization_result, input_image, raw_8bit_pixels, pixels_size);
+		const liq_palette *palette = liq_get_palette(quantization_result);
+
+		// Copy the result back into the output surface
+
+		for (int xIndex = 0; xIndex < width; ++xIndex)
+		{
+			int colorIndex = raw_8bit_pixels[ xIndex ];
+			liq_color p = palette->entries[ colorIndex ];
+
+			pTargetPixelsRow[0] = p.r;
+			pTargetPixelsRow[1] = p.g;
+			pTargetPixelsRow[2] = p.b;
+			pTargetPixelsRow[3] = p.a;
+			pTargetPixelsRow += 4;
+		}
+
+		// Free up the memory used by libquant -------------------------------------
+		free(raw_8bit_pixels);
+		liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+		liq_image_destroy(input_image);
+	}
+
+
+    liq_attr_destroy(pAttr);
+
+	//-----------------------------------------------
+
+    if( SDL_MUSTLOCK(pTarget) )
+        SDL_UnlockSurface(pTarget);
+
+    if( SDL_MUSTLOCK(pSource) )
+        SDL_UnlockSurface(pSource);
+
+    SDL_FreeSurface(pSource);     /* No longer needed */
+
+	m_pTargetSurface = pTarget;
+	GLfloat about_image_uv[4];
+	m_targetImage = SDL_GL_LoadTexture(pTarget, about_image_uv);
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::Quant3200()
+{
+	LOG("Quant3200\n");
+
+    unsigned int width=(unsigned int)m_width;
+	unsigned int height=(unsigned int)m_height;
+
+	//-----------------------------------------------
+
+	SDL_Surface *pSource  = SDL_SurfaceToRGBA(m_pSurface);
+	SDL_Surface *pTarget = SDL_SurfaceToRGBA(m_pSurface);
+
+	if (nullptr == pSource)  return;
+	if (nullptr == pTarget) return;
+
+    if( SDL_MUSTLOCK(pSource) )
+        SDL_LockSurface(pSource);
+
+    if( SDL_MUSTLOCK(pTarget) )
+        SDL_LockSurface(pTarget);
+
+
+	unsigned char* pSourcePixels = (unsigned char*) pSource->pixels;
+	unsigned char* pTargetPixels = (unsigned char*) pTarget->pixels;
+
+	//-----------------------------------------------
+	// Since I'm not supporting Alpha, now is the time
+	// to pre-multiply Alpha, and set the alpha to 1
+
+	{
+		for (int y = 0; y < height; ++y)
+		{
+			unsigned char *pPixel = pSourcePixels + (y * pSource->pitch);
+
+			for (int x = 0; x < width; ++x)
+			{
+				unsigned int a = pPixel[3];
+
+				if (a != 0xFF)
+				{
+					unsigned int r = pPixel[0];
+					unsigned int g = pPixel[1];
+					unsigned int b = pPixel[2];
+
+					r *= a; r>>=8;
+					g *= a; g>>=8;
+					b *= a; b>>=8;
+
+					a = 255;
+
+					pPixel[0] = (unsigned char)r;
+					pPixel[1] = (unsigned char)g;
+					pPixel[2] = (unsigned char)b;
+					pPixel[3] = (unsigned char)a;
+				}
+
+				pPixel+=4;
+			}
+		}
+	}
+
+//------------------------------------------------------------------------------
+//
+//   We're going to generate a 16 color palette, per scanline
+//
+
+// Then we'll cobble the images back together
+
+    liq_attr* pAttr = liq_attr_create();
+
+	liq_set_max_colors(pAttr, 16);
+	liq_set_speed(pAttr, 1);   // 1-10  (1 best quality)
+
+	int min_posterize = 4;
+	switch (m_iPosterize)
+	{
+	case ePosterize444:
+		min_posterize = 4;
+		break;
+	case ePosterize555:
+		min_posterize = 3;
+		break;
+	case ePosterize888:
+		min_posterize = 0;
+		break;
+	}
+
+	liq_set_min_posterization(pAttr, min_posterize);
+//------------------------------------------------------------------------------
+
+	for (int yIndex = 0; yIndex < height; ++yIndex)
+	{
+		unsigned char* pSourcePixelsRow = pSourcePixels + (yIndex * pSource->pitch);
+		unsigned char* pTargetPixelsRow = pTargetPixels + (yIndex * pTarget->pitch);
+
+		liq_image *input_image = liq_image_create_rgba(pAttr, pSourcePixelsRow,
+													   width, 1, 0);
+
+		liq_result *quantization_result;
+
+		if (liq_image_quantize(input_image, pAttr, &quantization_result) != LIQ_OK)
+		{
+			LOG("Quantization failed, memory leaked\n");
+			return;
+		}
+//------------------------------------------------------------------------------
+
+		size_t pixels_size = width * 1;  // width * height
+		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
+		liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
+
+		liq_write_remapped_image(quantization_result, input_image, raw_8bit_pixels, pixels_size);
+		const liq_palette *palette = liq_get_palette(quantization_result);
+
+		// Copy the result back into the output surface
+
+		for (int xIndex = 0; xIndex < width; ++xIndex)
+		{
+			int colorIndex = raw_8bit_pixels[ xIndex ];
+			liq_color p = palette->entries[ colorIndex ];
+
+			pTargetPixelsRow[0] = p.r;
+			pTargetPixelsRow[1] = p.g;
+			pTargetPixelsRow[2] = p.b;
+			pTargetPixelsRow[3] = p.a;
+			pTargetPixelsRow += 4;
+		}
+
+		// Free up the memory used by libquant -------------------------------------
+		free(raw_8bit_pixels);
+		liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+		liq_image_destroy(input_image);
+	}
+
+
+    liq_attr_destroy(pAttr);
+
+	//-----------------------------------------------
+
+    if( SDL_MUSTLOCK(pTarget) )
+        SDL_UnlockSurface(pTarget);
+
+    if( SDL_MUSTLOCK(pSource) )
+        SDL_UnlockSurface(pSource);
+
+    SDL_FreeSurface(pSource);     /* No longer needed */
+
+	m_pTargetSurface = pTarget;
+	GLfloat about_image_uv[4];
+	m_targetImage = SDL_GL_LoadTexture(pTarget, about_image_uv);
+}
+
 //------------------------------------------------------------------------------
 
 void ImageDocument::Quant()
