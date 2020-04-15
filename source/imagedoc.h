@@ -64,6 +64,7 @@ private:
 	int CountUniqueColors();
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant();
+	void Quant256();
 	void Quant3200();
 	void Quant3201();
 	void Quant3202();
@@ -113,6 +114,8 @@ private:
 	// for the 3202 quantizer
 	int m_iColorNeighbors;
 	int m_iDitherNeighbors;
+
+	int m_iTargetColorCount;
 
 	std::vector<int>   m_bLocks;
 	std::vector<ImVec4> m_targetColors;
