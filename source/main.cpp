@@ -552,29 +552,27 @@ void MainMenuBarUI()
 				  LOG("GIF_Load %d Frames\n", frames.size());
 				  if (frames.size())
 				  {
-					  image = frames[0];
+					  LOG("Loaded %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
 				  }
 				  else
-				  {
-					  image = IMG_Load(pathName.c_str());
-				  }
+					  image=IMG_Load(pathName.c_str());
 			  }
 			  else
 			  {
 				  image=IMG_Load(pathName.c_str());
-
-				  if (image)
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
-				  }
-				  else
-				  {
-					  LOG("Failed %s\n", it->second.c_str());
-				  }
 			  }
 
+			  if (image)
+			  {
+				  LOG("Loaded %s\n", it->second.c_str());
+
+				  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
+			  }
+			  else
+			  {
+				  LOG("Failed %s\n", it->second.c_str());
+			  }
 		  }
 	  }
 	  // close

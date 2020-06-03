@@ -50,11 +50,32 @@ GLuint
 SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
 
 //------------------------------------------------------------------------------
+// Animation Supporting Version
+ImageDocument::ImageDocument(std::string filename, std::string pathname, const std::vector<SDL_Surface*>& Images)
+	: ImageDocument(filename, pathname, Images[0])
+{
+	//m_images.push_back(m_image);
+	//m_pSurfaces.push_back(m_pSurface);
 
+	// Copy the the remainng Images / and surfaces into the ImageDocument
+	for (int idx = 0; idx < Images.size(); ++idx)
+	{
+		m_pSurfaces.push_back(Images[idx]);
+		m_images.push_back(SDL_GL_LoadTexture(Images[idx], m_image_uv));
+	}
+
+	m_bPlaying = true;
+
+}
+
+// Just a Static Image Version
 ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Surface *pImage)
 	: m_filename(filename)
 	, m_pathname(pathname)
 	, m_pSurface( pImage )
+	, m_bPlaying(false)
+	, m_bDelayTime(0)
+	, m_iFrameNo(0)
 	, m_zoom(1)
 	, m_targetImage(0)
 	, m_pTargetSurface(nullptr)

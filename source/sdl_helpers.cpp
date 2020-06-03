@@ -156,6 +156,33 @@ static unsigned char* pPreviousCanvas = nullptr;
 		SDL_SetSurfacePalette(pTargetSurface, pPalette);
 	}
 
+	// It turns out there's a userdata field in the surface
+	// I might as well use this to convey the play-speed information
+
+	int delayTime = 0;
+	int transparentColor = NO_TRANSPARENT_COLOR;
+
+	for (int idx = 0; idx < pGifImage->ExtensionBlockCount; ++idx)
+	{
+		if ( GRAPHICS_EXT_FUNC_CODE == pGifImage->ExtensionBlocks[idx].Function )
+		{
+			// We have a Grapics Control Block, which holds the transparent color ? (not sure we care)
+			// and the DelayTime  (I definitely care)
+			GraphicsControlBlock GCB;
+
+			if (GIF_OK == DGifExtensionToGCB(pGifImage->ExtensionBlocks[idx].ByteCount,
+							   pGifImage->ExtensionBlocks[idx].Bytes,
+							   &GCB))
+			{
+				delayTime = GCB.DelayTime;
+				transparentColor = GCB.TransparentColor;
+			}
+		}
+	}
+
+	// Stuff in the Delay Time, and the Transparent Color Index
+	pTargetSurface->userdata = (void *)((delayTime & 0xFFFF) | (transparentColor << 16));
+
 	return pTargetSurface;
 }
 
