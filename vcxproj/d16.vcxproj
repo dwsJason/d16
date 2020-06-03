@@ -123,7 +123,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -193,7 +193,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -245,6 +245,10 @@
     <ClCompile Include="..\libs\libimagequant-msvc\mempool.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\nearest.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\pam.c" />
+    <ClCompile Include="..\libs\lz4-dev\lib\lz4.c" />
+    <ClCompile Include="..\libs\lz4-dev\lib\lz4frame.c" />
+    <ClCompile Include="..\libs\lz4-dev\lib\lz4hc.c" />
+    <ClCompile Include="..\libs\lz4-dev\lib\xxhash.c" />
     <ClCompile Include="..\source\common\cursor.cpp" />
     <ClCompile Include="..\source\common\limage.cpp" />
     <ClCompile Include="..\source\common\log.cpp" />
@@ -252,6 +256,7 @@
     <ClCompile Include="..\source\imagedoc.cpp" />
     <ClCompile Include="..\source\main.cpp" />
     <ClCompile Include="..\source\paldoc.cpp" />
+    <ClCompile Include="..\source\sdl_helpers.cpp" />
     <ClCompile Include="..\source\toolbar.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -280,6 +285,95 @@
     <ClInclude Include="..\libs\libimagequant-msvc\mempool.h" />
     <ClInclude Include="..\libs\libimagequant-msvc\nearest.h" />
     <ClInclude Include="..\libs\libimagequant-msvc\pam.h" />
+    <ClInclude Include="..\libs\lz4-dev\lib\lz4.h" />
+    <ClInclude Include="..\libs\lz4-dev\lib\lz4frame.h" />
+    <ClInclude Include="..\libs\lz4-dev\lib\lz4frame_static.h" />
+    <ClInclude Include="..\libs\lz4-dev\lib\lz4hc.h" />
+    <ClInclude Include="..\libs\lz4-dev\lib\xxhash.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\begin_code.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\close_code.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_assert.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_atomic.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_audio.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_bits.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_blendmode.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_clipboard.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_android.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_iphoneos.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_macosx.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_minimal.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_pandora.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_psp.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_windows.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_winrt.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_config_wiz.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_copying.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_cpuinfo.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_egl.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_endian.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_error.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_events.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_filesystem.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_gamecontroller.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_gesture.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_haptic.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_hints.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_joystick.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_keyboard.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_keycode.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_loadso.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_log.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_main.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_messagebox.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_mouse.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_mutex.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_name.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengl.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengles.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengles2.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengles2_gl2.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengles2_gl2ext.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengles2_gl2platform.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengles2_khrplatform.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_opengl_glext.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_pixels.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_platform.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_power.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_quit.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_rect.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_render.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_revision.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_rwops.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_scancode.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_sensor.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_shape.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_stdinc.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_surface.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_system.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_syswm.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_assert.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_common.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_compare.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_crc32.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_font.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_fuzzer.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_harness.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_images.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_log.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_md5.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_memory.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_test_random.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_thread.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_timer.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_touch.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_types.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_version.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_video.h" />
+    <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL_vulkan.h" />
+    <ClInclude Include="..\libs\SDL2_image-2.0.5\include\SDL_image.h" />
     <ClInclude Include="..\libs\vectormath\common.hpp" />
     <ClInclude Include="..\libs\vectormath\scalar\matrix.hpp" />
     <ClInclude Include="..\libs\vectormath\scalar\quaternion.hpp" />
@@ -301,11 +395,15 @@
     <ClInclude Include="..\source\common\log.h" />
     <ClInclude Include="..\source\imagedoc.h" />
     <ClInclude Include="..\source\paldoc.h" />
+    <ClInclude Include="..\source\sdl_helpers.h" />
     <ClInclude Include="..\source\toolbar.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\libs\imgui\misc\natvis\imgui.natvis" />
+    <None Include="..\libs\SDL2-2.0.10\include\SDL_config.h.cmake" />
+    <None Include="..\libs\SDL2-2.0.10\include\SDL_config.h.in" />
+    <None Include="..\libs\SDL2-2.0.10\include\SDL_config_macosx.h.orig" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="d16.rc" />

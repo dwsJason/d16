@@ -18,19 +18,8 @@
 
 #include "d16.h"
 
-// About Desktop OpenGL function loaders:
-//  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
-//  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
-//  You may use another loader/header of your choice (glext, glLoadGen, etc.), or chose to manually implement your own.
-#if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
-#include <GL/gl3w.h>    // Initialize with gl3wInit()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
-#include <GL/glew.h>    // Initialize with glewInit()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
-#include <glad/glad.h>  // Initialize with gladLoadGL()
-#else
-#include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
-#endif
+// My SDL Helper Functions file
+#include "sdl_helpers.h"
 
 void SetWindowIcon( SDL_Window* pIcon );
 void ShowLog();
@@ -39,73 +28,10 @@ void ToolBarUI();
 void MainMenuBarUI();
 
 //------------------------------------------------------------------------------
-/* Quick utility function for texture creation */
-static int
-power_of_two(int input)
+// Local helper functions
+static bool endsWith(const std::string& s, const std::string& suffix)
 {
-    int value = 1;
-
-    while (value < input) {
-        value <<= 1;
-    }
-    return value;
-}
-
-GLuint
-SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord)
-{
-    GLuint texture;
-    int w, h;
-    SDL_Surface *image;
-    SDL_Rect area;
-    SDL_BlendMode saved_mode;
-
-    /* Use the surface width and height expanded to powers of 2 */
-    w = power_of_two(surface->w);
-    h = power_of_two(surface->h);
-    texcoord[0] = 0.0f;         /* Min X */
-    texcoord[1] = 0.0f;         /* Min Y */
-    texcoord[2] = (GLfloat) surface->w / w;     /* Max X */
-    texcoord[3] = (GLfloat) surface->h / h;     /* Max Y */
-
-    image = SDL_CreateRGBSurface(SDL_SWSURFACE, w, h, 32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
-                                 0x000000FF,
-                                 0x0000FF00, 0x00FF0000, 0xFF000000
-#else
-                                 0xFF000000,
-                                 0x00FF0000, 0x0000FF00, 0x000000FF
-#endif
-        );
-    if (image == NULL) {
-        return 0;
-    }
-
-    /* Save the alpha blending attributes */
-    SDL_GetSurfaceBlendMode(surface, &saved_mode);
-    SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_NONE);
-
-    /* Copy the surface into the GL texture image */
-    area.x = 0;
-    area.y = 0;
-    area.w = surface->w;
-    area.h = surface->h;
-    SDL_BlitSurface(surface, &area, image, &area);
-
-    /* Restore the alpha blending attributes */
-    SDL_SetSurfaceBlendMode(surface, saved_mode);
-
-    /* Create an OpenGL texture for the image */
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image->pixels);
-    SDL_FreeSurface(image);     /* No longer needed */
-
-    return texture;
+    return s.rfind(suffix) == (s.size()-suffix.size());
 }
 //------------------------------------------------------------------------------
 static int alphaSort(const struct dirent **a, const struct dirent **b)
@@ -614,9 +540,23 @@ void MainMenuBarUI()
 		  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
 		  {
 			  //LOG("%s - %s\n", it->first.c_str(), it->second.c_str());
+			  std::string pathName = it->second;
 
-			  SDL_Surface *image;
-			  image=IMG_Load(it->second.c_str());
+			  SDL_Surface *image = nullptr;
+
+			  if (endsWith(pathName, ".gif"))
+			  {
+				  // Use GIF Library
+				  std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());
+
+				  LOG("GIF_Load %d Frames\n", frames.size());
+
+				  image = frames[0];
+			  }
+			  else
+			  {
+				  image=IMG_Load(pathName.c_str());
+			  }
 
 			  if (image)
 			  {
