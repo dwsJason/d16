@@ -550,23 +550,29 @@ void MainMenuBarUI()
 				  std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());
 
 				  LOG("GIF_Load %d Frames\n", frames.size());
-
-				  image = frames[0];
+				  if (frames.size())
+				  {
+					  image = frames[0];
+				  }
+				  else
+				  {
+					  image = IMG_Load(pathName.c_str());
+				  }
 			  }
 			  else
 			  {
 				  image=IMG_Load(pathName.c_str());
-			  }
 
-			  if (image)
-			  {
-				  LOG("Loaded %s\n", it->second.c_str());
+				  if (image)
+				  {
+					  LOG("Loaded %s\n", it->second.c_str());
 
-				  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
-			  }
-			  else
-			  {
-				  LOG("Failed %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
+				  }
+				  else
+				  {
+					  LOG("Failed %s\n", it->second.c_str());
+				  }
 			  }
 
 		  }

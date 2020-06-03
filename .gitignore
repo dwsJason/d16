@@ -13,3 +13,5 @@ libs/udt4/win/.vs/
 *.bsc
 *.exp
 *.idb
+vcxproj/d16.vcxproj.user
+vcxproj/d16.VC.db

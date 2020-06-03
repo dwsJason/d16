@@ -6,6 +6,9 @@
 
 #include "sdl_helpers.h"
 
+// include the oldest, crustiest gif library out there
+#include "gif_lib.h"
+
 //------------------------------------------------------------------------------
 /* Quick utility function for texture creation */
 static int
@@ -77,12 +80,107 @@ SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord)
 }
 
 //------------------------------------------------------------------------------
+//
+// !!$$ Not Thread SAFE
+// !!$$ Must be called starting with frameNo 0, then sequentially
+//
+SDL_Surface* SDL_GifGetSurface(GifFileType* pGif, int frameNo)
+{
+// I know this is a bad, bad, bad idea
+static unsigned char* pPreviousCanvas = nullptr;
+
+	SavedImage *pGifImage = &pGif->SavedImages[ frameNo ];
+
+	unsigned char* pRawPixels = (unsigned char*)malloc( pGif->SWidth * pGif->SHeight );
+
+	if (0 == frameNo)
+	{
+		// First Frame, don't start with Garbage
+		memset(pRawPixels, 0, pGif->SWidth * pGif->SHeight);
+	}
+	else
+	{
+		// Copy the Previous Canvas, onto the current Canvas?
+		// Probably
+		memcpy(pRawPixels, pPreviousCanvas, pGif->SWidth * pGif->SHeight);
+	}
+
+	pPreviousCanvas = pRawPixels;
+
+
+	// Copy the Rect from here, onto the canvas
+	for (int srcY = 0; srcY < pGifImage->ImageDesc.Height; ++srcY)
+	{
+		for (int srcX = 0; srcX < pGifImage->ImageDesc.Width; ++srcX)
+		{
+			int srcIndex = (srcY * pGifImage->ImageDesc.Width) + srcX;
+			int dstIndex = ((srcY + pGifImage->ImageDesc.Top) * pGif->SWidth) +
+							 srcX + pGifImage->ImageDesc.Left;
+
+			pRawPixels[dstIndex] = pGifImage->RasterBits[ srcIndex ];
+		}
+	}
+
+	SDL_Surface *pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pRawPixels, pGif->SWidth, pGif->SHeight,
+		8, pGif->SWidth, SDL_PIXELFORMAT_INDEX8);
+
+
+	// Assign Global Color Map
+	ColorMapObject *pColorMap = pGif->SColorMap;
+
+	if (!pColorMap)
+	{
+		// No Global Color Map, Assign Local Color Map
+		pColorMap = pGifImage->ImageDesc.ColorMap;
+	}
+
+	if (pColorMap)
+	{
+		// We need to set some colors, if we have colors
+		SDL_Palette *pPalette = SDL_AllocPalette(pColorMap->ColorCount);
+
+		// Gif Colors to SDL Colors
+		for (int idx = 0; idx < pColorMap->ColorCount; ++idx)
+		{
+			GifColorType inColor = pColorMap->Colors[ idx ];
+			SDL_Color outColor;
+			outColor.r = inColor.Red;
+			outColor.g = inColor.Green;
+			outColor.b = inColor.Blue;
+			outColor.a = 255;
+
+			SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+		}
+
+		SDL_SetSurfacePalette(pTargetSurface, pPalette);
+	}
+
+	return pTargetSurface;
+}
 
 std::vector<SDL_Surface*> SDL_GIF_Load(const char* pFilePath)
 {
-
 	std::vector<SDL_Surface*> results;
 
+	int error = 0; // yes, I need to init this
+	GifFileType* pGifFile = DGifOpenFileName(pFilePath, &error);
+
+	if ((D_GIF_SUCCEEDED == error) && pGifFile)
+	{
+        if(GIF_OK == DGifSlurp(pGifFile))
+		{
+			const int imageCount   = pGifFile->ImageCount;
+
+			for (int idx = 0; idx < imageCount; ++idx)
+			{
+				SDL_Surface* pSurface = SDL_GifGetSurface(pGifFile, idx);
+				results.push_back(pSurface);
+			}
+		}
+
+        DGifCloseFile(pGifFile, &error);
+	}
 
 	return results;
 }
