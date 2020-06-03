@@ -68,6 +68,27 @@
     <ClCompile Include="..\source\toolbar.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\dgif_lib.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\egif_lib.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\getarg.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\gif_err.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\gif_hash.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\gifalloc.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\giflib-5.2.1\openbsd-reallocarray.c">
+      <Filter>libs\giflib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -202,6 +223,18 @@
     <ClInclude Include="resource.h">
       <Filter>resources</Filter>
     </ClInclude>
+    <ClInclude Include="..\libs\giflib-5.2.1\getarg.h">
+      <Filter>libs\giflib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\giflib-5.2.1\gif_hash.h">
+      <Filter>libs\giflib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\giflib-5.2.1\gif_lib.h">
+      <Filter>libs\giflib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\giflib-5.2.1\gif_lib_private.h">
+      <Filter>libs\giflib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">
@@ -236,6 +269,9 @@
     </Filter>
     <Filter Include="resources">
       <UniqueIdentifier>{f9cd2e21-876b-4474-b763-de17bc6ec850}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\giflib">
+      <UniqueIdentifier>{9a9018c6-0941-48f0-a091-a4a296a52ea9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
