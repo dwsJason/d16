@@ -96,7 +96,7 @@ static unsigned char* pPreviousCanvas = nullptr;
 	if (0 == frameNo)
 	{
 		// First Frame, don't start with Garbage
-		memset(pRawPixels, 0, pGif->SWidth * pGif->SHeight);
+		memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
 	}
 	else
 	{
@@ -107,6 +107,27 @@ static unsigned char* pPreviousCanvas = nullptr;
 
 	pPreviousCanvas = pRawPixels;
 
+	// Get the transparent color, before the copy
+	int delayTime = 0;
+	int transparentColor = NO_TRANSPARENT_COLOR;
+
+	for (int idx = 0; idx < pGifImage->ExtensionBlockCount; ++idx)
+	{
+		if ( GRAPHICS_EXT_FUNC_CODE == pGifImage->ExtensionBlocks[idx].Function )
+		{
+			// We have a Grapics Control Block, which holds the transparent color ? (not sure we care)
+			// and the DelayTime  (I definitely care)
+			GraphicsControlBlock GCB;
+
+			if (GIF_OK == DGifExtensionToGCB(pGifImage->ExtensionBlocks[idx].ByteCount,
+							   pGifImage->ExtensionBlocks[idx].Bytes,
+							   &GCB))
+			{
+				delayTime = GCB.DelayTime;
+				transparentColor = GCB.TransparentColor;
+			}
+		}
+	}
 
 	// Copy the Rect from here, onto the canvas
 	for (int srcY = 0; srcY < pGifImage->ImageDesc.Height; ++srcY)
@@ -114,10 +135,15 @@ static unsigned char* pPreviousCanvas = nullptr;
 		for (int srcX = 0; srcX < pGifImage->ImageDesc.Width; ++srcX)
 		{
 			int srcIndex = (srcY * pGifImage->ImageDesc.Width) + srcX;
-			int dstIndex = ((srcY + pGifImage->ImageDesc.Top) * pGif->SWidth) +
-							 srcX + pGifImage->ImageDesc.Left;
+			GifByteType pixel = pGifImage->RasterBits[ srcIndex ];
 
-			pRawPixels[dstIndex] = pGifImage->RasterBits[ srcIndex ];
+			if (pixel != transparentColor)
+			{
+				int dstIndex = ((srcY + pGifImage->ImageDesc.Top) * pGif->SWidth) +
+								 srcX + pGifImage->ImageDesc.Left;
+
+				pRawPixels[dstIndex] = pixel;
+			}
 		}
 	}
 
@@ -126,13 +152,13 @@ static unsigned char* pPreviousCanvas = nullptr;
 		8, pGif->SWidth, SDL_PIXELFORMAT_INDEX8);
 
 
-	// Assign Global Color Map
-	ColorMapObject *pColorMap = pGif->SColorMap;
+	// Assign Local Color Map
+	ColorMapObject* pColorMap = pGifImage->ImageDesc.ColorMap;
 
 	if (!pColorMap)
 	{
-		// No Global Color Map, Assign Local Color Map
-		pColorMap = pGifImage->ImageDesc.ColorMap;
+		// No Local Color Map, Assign Global Color Map
+		pColorMap = pGif->SColorMap;
 	}
 
 	if (pColorMap)
@@ -159,26 +185,6 @@ static unsigned char* pPreviousCanvas = nullptr;
 	// It turns out there's a userdata field in the surface
 	// I might as well use this to convey the play-speed information
 
-	int delayTime = 0;
-	int transparentColor = NO_TRANSPARENT_COLOR;
-
-	for (int idx = 0; idx < pGifImage->ExtensionBlockCount; ++idx)
-	{
-		if ( GRAPHICS_EXT_FUNC_CODE == pGifImage->ExtensionBlocks[idx].Function )
-		{
-			// We have a Grapics Control Block, which holds the transparent color ? (not sure we care)
-			// and the DelayTime  (I definitely care)
-			GraphicsControlBlock GCB;
-
-			if (GIF_OK == DGifExtensionToGCB(pGifImage->ExtensionBlocks[idx].ByteCount,
-							   pGifImage->ExtensionBlocks[idx].Bytes,
-							   &GCB))
-			{
-				delayTime = GCB.DelayTime;
-				transparentColor = GCB.TransparentColor;
-			}
-		}
-	}
 
 	// Stuff in the Delay Time, and the Transparent Color Index
 	pTargetSurface->userdata = (void *)((delayTime & 0xFFFF) | (transparentColor << 16));
