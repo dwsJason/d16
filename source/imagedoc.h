@@ -53,7 +53,7 @@ class ImageDocument
 {
 public:
 	ImageDocument(std::string filename, std::string pathname, SDL_Surface* pImage);
-	ImageDocument(std::string filename, std::string pathname, const std::vector<SDL_Surface*>& Images);
+	ImageDocument(std::string filename, std::string pathname, const std::vector<SDL_Surface*> Images);
 	~ImageDocument();
 
 	bool IsClosed() { return !m_bOpen; }
@@ -98,7 +98,7 @@ private:
 	std::vector<GLuint> m_images; // GL Images
 	std::vector<SDL_Surface*> m_pSurfaces;
 	bool m_bPlaying; 	// Is Animation Playing
-	int	 m_bDelayTime;	// Delay Time
+	int	 m_iDelayTime;	// Delay Time
 	int  m_iFrameNo;	// Currently Displayed Frame Number
 
 	int m_numSourceColors;

@@ -51,7 +51,7 @@ SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
 
 //------------------------------------------------------------------------------
 // Animation Supporting Version
-ImageDocument::ImageDocument(std::string filename, std::string pathname, const std::vector<SDL_Surface*>& Images)
+ImageDocument::ImageDocument(std::string filename, std::string pathname, std::vector<SDL_Surface*> Images)
 	: ImageDocument(filename, pathname, Images[0])
 {
 	//m_images.push_back(m_image);
@@ -61,7 +61,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, const s
 	for (int idx = 0; idx < Images.size(); ++idx)
 	{
 		m_pSurfaces.push_back(Images[idx]);
-		m_images.push_back(SDL_GL_LoadTexture(Images[idx], m_image_uv));
+		m_images.push_back(SDL_GL_LoadTexture(m_pSurfaces[idx], m_image_uv));
 	}
 
 	m_bPlaying = true;
@@ -74,7 +74,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_pathname(pathname)
 	, m_pSurface( pImage )
 	, m_bPlaying(false)
-	, m_bDelayTime(0)
+	, m_iDelayTime(0)
 	, m_iFrameNo(0)
 	, m_zoom(1)
 	, m_targetImage(0)
@@ -89,12 +89,12 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 {
 	// Make sure the surface is in a supported format for eyedropper
 	//if (SDL_PIXELFORMAT_RGBA8888 != pImage->format->format)
-	if (4 != pImage->format->BytesPerPixel)
-	{
-		m_pSurface = SDL_SurfaceToRGBA( pImage );
-		SDL_FreeSurface( pImage );
-		pImage = m_pSurface;
-	}
+	//if (4 != pImage->format->BytesPerPixel)
+	//{
+	//	m_pSurface = SDL_SurfaceToRGBA( pImage );
+	//	SDL_FreeSurface( pImage );
+	//	pImage = m_pSurface;
+	//}
 
 	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
 
@@ -301,6 +301,24 @@ void ImageDocument::Render()
 	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
+
+	// Animation Support
+	if (m_bPlaying && m_images.size() > 1)
+	{
+		m_iDelayTime--;
+		if (m_iDelayTime <= 0)
+		{
+			m_iFrameNo++;
+			if (m_iFrameNo >= m_images.size())
+			{
+				m_iFrameNo = 0;
+			}
+
+			m_iDelayTime = ((int)m_pSurfaces[m_iFrameNo]->userdata)&0xFFFF;
+		}
+
+		tex_id = (ImTextureID)((size_t)m_images[m_iFrameNo]);
+	}
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
