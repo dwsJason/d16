@@ -97,8 +97,10 @@ private:
 	// Turns out we now support Animation, weird
 	std::vector<GLuint> m_images; // GL Images
 	std::vector<SDL_Surface*> m_pSurfaces;
+	std::vector<int> m_iDelayTimes;
+
 	bool m_bPlaying; 	// Is Animation Playing
-	int	 m_iDelayTime;	// Delay Time
+	float m_fDelayTime;	// Delay Time
 	int  m_iFrameNo;	// Currently Displayed Frame Number
 
 	int m_numSourceColors;

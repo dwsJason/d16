@@ -54,14 +54,12 @@ SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
 ImageDocument::ImageDocument(std::string filename, std::string pathname, std::vector<SDL_Surface*> Images)
 	: ImageDocument(filename, pathname, Images[0])
 {
-	//m_images.push_back(m_image);
-	//m_pSurfaces.push_back(m_pSurface);
-
 	// Copy the the remainng Images / and surfaces into the ImageDocument
 	for (int idx = 0; idx < Images.size(); ++idx)
 	{
 		m_pSurfaces.push_back(Images[idx]);
 		m_images.push_back(SDL_GL_LoadTexture(m_pSurfaces[idx], m_image_uv));
+		m_iDelayTimes.push_back(((int)m_pSurfaces[idx]->userdata)&0xFFFF);
 	}
 
 	m_bPlaying = true;
@@ -74,7 +72,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_pathname(pathname)
 	, m_pSurface( pImage )
 	, m_bPlaying(false)
-	, m_iDelayTime(0)
+	, m_fDelayTime(0.0f)
 	, m_iFrameNo(0)
 	, m_zoom(1)
 	, m_targetImage(0)
@@ -305,8 +303,9 @@ void ImageDocument::Render()
 	// Animation Support
 	if (m_bPlaying && m_images.size() > 1)
 	{
-		m_iDelayTime--;
-		if (m_iDelayTime <= 0)
+		m_fDelayTime -= (100.0f / ImGui::GetIO().Framerate);
+
+		if (m_fDelayTime <= 0.0f)
 		{
 			m_iFrameNo++;
 			if (m_iFrameNo >= m_images.size())
@@ -314,7 +313,8 @@ void ImageDocument::Render()
 				m_iFrameNo = 0;
 			}
 
-			m_iDelayTime = ((int)m_pSurfaces[m_iFrameNo]->userdata)&0xFFFF;
+			//m_iDelayTime = ((int)m_pSurfaces[m_iFrameNo]->userdata)&0xFFFF;
+			m_fDelayTime += (float)m_iDelayTimes[m_iFrameNo];
 		}
 
 		tex_id = (ImTextureID)((size_t)m_images[m_iFrameNo]);
