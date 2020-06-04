@@ -55,12 +55,14 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, std::ve
 	: ImageDocument(filename, pathname, Images[0])
 {
 	// Copy the the remainng Images / and surfaces into the ImageDocument
-	for (int idx = 0; idx < Images.size(); ++idx)
+	for (int idx = 1; idx < Images.size(); ++idx)
 	{
 		m_pSurfaces.push_back(Images[idx]);
 		m_images.push_back(SDL_GL_LoadTexture(m_pSurfaces[idx], m_image_uv));
-		m_iDelayTimes.push_back(((int)m_pSurfaces[idx]->userdata)&0xFFFF);
+		m_iDelayTimes.push_back(((long long)m_pSurfaces[idx]->userdata)&0xFFFF);
 	}
+
+	m_numSourceColors = CountUniqueColors();
 
 	m_bPlaying = true;
 
@@ -95,7 +97,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	//	pImage = m_pSurface;
 	//}
 
-	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
+	m_images.push_back(SDL_GL_LoadTexture(pImage, m_image_uv));
 
 	m_width  = pImage->w;
 	m_height = pImage->h;
@@ -132,11 +134,12 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 ImageDocument::~ImageDocument()
 {
 	// unregister / free the m_image
-	if (m_image)
+	if (m_images.size())
 	{
-		glDeleteTextures(1, &m_image);
-		m_image = 0;
+		glDeleteTextures((GLsizei)m_images.size(), &m_images[0]);
+		m_images.clear();
 	}
+
 	// unregister / free the m_pSurface
 	if (m_pSurface)
 	{
@@ -297,7 +300,7 @@ void ImageDocument::Render()
 	// Force Target Palette
 	const float TOOLBAR_HEIGHT = 72.0f;
 
-	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
+	ImTextureID tex_id = (ImTextureID)((size_t) m_images[0] ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
 
@@ -1769,10 +1772,10 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
 	// Free up the source image, and opengl texture
 
 		// unregister / free the m_image
-		if (m_image)
+		if (m_images.size())
 		{
-			glDeleteTextures(1, &m_image);
-			m_image = 0;
+			glDeleteTextures((GLsizei)m_images.size(), &m_images[0]);
+			m_images.clear();
 		}
 		// unregister / free the m_pSurface
 		if (m_pSurface)
@@ -1783,7 +1786,7 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
 
 		// Set, and Register the new image
 		m_pSurface = pSurface;
-		m_image = SDL_GL_LoadTexture(pSurface, m_image_uv);
+		m_images.push_back(SDL_GL_LoadTexture(pSurface, m_image_uv));
 
 		m_width  = pSurface->w;
 		m_height = pSurface->h;

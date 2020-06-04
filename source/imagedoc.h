@@ -91,7 +91,6 @@ private:
 	std::string m_pathname;
 
 	// Source Image Things
-	GLuint m_image;           // GL Image Number
 	GLfloat m_image_uv[4];    // uv coordinates
 	SDL_Surface* m_pSurface;
 
