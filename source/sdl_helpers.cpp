@@ -188,7 +188,7 @@ static unsigned char* pPreviousCanvas = nullptr;
 
 
 	// Stuff in the Delay Time, and the Transparent Color Index
-	pTargetSurface->userdata = (void *)((delayTime & 0xFFFF) | (transparentColor << 16));
+	pTargetSurface->userdata = (void *)((long long)((delayTime & 0xFFFF) | (transparentColor << 16)));
 
 	switch (disposalMode)
 	{
