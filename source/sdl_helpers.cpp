@@ -96,6 +96,7 @@ static unsigned char* pPreviousCanvas = nullptr;
 	// Get the transparent color, before the copy
 	int delayTime = 0;
 	int transparentColor = NO_TRANSPARENT_COLOR;
+	int disposalMode = DISPOSAL_UNSPECIFIED;
 
 	for (int idx = 0; idx < pGifImage->ExtensionBlockCount; ++idx)
 	{
@@ -111,6 +112,7 @@ static unsigned char* pPreviousCanvas = nullptr;
 			{
 				delayTime = GCB.DelayTime;
 				transparentColor = GCB.TransparentColor;
+				disposalMode = GCB.DisposalMode;
 			}
 		}
 	}
@@ -118,32 +120,15 @@ static unsigned char* pPreviousCanvas = nullptr;
 	// Frame Clear Stuff
 	if (0 == frameNo)
 	{
+		pPreviousCanvas = (unsigned char*)realloc( pPreviousCanvas, pGif->SWidth * pGif->SHeight );
 		// First Frame, don't start with Garbage
 		memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+		memset(pPreviousCanvas, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
 	}
 	else
 	{
-		bool bSameSize =	(pGifImage->ImageDesc.Width  == pGif->SWidth) &&
-							(pGifImage->ImageDesc.Height == pGif->SHeight) &&
-							(pGifImage->ImageDesc.Left   == 0) &&
-							(pGifImage->ImageDesc.Top    == 0);
-
-		// Copy the Previous Canvas, onto the current Canvas?
-		// Probably
-		if (bSameSize && (transparentColor == pGif->SBackGroundColor))
-		{
-			// Muddy the Image
-			memcpy(pRawPixels, pPreviousCanvas, pGif->SWidth * pGif->SHeight);
-		}
-		else
-		{
-			// Clear the Image
-			memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
-		}
+		memcpy(pRawPixels, pPreviousCanvas, pGif->SWidth * pGif->SHeight);
 	}
-
-	pPreviousCanvas = pRawPixels;
-
 
 	// Copy the Rect from here, onto the canvas
 	for (int srcY = 0; srcY < pGifImage->ImageDesc.Height; ++srcY)
@@ -205,6 +190,23 @@ static unsigned char* pPreviousCanvas = nullptr;
 	// Stuff in the Delay Time, and the Transparent Color Index
 	pTargetSurface->userdata = (void *)((delayTime & 0xFFFF) | (transparentColor << 16));
 
+	switch (disposalMode)
+	{
+	case DISPOSE_BACKGROUND:
+		//$$JGA Note, this might supposed to be just the sub-region of the current
+		//$$JGA Frame
+		memset(pPreviousCanvas, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+		break;
+
+	case DISPOSE_PREVIOUS:
+		break;
+
+	case DISPOSAL_UNSPECIFIED:
+	case DISPOSE_DO_NOT:
+	default:
+		memcpy(pPreviousCanvas, pRawPixels, pGif->SWidth * pGif->SHeight);
+		break;
+	}
 	return pTargetSurface;
 }
 
