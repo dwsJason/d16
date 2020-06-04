@@ -93,20 +93,6 @@ static unsigned char* pPreviousCanvas = nullptr;
 
 	unsigned char* pRawPixels = (unsigned char*)malloc( pGif->SWidth * pGif->SHeight );
 
-	if (0 == frameNo)
-	{
-		// First Frame, don't start with Garbage
-		memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
-	}
-	else
-	{
-		// Copy the Previous Canvas, onto the current Canvas?
-		// Probably
-		memcpy(pRawPixels, pPreviousCanvas, pGif->SWidth * pGif->SHeight);
-	}
-
-	pPreviousCanvas = pRawPixels;
-
 	// Get the transparent color, before the copy
 	int delayTime = 0;
 	int transparentColor = NO_TRANSPARENT_COLOR;
@@ -128,6 +114,36 @@ static unsigned char* pPreviousCanvas = nullptr;
 			}
 		}
 	}
+
+	// Frame Clear Stuff
+	if (0 == frameNo)
+	{
+		// First Frame, don't start with Garbage
+		memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+	}
+	else
+	{
+		bool bSameSize =	(pGifImage->ImageDesc.Width  == pGif->SWidth) &&
+							(pGifImage->ImageDesc.Height == pGif->SHeight) &&
+							(pGifImage->ImageDesc.Left   == 0) &&
+							(pGifImage->ImageDesc.Top    == 0);
+
+		// Copy the Previous Canvas, onto the current Canvas?
+		// Probably
+		if (bSameSize && (transparentColor == pGif->SBackGroundColor))
+		{
+			// Muddy the Image
+			memcpy(pRawPixels, pPreviousCanvas, pGif->SWidth * pGif->SHeight);
+		}
+		else
+		{
+			// Clear the Image
+			memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+		}
+	}
+
+	pPreviousCanvas = pRawPixels;
+
 
 	// Copy the Rect from here, onto the canvas
 	for (int srcY = 0; srcY < pGifImage->ImageDesc.Height; ++srcY)
