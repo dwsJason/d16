@@ -80,6 +80,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_numTargetColors(16)
 	, m_iDither(50)
 	, m_iPosterize(ePosterize444)
+	, m_iTargetColorCount(256)
 	, m_bOpen(true)
 	, m_bPanActive(false)
 	, m_bShowResizeUI(false)
@@ -442,7 +443,7 @@ void ImageDocument::Render()
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Quantize Image"))
+	if (ImGui::Button("16"))
 	{
 		// Make it 16 colors
 		Quant();
@@ -453,6 +454,12 @@ void ImageDocument::Render()
 		ImGui::BeginTooltip();
 		ImGui::Text("Reduce / Remap Colors");
 		ImGui::EndTooltip();
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("256"))
+	{
+		Quant256();
 	}
 
 	ImVec2 buttonSize = ImVec2(20,20);
@@ -551,6 +558,10 @@ void ImageDocument::Render()
 
 	}
 	//ImGui::NewLine();
+
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(80);
+	ImGui::InputInt("Colors", &m_iTargetColorCount);
 
 	//--------------------------------------------------------------------------
 
@@ -1953,6 +1964,232 @@ void ImageDocument::SavePNG(std::string filenamepath)
 	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurface;
 
 	IMG_SavePNG(pImage, filenamepath.c_str());
+}
+
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+void ImageDocument::Quant256()
+{
+	LOG("Quant256\n");
+
+    unsigned int width=(unsigned int)m_width;
+	unsigned int height=(unsigned int)m_height;
+
+	std::vector<SDL_Surface*> pImages;
+	std::vector<unsigned char*> pRawPixels;
+
+
+	//-----------------------------------------------
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		SDL_Surface *pImage = SDL_SurfaceToRGBA(m_pSurface);
+
+		if (nullptr == pImage) return;
+
+		if( SDL_MUSTLOCK(pImage) )
+			SDL_LockSurface(pImage);
+
+		unsigned char* raw_rgba_pixels = (unsigned char*) pImage->pixels;
+
+		//-----------------------------------------------
+		// Since I'm not supporting Alpha, now is the time
+		// to pre-multiply Alpha, and set the alpha to 1
+
+		{
+			for (int y = 0; y < pImage->h; ++y)
+			{
+				unsigned char *pPixel = raw_rgba_pixels + (y * pImage->pitch);
+
+				for (int x = 0; x < pImage->w; ++x)
+				{
+					unsigned int a = pPixel[3];
+
+					if (a != 0xFF)
+					{
+						unsigned int r = pPixel[0];
+						unsigned int g = pPixel[1];
+						unsigned int b = pPixel[2];
+
+						r *= a; r>>=8;
+						g *= a; g>>=8;
+						b *= a; b>>=8;
+
+						a = 255;
+
+						pPixel[0] = (unsigned char)r;
+						pPixel[1] = (unsigned char)g;
+						pPixel[2] = (unsigned char)b;
+						pPixel[3] = (unsigned char)a;
+					}
+
+					pPixel+=4;
+				}
+			}
+		}
+
+		pImages.push_back(pImage);
+		pRawPixels.push_back(raw_rgba_pixels);
+	}
+
+	//-----------------------------------------------
+
+    liq_attr* attr_handle = liq_attr_create();
+
+	liq_set_max_colors(attr_handle, m_iTargetColorCount);
+	liq_set_speed(attr_handle, 1);   // 1-10  (1 best quality)
+
+	int min_posterize = 4;
+	switch (m_iPosterize)
+	{
+	case ePosterize444:
+		min_posterize = 4;
+		break;
+	case ePosterize555:
+		min_posterize = 3;
+		break;
+	case ePosterize888:
+		min_posterize = 0;
+		break;
+	}
+
+	liq_set_min_posterization(attr_handle, min_posterize);
+
+	liq_histogram* pHist = liq_histogram_create( attr_handle );
+
+	std::vector<liq_image*> input_images;
+
+	for (int rawIndex = 0; pRawPixels.size(); ++rawIndex)
+	{
+		//$$JGA Fixed Colors can be added to the input_image
+		//$$JGA which is going to be sweet
+
+		liq_image *input_image = liq_image_create_rgba(attr_handle, pRawPixels[ rawIndex ], width, height, 0);
+
+		// Add the fixed colors
+		for (int idx = 0; idx < m_bLocks.size(); ++idx)
+		{
+			if (m_bLocks[idx])
+			{
+				liq_color color;
+				color.r = (unsigned char) (m_targetColors[idx].x * 255.0f);
+				color.g = (unsigned char) (m_targetColors[idx].y * 255.0f); 
+				color.b = (unsigned char) (m_targetColors[idx].z * 255.0f); 
+				color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
+
+				// Add a Color
+				liq_image_add_fixed_color(input_image, color);
+			}
+		}
+
+		input_images.push_back(input_image);
+
+		liq_histogram_add_image(pHist, attr_handle, input_image);
+	}
+
+
+
+
+	// You could set more options here, like liq_set_quality
+    liq_result *quantization_result;
+    if (liq_histogram_quantize(pHist, attr_handle, &quantization_result) != LIQ_OK) {
+        LOG("Quantization failed, memory leaked\n");
+		return;
+    }
+
+    // Use libimagequant to make new image pixels from the palette
+
+    size_t pixels_size = width * height;
+	liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
+//	liq_set_output_gamma(quantization_result, 1.0);
+
+	std::vector<SDL_Surface*> pResults;
+
+	for (int idx = 0; idx < input_images.size(); ++idx)
+	{
+		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
+
+		liq_write_remapped_image(quantization_result, input_images[ idx ], raw_8bit_pixels, pixels_size);
+		const liq_palette *palette = liq_get_palette(quantization_result);
+
+		// Convert Results into a Surface ------------------------------------------
+
+		SDL_Surface *pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+										raw_8bit_pixels, width, height,
+										8, width, SDL_PIXELFORMAT_INDEX8);
+		SDL_Palette *pPalette = SDL_AllocPalette( m_iTargetColorCount );
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color*)palette->entries, 0, m_iTargetColorCount);
+
+		SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+		pResults.push_back(pTargetSurface);
+	}
+
+	// Fix up the GUI application junk
+
+	// We need to clear and free up the target image lists
+	//--------------------------------------------------------------------------
+	for (int idx = 0; idx < m_targetImages.size(); ++idx)
+	{
+		if (m_targetImages[idx])
+		{
+			glDeleteTextures(1, &m_targetImages[idx]);
+			m_targetImages[idx] = 0;
+		}
+
+		SDL_Surface* pSurface = m_pTargetSurfaces[idx];
+
+		// Free the pixels, because I allocated them?
+		if (pSurface->flags & SDL_PREALLOC)
+			free(pSurface->pixels);
+
+		SDL_FreeSurface(pSurface);
+		m_pTargetSurfaces[idx] = nullptr;
+	}
+	m_targetImages.clear();
+	m_pTargetSurfaces.clear();
+	//--------------------------------------------------------------------------
+
+	GLfloat about_image_uv[4];
+	for (int idx = 0; idx < pResults.size(); ++idx)
+	{
+		m_targetImages.push_back(SDL_GL_LoadTexture(pResults[idx], about_image_uv));
+		m_pTargetSurfaces.push_back(pResults[idx]);
+	}
+
+	m_targetImage = m_targetImages[0];
+    m_pTargetSurface = m_pTargetSurfaces[0];
+
+	// Free up the memory used by libquant -------------------------------------
+    liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+
+	while (input_images.size())
+	{
+		liq_image_destroy(input_images[input_images.size()-1]);
+		input_images.pop_back();
+	}
+
+    liq_attr_destroy(attr_handle);
+
+	// SDL_CreateRGBSurfaceWithFormatFrom, makes you manage the raw pixels buffer
+	// instead of make a copy of it, so I'm supposed to free it manually, after
+	// the surface is free!
+    //free(raw_8bit_pixels);  // The surface owns these now
+
+	//-----------------------------------------------
+
+	while (pImages.size())
+	{
+		SDL_Surface *pImage = pImages[ pImages.size() - 1 ];
+		pImages.pop_back();
+
+		if( SDL_MUSTLOCK(pImage) )
+			SDL_UnlockSurface(pImage);
+
+		SDL_FreeSurface(pImage);     /* No longer needed */
+	}
+
 }
 
 //------------------------------------------------------------------------------

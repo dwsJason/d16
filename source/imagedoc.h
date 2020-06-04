@@ -65,6 +65,7 @@ private:
 	int CountUniqueColors();
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant();
+	void Quant256();
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
@@ -112,10 +113,14 @@ private:
 	// Destination Image Things
 	GLuint m_targetImage; // GL Image Number
 	SDL_Surface* m_pTargetSurface;
+	std::vector<GLuint> m_targetImages; // GL Images
+	std::vector<SDL_Surface*> m_pTargetSurfaces;
+
 	int m_numTargetColors;
 
 	int m_iDither;
 	int m_iPosterize;
+	int m_iTargetColorCount;
 
 	std::vector<int>   m_bLocks;
 	std::vector<ImVec4> m_targetColors;
