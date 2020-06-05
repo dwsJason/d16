@@ -238,6 +238,17 @@ std::vector<SDL_Surface*> SDL_GIF_Load(const char* pFilePath)
 	return results;
 }
 
+//
+//  Helpers
+//
+std::vector<SDL_Surface*> SDL_FAN_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+	(void)pFilePath;
+	return results;
+}
+
+
 //------------------------------------------------------------------------------
 
 int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
@@ -307,4 +318,12 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
 }
 
 //------------------------------------------------------------------------------
+
+void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath, bool bTiled)
+{
+	(void)pSurfaces;
+	(void)pFilePath;
+	(void)bTiled;
+}
+
 

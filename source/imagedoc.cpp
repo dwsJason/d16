@@ -541,6 +541,38 @@ void ImageDocument::Render()
 															defaultFilename);
 
 				}
+
+				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
+				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveFANKey", "Save as FAN(bitmap)", ".fan\0\0",
+														   ".",
+															defaultFilename);
+
+				}
+
+				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Tiles)"))
+				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveFANTileKey", "Save as FAN(tiles)", ".fan\0\0",
+														   ".",
+															defaultFilename);
+
+				}
+
+
 				ImGui::EndPopup();
 			}
 		}
@@ -614,6 +646,26 @@ void ImageDocument::Render()
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SavePNGKey");
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SaveFAN( ImGuiFileDialog::Instance()->GetFilepathName(), false );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveFANKey");
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANTileKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SaveFAN( ImGuiFileDialog::Instance()->GetFilepathName(), true );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveFANTileKey");
 	}
 
 }
@@ -1987,5 +2039,13 @@ void ImageDocument::Quant256()
 
 }
 
+//------------------------------------------------------------------------------
+// Save as Foenix Animation
+//
+void ImageDocument::SaveFAN(std::string filenamepath, bool bTiled)
+{
+// Choose a surface to save
+	SDL_IMG_SaveFAN(m_pTargetSurfaces, filenamepath.c_str(), bTiled);
+}
 //------------------------------------------------------------------------------
 

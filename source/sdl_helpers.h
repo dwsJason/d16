@@ -33,8 +33,11 @@ typedef float		GLfloat;	/* single precision float */
 
 GLuint SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
 std::vector<SDL_Surface*> SDL_GIF_Load(const char* pFilePath);
+std::vector<SDL_Surface*> SDL_FAN_Load(const char* pFilePath);
 
 int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface);
+
+void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath, bool bTiled=false);
 
 #endif // SDL_HELPERS_H
 
