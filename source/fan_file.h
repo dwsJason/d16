@@ -17,6 +17,8 @@
 
 #include <vector>
 
+#pragma pack(push, 1)
+
 typedef struct FAN_Color
 {
     unsigned char b;
@@ -24,6 +26,54 @@ typedef struct FAN_Color
 	unsigned char r;
 	unsigned char a;
 } FAN_Color;
+
+// Header Chunk (whole file Chunk)
+typedef struct FanFile_Header
+{
+	char 			f,a,n,m;  // 'F','A','N','M'
+	unsigned char	version;  // 0x00 or 0x80 for Tiled
+	short			width;	  // In pixels
+	short			height;	  // In pixels
+	unsigned int 	file_length;  // In bytes, including the 16 byte header
+
+	unsigned short	frame_count;	// 3 bytes for the frame count
+	unsigned char   frame_count_high;
+
+} FanFile_Header;
+
+// Color LookUp Table, Chunk
+typedef struct FanFile_CLUT
+{
+	char		  c,l,u,t;		// 'C','L','U','T'
+	unsigned int  chunk_length; // in bytes, including the 8 bytes header of this chunk
+
+	// BGR triples follow
+
+} FanFile_CLUT;
+
+// INITial Frame Chunk
+typedef struct FanFile_INIT
+{
+	char		  i,n,I,t;		// 'I','N','I','T'
+	unsigned int  chunk_length; // in bytes, including the 9 bytes header of this chunk
+	unsigned char num_blobs;	// number of blobs to decompress
+
+	// Commands Coded Data Follows
+
+} FanFile_INIT;
+
+// Frames Chunk
+typedef struct FanFile_FRAM
+{
+	char		  f,r,a,m;		// 'F','R','A','M'
+	unsigned int  chunk_length; // in bytes, including the 8 bytes header of this chunk
+
+	// Commands Coded Data Follows
+
+} FanFile_FRAM;
+
+#pragma pack(pop)
+
 
 typedef struct FAN_Palette
 {
