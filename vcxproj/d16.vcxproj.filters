@@ -104,6 +104,9 @@
     <ClCompile Include="..\source\sdl_helpers.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\fan_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -518,6 +521,9 @@
       <Filter>libs\SDL2</Filter>
     </ClInclude>
     <ClInclude Include="..\source\sdl_helpers.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\fan_file.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

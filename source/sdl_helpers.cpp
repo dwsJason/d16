@@ -6,8 +6,12 @@
 
 #include "sdl_helpers.h"
 
+#include "fan_file.h" // Support for Foenix Animation File
+
 // include the oldest, crustiest gif library out there
 #include "gif_lib.h"
+
+#include "log.h"
 
 #include <map>
 
@@ -321,9 +325,95 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
 
 void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath, bool bTiled)
 {
-	(void)pSurfaces;
 	(void)pFilePath;
 	(void)bTiled;
+
+	if (pSurfaces.size())
+	{
+		// 1. Convert Surfaces into a format that the FanFile can accept
+		SDL_Surface* pSurface = pSurfaces[0];
+
+		int width  = pSurface->w;
+		int height = pSurface->h;
+
+		if (bTiled)
+		{
+			if ((width & 0xF) || (height & 0xF))
+			{
+				LOG("FAILED: Save Tiled FAN: %s\n", pFilePath);
+				LOG("Save Tile Based FAN, Image must be a multiple of 16 pixels\n");
+				LOG("Width = %d, Height = %d\n", width, height );
+				return;
+			}
+		}
+
+		// Check for palette right now
+		SDL_Palette *pPal = pSurface->format->palette;
+
+		if (!pPal)
+		{
+			LOG("FAILED: Save Tiled FAN: %s\n", pFilePath);
+			LOG("SDL_Surface does not contain a palette!\n");
+			return;
+		}
+
+		// Ok, to keep the types as simple as possible, the FanFile class
+		// requires a list of pointer to a char array, that contains the data it's going to process
+		// the char array contains the 8 bit index data used to represent the pixels
+
+		// As it happens, each our surfaces, contains such an array, already
+
+		std::vector<unsigned char*> pixelMaps;
+
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			pSurface = pSurfaces[ idx ];
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_LockSurface(pSurface);
+
+			pixelMaps.push_back( (unsigned char*)pSurface->pixels );
+		}
+
+		// 2. Convert Color Table into a format that the FanFile can accept;
+		//
+		//  FAN Files technically support palette animation, but I'm not doing this yet
+		//
+
+		// Convert the surface palette, into a Foenix palette B G R FF, format
+
+		FAN_Palette palette;
+		palette.iNumColors = pPal->ncolors;
+		palette.pColors = new FAN_Color[ pPal->ncolors ];
+
+		for (int idx = 0; idx < pPal->ncolors; ++idx)
+		{
+			palette.pColors[ idx ].r = pPal->colors[ idx ].r;
+			palette.pColors[ idx ].g = pPal->colors[ idx ].g;
+			palette.pColors[ idx ].b = pPal->colors[ idx ].b;
+			palette.pColors[ idx ].a = pPal->colors[ idx ].a;
+		}
+
+
+		// Create the FanFile Object
+
+		FanFile fanFile(width, height, palette.iNumColors);
+
+		// Add the pixels
+		// Add the colors
+		// Save the File
+
+
+		// Unlock Surfaces
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			pSurface = pSurfaces[ idx ];
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_UnlockSurface(pSurface);
+		}
+
+	}
 }
 
 
