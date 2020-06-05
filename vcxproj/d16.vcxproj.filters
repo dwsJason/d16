@@ -529,6 +529,9 @@
     <ClInclude Include="..\source\common\memstream.h">
       <Filter>source\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\common\bctypes.h">
+      <Filter>source\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">
