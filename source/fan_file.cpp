@@ -193,19 +193,65 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 		}
 	}
 
+	// Update the chunk length
 	pINIT = (FanFile_INIT*)&bytes[ init_offset ];
-
 	pINIT->chunk_length = (unsigned int) (bytes.size() - init_offset);
 
-
 	//--------------------------------------------------------------------------
-	// Add a FRAMes Chunk
+	// Add a FRAMes Chunk 
 
+	if (m_pPixelMaps.size() > 1)
+	{
+		delete[] pWorkBuffer;
+		pWorkBuffer = new char[ decompressed_size * 2 ]; // this is pretty dumb
+
+		size_t fram_offset = bytes.size();
+
+		// Add space for the INIT header;
+		bytes.resize( bytes.size() + sizeof(FanFile_FRAM) );
+		FanFile_FRAM* pFRAM = (FanFile_FRAM*)&bytes[ fram_offset ];
+
+		pFRAM->f = 'F'; pFRAM->r = 'R'; pFRAM->a = 'A'; pFRAM->m = 'M';
+		pFRAM->chunk_length = 0; // Temporary Chunk Size
+
+		// Initializae Canvas with the initial frame
+		unsigned char* pCanvas = new unsigned char[ decompressed_size ];
+		memcpy(pCanvas, pSourceData, decompressed_size);
+
+		for (int index = 1; index < m_pPixelMaps.size(); ++index)
+		{
+			unsigned char *pFrame = m_pPixelMaps[ index ];
+
+			int compSize = EncodeFrame(pCanvas, pFrame, (unsigned char*)pWorkBuffer, decompressed_size);
+
+			if (compSize > 0)
+			{
+				// is this fast?  Probably not
+				for (int compressedIndex = 0; compressedIndex < compSize; ++compressedIndex)
+				{
+					bytes.push_back((unsigned char)pWorkBuffer[ compressedIndex ]);
+				}
+			}
+		}
+
+		delete[] pCanvas;
+
+		// END OF FILE / END OF CHUNK
+		bytes.push_back(0xFF);
+		bytes.push_back(0xFF);
+
+		// Update the chunk length
+		pFRAM = (FanFile_FRAM*)&bytes[ init_offset ];
+		pFRAM->chunk_length = (unsigned int) (bytes.size() - fram_offset);
+	}
 
 	//--------------------------------------------------------------------------
 	// Update the header
 	pHeader = (FanFile_Header*)&bytes[0]; // Required
 	pHeader->file_length = (unsigned int)bytes.size(); // get some valid data in there
+
+	// Try not to leak memory, even though we probably do
+	delete[] pWorkBuffer;
 
 	//--------------------------------------------------------------------------
 	// Create the file and write it
@@ -220,4 +266,12 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 }
 
 //------------------------------------------------------------------------------
+
+int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned char* pWorkBuffer, size_t bufferSize )
+{
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+
 

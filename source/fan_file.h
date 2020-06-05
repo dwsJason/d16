@@ -82,7 +82,6 @@ typedef struct FAN_Palette
 
 } FAN_Palette;
 
-
 class FanFile
 {
 public:
@@ -96,6 +95,8 @@ public:
 	void SaveToFile(const char* pFilenamePath);
 
 private:
+
+	int EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned char* pWorkBuffer, size_t bufferSize );
 
 	int m_widthPixels;		// Width of image in pixels
 	int m_heightPixels;		// Height of image in pixels
