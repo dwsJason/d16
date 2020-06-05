@@ -9,6 +9,8 @@
 // include the oldest, crustiest gif library out there
 #include "gif_lib.h"
 
+#include <map>
+
 //------------------------------------------------------------------------------
 /* Quick utility function for texture creation */
 static int
@@ -234,6 +236,74 @@ std::vector<SDL_Surface*> SDL_GIF_Load(const char* pFilePath)
 	}
 
 	return results;
+}
+
+//------------------------------------------------------------------------------
+
+int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
+{
+	int width  = pSurface->w;
+	int height = pSurface->h;
+
+    SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height,
+											   32,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+                                 0x000000FF,
+                                 0x0000FF00, 0x00FF0000, 0xFF000000
+#else
+                                 0xFF000000,
+                                 0x00FF0000, 0x0000FF00, 0x000000FF
+#endif
+											   );
+
+	if (nullptr == pImage)
+	{
+		return 0;
+	}
+
+	// Copy the source image into 32bpp format
+	{
+		/* Save the alpha blending attributes */
+		SDL_Rect area;
+		SDL_BlendMode saved_mode;
+		SDL_GetSurfaceBlendMode(pSurface, &saved_mode);
+		SDL_SetSurfaceBlendMode(pSurface, SDL_BLENDMODE_NONE);
+
+		/* Copy the surface into the GL texture image */
+		area.x = 0;
+		area.y = 0;
+		area.w = pSurface->w;
+		area.h = pSurface->h;
+		SDL_BlitSurface(pSurface, &area, pImage, &area);
+
+		/* Restore the alpha blending attributes */
+		SDL_SetSurfaceBlendMode(pSurface, saved_mode);
+	}
+
+    if( SDL_MUSTLOCK(pImage) )
+        SDL_LockSurface(pImage);
+
+	std::map<Uint32,Uint32> histogram;
+
+	for (int y = 0; y < pImage->h; ++y)
+	{
+		for (int x = 0; x < pImage->w; ++x)
+		{
+			Uint8 * pixel = (Uint8*)pImage->pixels;
+			pixel += (y * pImage->pitch) + (x * sizeof(Uint32));
+
+			Uint32 color = *((Uint32*)pixel);
+
+			histogram[ color ] = 1;
+		}
+	}
+
+    if( SDL_MUSTLOCK(pImage) )
+        SDL_UnlockSurface(pImage);
+
+    SDL_FreeSurface(pImage);     /* No longer needed */
+
+	return (int)histogram.size();
 }
 
 //------------------------------------------------------------------------------

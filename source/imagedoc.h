@@ -64,7 +64,7 @@ private:
 
 	int CountUniqueColors();
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
-	void Quant();
+	void Quant16();
 	void Quant256();
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
@@ -79,7 +79,8 @@ private:
 	void SaveC1(std::string filenamepath);
 	void SavePNG(std::string filenamepath);
 
-	void SetDocumentSurface(SDL_Surface* pSurface);
+	void SetDocumentSurface(std::vector<SDL_Surface*> pSurfaces);
+	void SetDocumentSurface(SDL_Surface* pSurface, int iFrameNo);
 
 	SDL_Surface* SDL_SurfaceToRGBA(SDL_Surface* pSurface);
 	SDL_Surface* SDL_SurfaceFromRawRGBA(Uint32* pPixels, int iWidth, int iHeight);
@@ -92,7 +93,6 @@ private:
 
 	// Source Image Things
 	GLfloat m_image_uv[4];    // uv coordinates
-	SDL_Surface* m_pSurface;
 
 	// Turns out we now support Animation, weird
 	std::vector<GLuint> m_images; // GL Images
