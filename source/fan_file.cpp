@@ -266,10 +266,189 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 }
 
 //------------------------------------------------------------------------------
-
+//
+// A Frame encoded with a 16 bit code word, followed by some kind of action
+// 
+// Each Frame starts with the assumption that there's a cursor at offset 0
+// in the frame
+//
+// %10xx_xxxx_xxxx_xxxx - Copy Bytes  (1-16384) to follow the word, each byte
+// 						  moves the cursor forwarc
+// %01xx_xxxx_xxxx_xxxx - Skip Bytes  (1-16384) move the "cursor" forward
+// %00xx_xxxx_xxxx_xxxx - LZ4 Decompress Bytes / uncompressed size of bytes to
+//					      to follow (1-16384)
+// %1100_0000_xxxx_xxxx - Realtime Color Swap
+//						  xxx_xxxx number of colors, 1 byte follows, with the
+//                        the color index to start copying onto 0-255, followed
+//                        by the colors
+//                        Colors in B G R 255 format follow (so they can be
+//                        straight copied)
+// 
+// %1111_1111_1111_1111 - End of Chunk / End of File (Loop here?)
+//
+//
+//  pCanvas is the reference Canvas
+//  pFrame  is the new frame
+//  pWorkBuffer is where the encoded data goes
+//  bufferSize is the size in bytes of the uncompressed data
+//
+//  Return encoded size
+//
 int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned char* pWorkBuffer, size_t bufferSize )
 {
-	return 0;
+	int resultSize = 0;
+	int sourceCursor = 0;
+	// There are opportunities to make this better than it is
+	// this is a what I call, "dumb" implementation
+
+	// Start by looking for bytes to skip (this is by far the most efficient
+	// thing we can do while encoding
+
+	// The easiest thing I can do to guarantee no issues with banks changing
+	// is to only analyze the data in 64KB chunks
+	int num_blobs = (int)(bufferSize / 0x10000);
+	if (bufferSize & 0xFFFF)
+	{
+		num_blobs+=1;
+	}
+
+	for (int idx = 0; idx < num_blobs; ++idx)
+	{
+		size_t sourceOffset = 0x10000 * idx;
+		int decompressedChunkSize = (int)(bufferSize - sourceOffset);
+		if (decompressedChunkSize > 0x10000)
+		{
+			decompressedChunkSize = 0x10000;
+		}
+
+		// Now we know we're looking at data that is 64K or less
+		unsigned char *pSrcCanvas = &pCanvas[ sourceOffset ];
+		unsigned char *pSrcFrame  = &pFrame[ sourceOffset ];
+
+		int bridge_run_size = 0;	// how many bytes are we bridging that could be "skipped"
+
+		for (int analyzeIndex = 0; analyzeIndex < decompressedChunkSize;/*++analyzeIndex*/)
+		{
+			if (!bridge_run_size && pSrcCanvas[ analyzeIndex ] == pFrame[ analyzeIndex ])
+			{
+				// We might be skipping some stuff here, we only want to skip if the
+				// skip size is more than 2
+				int skip_run_size = 1;
+
+				while ((analyzeIndex+skip_run_size) < decompressedChunkSize)
+				{
+					if (pSrcCanvas[analyzeIndex + skip_run_size] == pSrcFrame[analyzeIndex + skip_run_size])
+					{
+						skip_run_size++;
+					}
+					else
+						break;
+				}
+
+				// Look at the skip_run_size, to see what to do next, we need
+				// it to be 2 to break even, but if we end because we're out
+				// of data, then, whatever, it is what it is
+
+				if ((skip_run_size > 2) || ((analyzeIndex+skip_run_size) == decompressedChunkSize))
+				{
+					// Let's do it
+
+					// This is going to cause is to re-analyze some of the image
+					if (skip_run_size > 16384)
+					{
+						skip_run_size = 16384;
+					}
+
+					//if (skip_run_size <= 16384)
+					{
+						// Perfect
+						unsigned short command = 0x4000 | ((unsigned short)skip_run_size - 1);
+						*pWorkBuffer++ = (unsigned char)(command & 0xFF);
+						*pWorkBuffer++ = (unsigned char)((command>>8) & 0xFF);
+						sourceCursor += skip_run_size;
+						analyzeIndex += skip_run_size;
+					}
+				}
+				else
+				{
+					bridge_run_size++;
+				}
+			}
+			else
+			{
+				// Bytes differ, due to the encoding, we can eat a series of
+				// bytes that don't differ, and actually end up more efficient
+				// thank encoding a skip command (more efficient means faster
+				// executing code, and smaller total size, so yes both)
+				//
+				int copy_run_size = 1;
+
+				while ((analyzeIndex+copy_run_size) < decompressedChunkSize)
+				{
+					if (pSrcCanvas[ analyzeIndex+copy_run_size ] != pSrcFrame[ analyzeIndex+copy_run_size ])
+					{
+						copy_run_size++;
+						bridge_run_size = 0;
+					}
+					else
+					{
+						copy_run_size++;
+						bridge_run_size++;
+						if (bridge_run_size > 4)
+						{
+							break;
+						}
+					}
+				}
+
+				// if we hit the end of the data / bank, then we just keep what
+				// we have, otherwise, reduce the size of the copy, by the size
+				// of the bridge
+
+				if ((analyzeIndex+copy_run_size) != decompressedChunkSize)
+				{
+					copy_run_size -= bridge_run_size;
+				}
+
+				bridge_run_size = 0;
+
+				if (copy_run_size > 16384)
+				{
+					// Again, is going to cause some data to be analyzed twice
+					copy_run_size = 16384;
+				}
+
+				if (copy_run_size > 256)
+				{
+					// LZ4 Compress the chunk to be copied
+				}
+
+				{
+					unsigned short command = 0x8000 | ((unsigned short)copy_run_size - 1);
+					*pWorkBuffer++ = (unsigned char)(command & 0xFF);
+					*pWorkBuffer++ = (unsigned char)((command>>8) & 0xFF);
+
+					for (int copyIndex = 0; copyIndex <= copy_run_size; ++copyIndex)
+					{
+						*pWorkBuffer++ = pFrame[ analyzeIndex + copyIndex ];
+					}
+
+					sourceCursor += copy_run_size;
+					analyzeIndex += copy_run_size;
+				}
+
+			}
+		}
+	}
+
+	// if copy is large, then look at doing LZ4 compress
+
+
+	// At ending, make sure pCanvas matches pFrame
+	memcpy(pCanvas, pFrame, bufferSize);
+
+
+	return resultSize;
 }
 
 //------------------------------------------------------------------------------
