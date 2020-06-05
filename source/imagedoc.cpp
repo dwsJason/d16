@@ -61,7 +61,6 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_fDelayTime(0.0f)
 	, m_iFrameNo(0)
 	, m_zoom(1)
-	, m_targetImage(0)
 	, m_pTargetSurface(nullptr)
 	, m_numTargetColors(16)
 	, m_iDither(50)
@@ -496,9 +495,9 @@ void ImageDocument::Render()
 		    ImGui::EndPopup();
 		}
 
-		if (m_targetImage)
+		if (m_targetImages.size())
 		{
-			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
+			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImages[ m_iFrameNo ] ); 
 
 			ImGui::SameLine();
 			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
@@ -1503,10 +1502,10 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface, int iFrameNo)
 void ImageDocument::SetDocumentSurface(std::vector<SDL_Surface*> pSurfaces)
 {
 	// Free up the target, because it won't work right after a resize
-		if (m_targetImage)
+		if (m_targetImages.size())
 		{
-			glDeleteTextures(1, &m_targetImage);
-			m_targetImage = 0;
+			glDeleteTextures((GLsizei) m_targetImages.size(), &m_targetImages[0]);
+			m_targetImages.clear();
 		}
 
 		if (m_pTargetSurface)
@@ -1954,7 +1953,7 @@ void ImageDocument::Quant256()
 		m_pTargetSurfaces.push_back(pResults[idx]);
 	}
 
-	m_targetImage = m_targetImages[0];
+	//m_targetImage = m_targetImages[0];
     m_pTargetSurface = m_pTargetSurfaces[0];
 
 	// Free up the memory used by libquant -------------------------------------

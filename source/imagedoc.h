@@ -110,7 +110,7 @@ private:
 	int m_zoom;
 
 	// Destination Image Things
-	GLuint m_targetImage; // GL Image Number
+	//GLuint m_targetImage; // GL Image Number
 	SDL_Surface* m_pTargetSurface;
 	std::vector<GLuint> m_targetImages; // GL Images
 	std::vector<SDL_Surface*> m_pTargetSurfaces;
