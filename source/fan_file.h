@@ -40,6 +40,11 @@ public:
 	FanFile(int iWidthPixels, int iHeightPixels, int iNumColors);
 	~FanFile();
 
+	void SetPalette( const FAN_Palette& palette );
+	void AddImages( const std::vector<unsigned char*>& pPixelMaps );
+
+	void SaveToFile(const char* pFilenamePath);
+
 private:
 
 	int m_widthPixels;		// Width of image in pixels
@@ -47,6 +52,8 @@ private:
 	int m_numColors;		// number of colors in the initial CLUT
 
 	FAN_Palette m_pal;
+
+	std::vector<unsigned char*> m_pPixelMaps;
 
 };
 

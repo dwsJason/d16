@@ -8,7 +8,7 @@
 #ifndef MEMSTREAM_H_
 #define MEMSTREAM_H_
 
-
+#include "bctypes.h"
 #include <string>
 
 // Prototypes

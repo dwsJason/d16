@@ -399,10 +399,17 @@ void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath,
 
 		FanFile fanFile(width, height, palette.iNumColors);
 
-		// Add the pixels
 		// Add the colors
-		// Save the File
+		fanFile.SetPalette( palette );
+		// free the palette
+		delete[] palette.pColors;
+		palette.pColors = nullptr;
 
+		// Add the pixels
+		fanFile.AddImages( pixelMaps );
+
+		// Save the File
+		fanFile.SaveToFile( pFilePath );
 
 		// Unlock Surfaces
 		for (int idx = 0; idx < pSurfaces.size(); ++idx)
@@ -416,4 +423,4 @@ void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath,
 	}
 }
 
-
+//------------------------------------------------------------------------------
