@@ -526,6 +526,9 @@
     <ClInclude Include="..\source\fan_file.h">
       <Filter>source</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\common\memstream.h">
+      <Filter>source\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">

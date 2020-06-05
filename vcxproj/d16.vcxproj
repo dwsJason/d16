@@ -394,6 +394,7 @@
     <ClInclude Include="..\source\common\cursor.h" />
     <ClInclude Include="..\source\common\limage.h" />
     <ClInclude Include="..\source\common\log.h" />
+    <ClInclude Include="..\source\common\memstream.h" />
     <ClInclude Include="..\source\fan_file.h" />
     <ClInclude Include="..\source\imagedoc.h" />
     <ClInclude Include="..\source\paldoc.h" />
