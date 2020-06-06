@@ -677,7 +677,12 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 
 	// Current Frame Number
 	int frame_num = 1;
+	int cursor_position = 0;
+	unsigned char *pCurrentFrame = m_pPixelMaps[1];
+	size_t frame_size = m_widthPixels * m_heightPixels;
 
+	// start, frame 1, with a copy of the first frame
+	memcpy(pCurrentFrame, m_pPixelMaps[0], frame_size);
 
 	// First Code Word
 	codeword  = *pData++;
@@ -692,11 +697,28 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 		switch ((codeword >> 14)&0x3)
 		{
 		case 0: //LZ4 Decompress
-			//$$JGA TODO - Encoder also needs to do this
+			{
+				unsigned short original_size = (codeword & 0x3FFF) + 1;
+
+				int compressed_size = LZ4_decompress_fast((const char*)pData,
+														  (char*)&pCurrentFrame[ cursor_position ],
+														  original_size);
+
+				pData += compressed_size;
+				cursor_position += original_size;
+
+			}
 			break;
 		case 1: // Skip Bytes, Move Frame Cursor ahead
+			cursor_position += (codeword & 0x3FFF) + 1;
 			break;
 		case 2: // Copy Bytes to current cursor position
+			{
+				unsigned short copy_size = (codeword & 0x3FFF) + 1;
+				memcpy(pCurrentFrame + cursor_position, pData, copy_size);
+				cursor_position += copy_size;
+				pData += copy_size;
+			}
 			break;
 		case 3:
 		default:
@@ -708,6 +730,10 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 					break;
 				case 0xE000:	// End of Frame
 					//$$JGA TODO - Extract Time from this word
+					cursor_position = 0;
+					frame_num++;
+					pCurrentFrame = m_pPixelMaps[ frame_num ];
+					memcpy(pCurrentFrame, m_pPixelMaps[ frame_num - 1], frame_size);
 					break;
 				default:
 					// Anything else, let's quit
