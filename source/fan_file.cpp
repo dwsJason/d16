@@ -25,7 +25,15 @@ static_assert(sizeof(FanFile_CLUT)==8, "FanFile_CLUT is supposed to be 8 bytes")
 static_assert(sizeof(FanFile_FRAM)==8, "FanFile_FRAM is supposed to be 8 bytes");
 static_assert(sizeof(FanFile_INIT)==9, "FanFile_INIT is supposed to be 9 bytes");
 
-
+//------------------------------------------------------------------------------
+// Load in a FanFile constructor
+//
+FanFile::FanFile(const char *pFilePath)
+{
+}
+//------------------------------------------------------------------------------
+// Create a blank FanFile constructor
+//
 FanFile::FanFile(int iWidthPixels, int iHeightPixels, int iNumColors)
 	: m_widthPixels( iWidthPixels )
 	, m_heightPixels( iHeightPixels )

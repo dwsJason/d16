@@ -175,6 +175,7 @@ int main(int, char**)
 	ImGuiFileDialog::Instance()->SetFilterColor(".tif", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".tga", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".gif", ImVec4(0,1,0,1));
+	ImGuiFileDialog::Instance()->SetFilterColor(".fan", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".jpg", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".jfif", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".lbm", ImVec4(0,1,0,1));
@@ -186,6 +187,7 @@ int main(int, char**)
 	ImGuiFileDialog::Instance()->SetFilterColor(".TIF", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".TGA", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".GIF", ImVec4(0,1,0,1));
+	ImGuiFileDialog::Instance()->SetFilterColor(".FAN", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".JPG", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".JFIF", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".LBM", ImVec4(0,1,0,1));
@@ -544,7 +546,21 @@ void MainMenuBarUI()
 
 			  SDL_Surface *image = nullptr;
 
-			  if (endsWith(pathName, ".gif"))
+			  if (endsWith(pathName, ".fan"))
+			  {
+				  // Foenix Animation
+				  std::vector<SDL_Surface*> frames = SDL_FAN_Load(pathName.c_str());
+
+				  LOG("FAN_Load %d Frames\n", frames.size());
+				  if (frames.size())
+				  {
+					  LOG("Loaded %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
+				  }
+
+
+			  }
+			  else if (endsWith(pathName, ".gif"))
 			  {
 				  // Use GIF Library
 				  std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());

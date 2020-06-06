@@ -87,12 +87,23 @@ class FanFile
 public:
 	// Create a Blank Fan File
 	FanFile(int iWidthPixels, int iHeightPixels, int iNumColors);
+	// Load in a Fan File
+	FanFile(const char *pFilePath);
+
 	~FanFile();
 
+	// Creation
 	void SetPalette( const FAN_Palette& palette );
 	void AddImages( const std::vector<unsigned char*>& pPixelMaps );
-
 	void SaveToFile(const char* pFilenamePath);
+
+	// Retrieval
+	int GetFrameCount() { return (int)m_pPixelMaps.size(); }
+	int GetWidth()  { return m_widthPixels; }
+	int GetHeight() { return m_heightPixels; }
+
+	const FAN_Palette& GetPalette() { return m_pal; }
+	const std::vector<unsigned char*> GetPixelMaps() { return m_pPixelMaps; }
 
 private:
 
