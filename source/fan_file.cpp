@@ -232,6 +232,10 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 					bytes.push_back((unsigned char)pWorkBuffer[ compressedIndex ]);
 				}
 			}
+
+			// END OF FRAME
+			bytes.push_back(0x00);
+			bytes.push_back(0xE0);
 		}
 
 		delete[] pCanvas;
@@ -283,6 +287,8 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 //                        by the colors
 //                        Colors in B G R 255 format follow (so they can be
 //                        straight copied)
+// 
+// %1110_0000_00xx_xxxx - End of Frame, xxxxx is number of ticks at 60 hz
 // 
 // %1111_1111_1111_1111 - End of Chunk / End of File (Loop here?)
 //
