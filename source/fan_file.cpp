@@ -162,13 +162,13 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 
 	pINIT->num_blobs = (unsigned char) (decompressed_size / 0x10000);
 
-	int num_blobs = pINIT->num_blobs;
-
 	// Need to add an extra blob, if we're not a multiple of 65536
 	if (decompressed_size & 0xFFFF)
 	{
 		pINIT->num_blobs+=1;
 	}
+
+	int num_blobs = pINIT->num_blobs;
 
 	// Work Buffer Guaranteed to be large enough
 	char* pWorkBuffer = new char[ LZ4_COMPRESSBOUND( 65536 ) ];
