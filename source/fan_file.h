@@ -39,6 +39,31 @@ typedef struct FanFile_Header
 	unsigned short	frame_count;	// 3 bytes for the frame count
 	unsigned char   frame_count_high;
 
+//------------------------------------------------------------------------------
+// If you're doing C, just get rid of these methods
+	bool IsValid(unsigned int fileLength)
+	{
+		if (file_length != fileLength)
+			return false;				// size isn't right
+
+		if ((version != 0) && (version != 0x80))
+			return false;				// version is not right
+
+		if ((f!='F')||(a!='A')||(n!='N')||(m!='M'))
+			return false;				// signature is not right
+
+		if ((0==width)||(0==height))
+			return false;				// invalid dimensions
+
+		//unsigned long long pixCount = width * height;
+
+		// Going to put a 4MB limit on the frame size, which is stupid big
+		//if (pixCount > (0x400000))
+		//	return false;
+
+		return true;
+	}
+
 } FanFile_Header;
 
 // Color LookUp Table, Chunk
@@ -48,6 +73,20 @@ typedef struct FanFile_CLUT
 	unsigned int  chunk_length; // in bytes, including the 8 bytes header of this chunk
 
 	// BGR triples follow
+
+//------------------------------------------------------------------------------
+// If you're doing C, just get rid of these methods
+	bool IsValid()
+	{
+		if (chunk_length > (sizeof(FanFile_CLUT)+(256*3)))
+			return false;				// size isn't right
+
+		if ((c!='C')||(l!='L')||(u!='U')||(t!='T'))
+			return false;				// signature is not right
+
+		return true;
+	}
+
 
 } FanFile_CLUT;
 
@@ -59,6 +98,16 @@ typedef struct FanFile_INIT
 	unsigned char num_blobs;	// number of blobs to decompress
 
 	// Commands Coded Data Follows
+//------------------------------------------------------------------------------
+// If you're doing C, just get rid of these methods
+	bool IsValid()
+	{
+		if ((i!='I')||(n!='N')||(I!='I')||(t!='T'))
+			return false;				// signature is not right
+
+		return true;
+	}
+
 
 } FanFile_INIT;
 
@@ -70,7 +119,25 @@ typedef struct FanFile_FRAM
 
 	// Commands Coded Data Follows
 
+//------------------------------------------------------------------------------
+// If you're doing C, just get rid of these methods
+	bool IsValid()
+	{
+		if ((f!='F')||(r!='R')||(a!='A')||(m!='M'))
+			return false;				// signature is not right
+
+		return true;
+	}
+
 } FanFile_FRAM;
+
+// Generic Unknown Chunk
+typedef struct FanFile_CHUNK
+{
+	char id0,id1,id2,id3;
+	unsigned int chunk_length;
+
+} FanFile_CHUNK;
 
 #pragma pack(pop)
 
@@ -98,6 +165,7 @@ public:
 	void SaveToFile(const char* pFilenamePath);
 
 	// Retrieval
+	void LoadFromFile(const char* pFilePath);
 	int GetFrameCount() { return (int)m_pPixelMaps.size(); }
 	int GetWidth()  { return m_widthPixels; }
 	int GetHeight() { return m_heightPixels; }
@@ -106,6 +174,10 @@ public:
 	const std::vector<unsigned char*> GetPixelMaps() { return m_pPixelMaps; }
 
 private:
+
+	void UnpackClut(FanFile_CLUT* pCLUT);
+	void UnpackInitialFrame(FanFile_INIT* pINIT);
+	void UnpackFrames(FanFile_FRAM* pFRAM);
 
 	int EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned char* pWorkBuffer, size_t bufferSize );
 

@@ -24,12 +24,21 @@ static_assert(sizeof(FanFile_Header)==16, "FanFile_Header is supposed to be 16 b
 static_assert(sizeof(FanFile_CLUT)==8, "FanFile_CLUT is supposed to be 8 bytes");
 static_assert(sizeof(FanFile_FRAM)==8, "FanFile_FRAM is supposed to be 8 bytes");
 static_assert(sizeof(FanFile_INIT)==9, "FanFile_INIT is supposed to be 9 bytes");
+static_assert(sizeof(FanFile_CHUNK)==8, "FanFile_CHUNK is supposed to be 8 bytes");
 
 //------------------------------------------------------------------------------
 // Load in a FanFile constructor
 //
 FanFile::FanFile(const char *pFilePath)
+	: m_widthPixels(0)
+	, m_heightPixels(0)
+	, m_numColors( 0 )
 {
+
+	m_pal.iNumColors = 0;
+	m_pal.pColors = nullptr;
+
+	LoadFromFile(pFilePath);
 }
 //------------------------------------------------------------------------------
 // Create a blank FanFile constructor
@@ -46,8 +55,11 @@ FanFile::FanFile(int iWidthPixels, int iHeightPixels, int iNumColors)
 
 FanFile::~FanFile()
 {
-	delete[] m_pal.pColors;
-
+	if (m_pal.pColors)
+	{
+		delete[] m_pal.pColors;
+		m_pal.pColors = nullptr;
+	}
 	// Free Up the memory
 	for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
 	{
@@ -467,4 +479,246 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 //------------------------------------------------------------------------------
 
+void FanFile::LoadFromFile(const char* pFilePath)
+{
+	// Free any existing memory
+	if (m_pal.pColors)
+	{
+		delete[] m_pal.pColors;
+		m_pal.pColors = nullptr;
+	}
+	// Free Up the memory
+	for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
+	{
+		delete[] m_pPixelMaps[idx];
+		m_pPixelMaps[ idx ] = nullptr;
+	}
+	//--------------------------------------------------------------------------
+	
+
+	std::vector<unsigned char> bytes;
+
+	//--------------------------------------------------------------------------
+	// Read the file into memory
+	FILE* pFile = nullptr;
+	errno_t err = fopen_s(&pFile, pFilePath, "rb");
+
+	if (0==err)
+	{
+		fseek(pFile, 0, SEEK_END);
+		size_t length = ftell(pFile);	// get file size
+		fseek(pFile, 0, SEEK_SET);
+
+		bytes.resize( length );			// make sure buffer is large enough
+
+		// Read in the file
+		fread(&bytes[0], sizeof(unsigned char), bytes.size(), pFile);
+		fclose(pFile);
+	}
+
+	if (bytes.size())
+	{
+		size_t file_offset = 0;	// File Cursor
+
+		// Bytes are in the buffer, so let's start looking at what we have
+		FanFile_Header* pHeader = (FanFile_Header*) &bytes[0];
+
+		// Early out if things don't look right
+		if (!pHeader->IsValid((unsigned int)bytes.size()))
+			return;
+
+		m_widthPixels = pHeader->width;
+		m_heightPixels = pHeader->height;
+
+		if (pHeader->version & 0x80)
+		{
+			// We need to UnSwizzle the Data to "see" it correctly on PC
+			// we leave it alone if we're on C256 Device, and use tiles
+			printf("$$TODO JGA UnSwizzle Tiles\n");
+		}
+
+		// Go ahead and allocate the bitmaps
+		unsigned int frameCount = (pHeader->frame_count_high << 16) | pHeader->frame_count;
+		unsigned int frameSize = pHeader->width * pHeader->height;
+
+		for (unsigned int idx = 0; idx < frameCount; ++idx)
+		{
+			unsigned char* pFrame = new unsigned char[ frameSize ];
+			m_pPixelMaps.push_back(pFrame);
+		}
+
+		//----------------------------------------------------------------------
+		// Process Chunks as we encounter them
+		file_offset += sizeof(FanFile_Header);
+
+		// While we're not at the end of the file
+		while (file_offset < bytes.size())
+		{
+			// This is pretty dumb, just get it done
+			// These are the types I understand
+			// every chunk is supposed to contain a value chunk_length
+			// at offset +4, so that we can ignore ones we don't understand
+			FanFile_CLUT* pCLUT = (FanFile_CLUT*)&bytes[ file_offset ];
+			FanFile_INIT* pINIT = (FanFile_INIT*)&bytes[ file_offset ];
+			FanFile_FRAM* pFRAM = (FanFile_FRAM*)&bytes[ file_offset ];
+
+			FanFile_CHUNK* pCHUNK = (FanFile_CHUNK*)&bytes[ file_offset ];
+
+			if (pCLUT->IsValid())
+			{
+				// We have a CLUT Chunk
+				UnpackClut(pCLUT);
+			}
+			else if (pINIT->IsValid())
+			{
+				// We have an initial frame chunk
+				UnpackInitialFrame(pINIT);
+			}
+			else if (pFRAM->IsValid())
+			{
+				// We have a packed frames chunk
+				UnpackFrames(pFRAM);
+			}
+
+			file_offset += pCHUNK->chunk_length;
+
+		}
+	}
+
+}
+
+//------------------------------------------------------------------------------
+//
+//  Move data out of the CLUT b;ock into the unpacked class structure
+//
+void FanFile::UnpackClut(FanFile_CLUT* pCLUT)
+{
+	int numColors = (pCLUT->chunk_length - sizeof(FanFile_CLUT)) / 3;
+
+	// BGR Triples
+	m_pal.iNumColors = numColors;
+
+	unsigned char* pBGR = ((unsigned char*) pCLUT) + sizeof(FanFile_CLUT);
+
+	m_pal.pColors = new FAN_Color[ numColors ];
+
+	for (int colorIndex = 0; colorIndex < numColors; ++colorIndex)
+	{
+		FAN_Color& color = m_pal.pColors[ colorIndex ];
+
+		color.b = *pBGR++;
+		color.g = *pBGR++;
+		color.r = *pBGR++;
+		color.a = 0xFF;
+	}
+}
+
+//------------------------------------------------------------------------------
+//
+// Unpack the initial frame, that's been weirdly packed into 64KB chunks
+// to make it easier to deal with on 65816
+//
+void FanFile::UnpackInitialFrame(FanFile_INIT* pINIT)
+{
+	int num_blobs = pINIT->num_blobs;
+
+	unsigned char *pData = ((unsigned char*)pINIT) + sizeof(FanFile_INIT);
+
+	unsigned char *pTargetBuffer = m_pPixelMaps[ 0 ]; // Data needs to be pre allocated
+
+	while (num_blobs-- > 0)
+	{
+		int originalSize = *pData++;
+		originalSize |= (*pData++)<<8;
+
+		// Zero Size means 64KB
+		if (!originalSize)
+			originalSize = 0x10000;
+
+		int compressed_size = LZ4_decompress_fast((const char*)pData,
+												  (char*)pTargetBuffer,
+												  originalSize);
+
+		pData += compressed_size;
+		pTargetBuffer += originalSize;
+	}
+}
+
+//------------------------------------------------------------------------------
+//
+// Work in progress, doesn't support all the different Code Words that Exist
+//
+// A Frame encoded with a 16 bit code word, followed by some kind of action
+// 
+// Each Frame starts with the assumption that there's a cursor at offset 0
+// in the frame
+//
+// %10xx_xxxx_xxxx_xxxx - Copy Bytes  (1-16384) to follow the word, each byte
+// 						  moves the cursor forwarc
+// %01xx_xxxx_xxxx_xxxx - Skip Bytes  (1-16384) move the "cursor" forward
+// %00xx_xxxx_xxxx_xxxx - LZ4 Decompress Bytes / uncompressed size of bytes to
+//					      to follow (1-16384)
+// %1100_0000_xxxx_xxxx - Realtime Color Swap
+//						  xxx_xxxx number of colors, 1 byte follows, with the
+//                        the color index to start copying onto 0-255, followed
+//                        by the colors
+//                        Colors in B G R 255 format follow (so they can be
+//                        straight copied)
+// 
+// %1110_0000_00xx_xxxx - End of Frame, xxxxx is number of ticks at 60 hz
+// 
+// %1111_1111_1111_1111 - End of Chunk / End of File (Loop here?)
+//
+void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
+{
+	unsigned char* pData = ((unsigned char*)pFRAM) + sizeof(FanFile_FRAM);
+
+	unsigned short codeword = 0;
+
+	// Current Frame Number
+	int frame_num = 1;
+
+
+	// First Code Word
+	codeword  = *pData++;
+	codeword |= (*pData++)<<8;
+
+	// While not the end of the file
+	while (0xFFFF != codeword)
+	{
+		codeword  = *pData++;
+		codeword |= (*pData++)<<8;
+
+		switch ((codeword >> 14)&0x3)
+		{
+		case 0: //LZ4 Decompress
+			//$$JGA TODO - Encoder also needs to do this
+			break;
+		case 1: // Skip Bytes, Move Frame Cursor ahead
+			break;
+		case 2: // Copy Bytes to current cursor position
+			break;
+		case 3:
+		default:
+			{
+				switch (codeword & 0xFF00)
+				{
+				case 0xC000:	// color swap
+					//$$JGA TODO - Encoder also needs this
+					break;
+				case 0xE000:	// End of Frame
+					//$$JGA TODO - Extract Time from this word
+					break;
+				default:
+					// Anything else, let's quit
+					codeword = 0xFFFF;
+					break;
+				}
+			}
+			break;
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
 
