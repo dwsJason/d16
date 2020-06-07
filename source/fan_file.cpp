@@ -746,7 +746,7 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 					}
 					else
 					{
-						printf("help");
+						//printf("help");
 					}
 					break;
 				default:
