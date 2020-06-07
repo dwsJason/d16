@@ -265,7 +265,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 		bytes.push_back(0xFF);
 
 		// Update the chunk length
-		pFRAM = (FanFile_FRAM*)&bytes[ init_offset ];
+		pFRAM = (FanFile_FRAM*)&bytes[ fram_offset ];
 		pFRAM->chunk_length = (unsigned int) (bytes.size() - fram_offset);
 	}
 
@@ -324,6 +324,8 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 {
 	int resultSize = 0;
 	int sourceCursor = 0;
+	unsigned char* pWorkBufferStart = pWorkBuffer;
+
 	// There are opportunities to make this better than it is
 	// this is a what I call, "dumb" implementation
 
@@ -355,7 +357,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 		for (int analyzeIndex = 0; analyzeIndex < decompressedChunkSize;/*++analyzeIndex*/)
 		{
-			if (!bridge_run_size && pSrcCanvas[ analyzeIndex ] == pFrame[ analyzeIndex ])
+			if (!bridge_run_size && pSrcCanvas[ analyzeIndex ] == pSrcFrame[ analyzeIndex ])
 			{
 				// We might be skipping some stuff here, we only want to skip if the
 				// skip size is more than 2
@@ -420,7 +422,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 					{
 						copy_run_size++;
 						bridge_run_size++;
-						if (bridge_run_size > 4)
+						if (bridge_run_size > 2)
 						{
 							break;
 						}
@@ -433,7 +435,10 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 				if ((analyzeIndex+copy_run_size) != decompressedChunkSize)
 				{
-					copy_run_size -= bridge_run_size;
+					if (bridge_run_size > 2)
+					{
+						copy_run_size -= bridge_run_size;
+					}
 				}
 
 				bridge_run_size = 0;
@@ -454,9 +459,9 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 					*pWorkBuffer++ = (unsigned char)(command & 0xFF);
 					*pWorkBuffer++ = (unsigned char)((command>>8) & 0xFF);
 
-					for (int copyIndex = 0; copyIndex <= copy_run_size; ++copyIndex)
+					for (int copyIndex = 0; copyIndex < copy_run_size; ++copyIndex)
 					{
-						*pWorkBuffer++ = pFrame[ analyzeIndex + copyIndex ];
+						*pWorkBuffer++ = pSrcFrame[ analyzeIndex + copyIndex ];
 					}
 
 					sourceCursor += copy_run_size;
@@ -473,6 +478,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 	// At ending, make sure pCanvas matches pFrame
 	memcpy(pCanvas, pFrame, bufferSize);
 
+	resultSize = (int)(pWorkBuffer - pWorkBufferStart);
 
 	return resultSize;
 }
@@ -677,6 +683,7 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 
 	// Current Frame Number
 	int frame_num = 1;
+	int frame_count = GetFrameCount();
 	int cursor_position = 0;
 	unsigned char *pCurrentFrame = m_pPixelMaps[1];
 	size_t frame_size = m_widthPixels * m_heightPixels;
@@ -685,8 +692,8 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 	memcpy(pCurrentFrame, m_pPixelMaps[0], frame_size);
 
 	// First Code Word
-	codeword  = *pData++;
-	codeword |= (*pData++)<<8;
+	//codeword  = *pData++;
+	//codeword |= (*pData++)<<8;
 
 	// While not the end of the file
 	while (0xFFFF != codeword)
@@ -732,8 +739,15 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 					//$$JGA TODO - Extract Time from this word
 					cursor_position = 0;
 					frame_num++;
-					pCurrentFrame = m_pPixelMaps[ frame_num ];
-					memcpy(pCurrentFrame, m_pPixelMaps[ frame_num - 1], frame_size);
+					if (frame_num < frame_count)
+					{
+						pCurrentFrame = m_pPixelMaps[frame_num];
+						memcpy(pCurrentFrame, m_pPixelMaps[ frame_num - 1], frame_size);
+					}
+					else
+					{
+						printf("help");
+					}
 					break;
 				default:
 					// Anything else, let's quit
