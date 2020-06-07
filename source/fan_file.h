@@ -71,18 +71,24 @@ typedef struct FanFile_CLUT
 {
 	char		  c,l,u,t;		// 'C','L','U','T'
 	unsigned int  chunk_length; // in bytes, including the 8 bytes header of this chunk
+	unsigned short num_colors;  // number of colors-1, 1-16384 colors
 
-	// BGR triples follow
+	// BGRA quads follow, either raw or LZ4 compressed
 
 //------------------------------------------------------------------------------
 // If you're doing C, just get rid of these methods
 	bool IsValid()
 	{
-		if (chunk_length > (sizeof(FanFile_CLUT)+(256*3)))
+		int numColors = num_colors & 0x3FFF;
+		numColors++;
+
+		if (chunk_length > (sizeof(FanFile_CLUT)+(numColors*4)))
 			return false;				// size isn't right
 
 		if ((c!='C')||(l!='L')||(u!='U')||(t!='T'))
 			return false;				// signature is not right
+
+
 
 		return true;
 	}

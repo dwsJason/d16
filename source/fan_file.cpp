@@ -21,7 +21,7 @@
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler
 static_assert(sizeof(FanFile_Header)==16, "FanFile_Header is supposed to be 16 bytes");
-static_assert(sizeof(FanFile_CLUT)==8, "FanFile_CLUT is supposed to be 8 bytes");
+static_assert(sizeof(FanFile_CLUT)==10, "FanFile_CLUT is supposed to be 10 bytes");
 static_assert(sizeof(FanFile_FRAM)==8, "FanFile_FRAM is supposed to be 8 bytes");
 static_assert(sizeof(FanFile_INIT)==9, "FanFile_INIT is supposed to be 9 bytes");
 static_assert(sizeof(FanFile_CHUNK)==8, "FanFile_CHUNK is supposed to be 8 bytes");
@@ -126,25 +126,59 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 	//--------------------------------------------------------------------------
 	// Add a CLUT Chunk
 
-	unsigned int clut_size = (m_pal.iNumColors * 3) + sizeof(FanFile_CLUT);
+	unsigned int clut_size = (m_pal.iNumColors * 4) + sizeof(FanFile_CLUT);
 
 	size_t clut_offset = bytes.size();
 
-	// Add space for the CLUT
-	bytes.resize( bytes.size() + clut_size );
-	FanFile_CLUT* pCLUT = (FanFile_CLUT*) &bytes[ clut_offset ];
-	
-	pCLUT->c = 'C'; pCLUT->l = 'L'; pCLUT->u = 'U'; pCLUT->t = 'T';
-	pCLUT->chunk_length = clut_size;
+	int decompressed_clut_size = m_pal.iNumColors * 4;
 
-	unsigned char *pBgr = &bytes[ sizeof(FanFile_CLUT) + clut_offset ];
+	char* pCompressedBuffer = new char[ LZ4_COMPRESSBOUND( decompressed_clut_size ) ];
+	char *pSourceColors = (char *)m_pal.pColors;
 
-	for (int idx = 0; idx < m_pal.iNumColors; ++idx)
+	int compSize = LZ4_compress_HC(pSourceColors,
+							 pCompressedBuffer,
+							 decompressed_clut_size,
+							 LZ4_COMPRESSBOUND( decompressed_clut_size ),
+							 LZ4HC_CLEVEL_MAX );
+
+	if (compSize < decompressed_clut_size)
 	{
-		*pBgr++ = m_pal.pColors[ idx ].b;
-		*pBgr++ = m_pal.pColors[ idx ].g;
-		*pBgr++ = m_pal.pColors[ idx ].r;
+		// Save compressed
+		clut_size = compSize + sizeof(FanFile_CLUT);
+		// Add space for the CLUT
+		bytes.resize( bytes.size() + clut_size );
+		FanFile_CLUT* pCLUT = (FanFile_CLUT*) &bytes[ clut_offset ];
+		pCLUT->c = 'C'; pCLUT->l = 'L'; pCLUT->u = 'U'; pCLUT->t = 'T';
+		pCLUT->chunk_length = clut_size;
+		pCLUT->num_colors = (unsigned short)(m_pal.iNumColors - 1) | (unsigned short)0x8000; // signal compressed
+
+		memcpy(&bytes[ clut_offset + sizeof(FanFile_CLUT) ], pCompressedBuffer,
+			   compSize);
+
 	}
+	else
+	{
+		// Save Decompressed
+		// Add space for the CLUT
+		bytes.resize( bytes.size() + clut_size );
+		FanFile_CLUT* pCLUT = (FanFile_CLUT*) &bytes[ clut_offset ];
+		
+		pCLUT->c = 'C'; pCLUT->l = 'L'; pCLUT->u = 'U'; pCLUT->t = 'T';
+		pCLUT->chunk_length = clut_size;
+		pCLUT->num_colors = (unsigned short)(m_pal.iNumColors - 1);
+
+		unsigned char *pBgr = &bytes[ sizeof(FanFile_CLUT) + clut_offset ];
+
+		for (int idx = 0; idx < m_pal.iNumColors; ++idx)
+		{
+			*pBgr++ = m_pal.pColors[ idx ].b;
+			*pBgr++ = m_pal.pColors[ idx ].g;
+			*pBgr++ = m_pal.pColors[ idx ].r;
+			*pBgr++ = m_pal.pColors[ idx ].a;
+		}
+	}
+
+	delete[] pCompressedBuffer;
 
 	//--------------------------------------------------------------------------
 	// Add an INIT (Initial Frame) Chunk
@@ -185,7 +219,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 			decompressedChunkSize = 0x10000;
 		}
 
-		int compSize = LZ4_compress_HC(&pSourceData[ sourceOffset ],
+		compSize = LZ4_compress_HC(&pSourceData[ sourceOffset ],
 								 pWorkBuffer,
 								 decompressedChunkSize,
 								 LZ4_COMPRESSBOUND( 65536 ),
@@ -242,7 +276,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 		{
 			unsigned char *pFrame = m_pPixelMaps[ index ];
 
-			int compSize = EncodeFrame(pCanvas, pFrame, (unsigned char*)pWorkBuffer, decompressed_size);
+			compSize = EncodeFrame(pCanvas, pFrame, (unsigned char*)pWorkBuffer, decompressed_size);
 
 			if (compSize > 0)
 			{
@@ -622,24 +656,41 @@ void FanFile::LoadFromFile(const char* pFilePath)
 //
 void FanFile::UnpackClut(FanFile_CLUT* pCLUT)
 {
-	int numColors = (pCLUT->chunk_length - sizeof(FanFile_CLUT)) / 3;
+	int numColors = pCLUT->num_colors & 0x7FFF;
+	numColors += 1;
 
-	// BGR Triples
+	// Uncompressed
+	
+	// BGRA Quads
 	m_pal.iNumColors = numColors;
 
-	unsigned char* pBGR = ((unsigned char*) pCLUT) + sizeof(FanFile_CLUT);
+	unsigned char* pBGRA = ((unsigned char*) pCLUT) + sizeof(FanFile_CLUT);
 
 	m_pal.pColors = new FAN_Color[ numColors ];
 
-	for (int colorIndex = 0; colorIndex < numColors; ++colorIndex)
+	if (pCLUT->num_colors & 0x8000)
 	{
-		FAN_Color& color = m_pal.pColors[ colorIndex ];
+		// data is compressed
+		LZ4_decompress_fast((char*)pBGRA,
+							(char*)m_pal.pColors,
+							numColors * 4);
 
-		color.b = *pBGR++;
-		color.g = *pBGR++;
-		color.r = *pBGR++;
-		color.a = 0xFF;
 	}
+	else
+	{
+		memcpy(m_pal.pColors, pBGRA, numColors * 4);
+	}
+
+	//for (int colorIndex = 0; colorIndex < numColors; ++colorIndex)
+	//{
+	//	FAN_Color& color = m_pal.pColors[ colorIndex ];
+	//
+	//	color.b = *pBGR++;
+	//	color.g = *pBGR++;
+	//	color.r = *pBGR++;
+	//	color.a = *pBGR++;
+	//}
+	
 }
 
 //------------------------------------------------------------------------------
