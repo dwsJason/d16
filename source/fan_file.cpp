@@ -422,7 +422,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 					{
 						copy_run_size++;
 						bridge_run_size++;
-						if (bridge_run_size > 2)
+						if (bridge_run_size > 4)
 						{
 							break;
 						}
@@ -435,7 +435,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 				if ((analyzeIndex+copy_run_size) != decompressedChunkSize)
 				{
-					if (bridge_run_size > 2)
+					//if (bridge_run_size > 2)
 					{
 						copy_run_size -= bridge_run_size;
 					}
@@ -449,11 +449,35 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 					copy_run_size = 16384;
 				}
 
-				if (copy_run_size > 256)
+				bool bCompressed = false;
+
+				if (copy_run_size > 32)
 				{
 					// LZ4 Compress the chunk to be copied
+					int compSize = LZ4_compress_HC((char*)&pSrcFrame[ analyzeIndex ],
+											 (char*)&pWorkBuffer[2],
+											 copy_run_size,
+											 LZ4_COMPRESSBOUND( copy_run_size ),
+											 LZ4HC_CLEVEL_MAX );
+
+					float ratio = (float) compSize /  (float) copy_run_size;
+
+					//printf("%d/%d Ratio = %f\n", compSize, copy_run_size, ratio);
+
+					if (ratio <= 0.8f)
+					{
+						// If I save more than 20%, compress, otherwise copy?
+						unsigned short command = ((unsigned short)copy_run_size - 1);
+						*pWorkBuffer++ = (unsigned char)(command & 0xFF);
+						*pWorkBuffer++ = (unsigned char)((command>>8) & 0xFF);
+
+						pWorkBuffer += compSize;
+
+						bCompressed = true;
+					}
 				}
 
+				if (!bCompressed)
 				{
 					unsigned short command = 0x8000 | ((unsigned short)copy_run_size - 1);
 					*pWorkBuffer++ = (unsigned char)(command & 0xFF);
@@ -463,11 +487,10 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 					{
 						*pWorkBuffer++ = pSrcFrame[ analyzeIndex + copyIndex ];
 					}
-
-					sourceCursor += copy_run_size;
-					analyzeIndex += copy_run_size;
 				}
 
+				sourceCursor += copy_run_size;
+				analyzeIndex += copy_run_size;
 			}
 		}
 	}
