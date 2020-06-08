@@ -383,6 +383,10 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 			decompressedChunkSize = 0x10000;
 		}
 
+		//$$JGA allow the history in the decompression buffer, to be used
+		//$$JGA as a dictionary, for better compression
+		LZ4_streamHC_t* pLZ4Stream = LZ4_createStreamHC();
+
 		// Now we know we're looking at data that is 64K or less
 		unsigned char *pSrcCanvas = &pCanvas[ sourceOffset ];
 		unsigned char *pSrcFrame  = &pFrame[ sourceOffset ];
@@ -485,14 +489,28 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 				bool bCompressed = false;
 
-				if (copy_run_size > 32)
+				if (copy_run_size > 8)
 				{
+					// Load the dictionary, with data already in decompress
+					// buffer, for better compression ratios
+					LZ4_resetStreamHC_fast(pLZ4Stream, LZ4HC_CLEVEL_MAX);
+					LZ4_loadDictHC(pLZ4Stream, (char*)pSrcFrame, analyzeIndex);
+
+					int compSize = LZ4_compress_HC_continue(pLZ4Stream,
+											(char*)&pSrcFrame[ analyzeIndex ],
+											(char*)&pWorkBuffer[2],
+											copy_run_size,
+											LZ4_COMPRESSBOUND( copy_run_size ));
+
+
 					// LZ4 Compress the chunk to be copied
+					#if 0
 					int compSize = LZ4_compress_HC((char*)&pSrcFrame[ analyzeIndex ],
 											 (char*)&pWorkBuffer[2],
 											 copy_run_size,
 											 LZ4_COMPRESSBOUND( copy_run_size ),
 											 LZ4HC_CLEVEL_MAX );
+					#endif
 
 					float ratio = (float) compSize /  (float) copy_run_size;
 
@@ -527,6 +545,9 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 				analyzeIndex += copy_run_size;
 			}
 		}
+
+		LZ4_freeStreamHC(pLZ4Stream);
+		pLZ4Stream = nullptr;
 	}
 
 	// if copy is large, then look at doing LZ4 compress
