@@ -21,7 +21,7 @@
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler
 static_assert(sizeof(FanFile_Header)==16, "FanFile_Header is supposed to be 16 bytes");
-static_assert(sizeof(FanFile_CLUT)==8, "FanFile_CLUT is supposed to be 8 bytes");
+static_assert(sizeof(FanFile_CLUT)==10, "FanFile_CLUT is supposed to be 10 bytes");
 static_assert(sizeof(FanFile_FRAM)==8, "FanFile_FRAM is supposed to be 8 bytes");
 static_assert(sizeof(FanFile_INIT)==9, "FanFile_INIT is supposed to be 9 bytes");
 static_assert(sizeof(FanFile_CHUNK)==8, "FanFile_CHUNK is supposed to be 8 bytes");
@@ -126,25 +126,59 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 	//--------------------------------------------------------------------------
 	// Add a CLUT Chunk
 
-	unsigned int clut_size = (m_pal.iNumColors * 3) + sizeof(FanFile_CLUT);
+	unsigned int clut_size = (m_pal.iNumColors * 4) + sizeof(FanFile_CLUT);
 
 	size_t clut_offset = bytes.size();
 
-	// Add space for the CLUT
-	bytes.resize( bytes.size() + clut_size );
-	FanFile_CLUT* pCLUT = (FanFile_CLUT*) &bytes[ clut_offset ];
-	
-	pCLUT->c = 'C'; pCLUT->l = 'L'; pCLUT->u = 'U'; pCLUT->t = 'T';
-	pCLUT->chunk_length = clut_size;
+	int decompressed_clut_size = m_pal.iNumColors * 4;
 
-	unsigned char *pBgr = &bytes[ sizeof(FanFile_CLUT) + clut_offset ];
+	char* pCompressedBuffer = new char[ LZ4_COMPRESSBOUND( decompressed_clut_size ) ];
+	char *pSourceColors = (char *)m_pal.pColors;
 
-	for (int idx = 0; idx < m_pal.iNumColors; ++idx)
+	int compSize = LZ4_compress_HC(pSourceColors,
+							 pCompressedBuffer,
+							 decompressed_clut_size,
+							 LZ4_COMPRESSBOUND( decompressed_clut_size ),
+							 LZ4HC_CLEVEL_MAX );
+
+	if (compSize < decompressed_clut_size)
 	{
-		*pBgr++ = m_pal.pColors[ idx ].b;
-		*pBgr++ = m_pal.pColors[ idx ].g;
-		*pBgr++ = m_pal.pColors[ idx ].r;
+		// Save compressed
+		clut_size = compSize + sizeof(FanFile_CLUT);
+		// Add space for the CLUT
+		bytes.resize( bytes.size() + clut_size );
+		FanFile_CLUT* pCLUT = (FanFile_CLUT*) &bytes[ clut_offset ];
+		pCLUT->c = 'C'; pCLUT->l = 'L'; pCLUT->u = 'U'; pCLUT->t = 'T';
+		pCLUT->chunk_length = clut_size;
+		pCLUT->num_colors = (unsigned short)(m_pal.iNumColors - 1) | (unsigned short)0x8000; // signal compressed
+
+		memcpy(&bytes[ clut_offset + sizeof(FanFile_CLUT) ], pCompressedBuffer,
+			   compSize);
+
 	}
+	else
+	{
+		// Save Decompressed
+		// Add space for the CLUT
+		bytes.resize( bytes.size() + clut_size );
+		FanFile_CLUT* pCLUT = (FanFile_CLUT*) &bytes[ clut_offset ];
+		
+		pCLUT->c = 'C'; pCLUT->l = 'L'; pCLUT->u = 'U'; pCLUT->t = 'T';
+		pCLUT->chunk_length = clut_size;
+		pCLUT->num_colors = (unsigned short)(m_pal.iNumColors - 1);
+
+		unsigned char *pBgr = &bytes[ sizeof(FanFile_CLUT) + clut_offset ];
+
+		for (int idx = 0; idx < m_pal.iNumColors; ++idx)
+		{
+			*pBgr++ = m_pal.pColors[ idx ].b;
+			*pBgr++ = m_pal.pColors[ idx ].g;
+			*pBgr++ = m_pal.pColors[ idx ].r;
+			*pBgr++ = m_pal.pColors[ idx ].a;
+		}
+	}
+
+	delete[] pCompressedBuffer;
 
 	//--------------------------------------------------------------------------
 	// Add an INIT (Initial Frame) Chunk
@@ -162,13 +196,13 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 
 	pINIT->num_blobs = (unsigned char) (decompressed_size / 0x10000);
 
-	int num_blobs = pINIT->num_blobs;
-
 	// Need to add an extra blob, if we're not a multiple of 65536
 	if (decompressed_size & 0xFFFF)
 	{
 		pINIT->num_blobs+=1;
 	}
+
+	int num_blobs = pINIT->num_blobs;
 
 	// Work Buffer Guaranteed to be large enough
 	char* pWorkBuffer = new char[ LZ4_COMPRESSBOUND( 65536 ) ];
@@ -185,7 +219,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 			decompressedChunkSize = 0x10000;
 		}
 
-		int compSize = LZ4_compress_HC(&pSourceData[ sourceOffset ],
+		compSize = LZ4_compress_HC(&pSourceData[ sourceOffset ],
 								 pWorkBuffer,
 								 decompressedChunkSize,
 								 LZ4_COMPRESSBOUND( 65536 ),
@@ -242,7 +276,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 		{
 			unsigned char *pFrame = m_pPixelMaps[ index ];
 
-			int compSize = EncodeFrame(pCanvas, pFrame, (unsigned char*)pWorkBuffer, decompressed_size);
+			compSize = EncodeFrame(pCanvas, pFrame, (unsigned char*)pWorkBuffer, decompressed_size);
 
 			if (compSize > 0)
 			{
@@ -265,7 +299,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 		bytes.push_back(0xFF);
 
 		// Update the chunk length
-		pFRAM = (FanFile_FRAM*)&bytes[ init_offset ];
+		pFRAM = (FanFile_FRAM*)&bytes[ fram_offset ];
 		pFRAM->chunk_length = (unsigned int) (bytes.size() - fram_offset);
 	}
 
@@ -324,6 +358,8 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 {
 	int resultSize = 0;
 	int sourceCursor = 0;
+	unsigned char* pWorkBufferStart = pWorkBuffer;
+
 	// There are opportunities to make this better than it is
 	// this is a what I call, "dumb" implementation
 
@@ -355,7 +391,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 		for (int analyzeIndex = 0; analyzeIndex < decompressedChunkSize;/*++analyzeIndex*/)
 		{
-			if (!bridge_run_size && pSrcCanvas[ analyzeIndex ] == pFrame[ analyzeIndex ])
+			if (!bridge_run_size && pSrcCanvas[ analyzeIndex ] == pSrcFrame[ analyzeIndex ])
 			{
 				// We might be skipping some stuff here, we only want to skip if the
 				// skip size is more than 2
@@ -433,7 +469,10 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 
 				if ((analyzeIndex+copy_run_size) != decompressedChunkSize)
 				{
-					copy_run_size -= bridge_run_size;
+					//if (bridge_run_size > 2)
+					{
+						copy_run_size -= bridge_run_size;
+					}
 				}
 
 				bridge_run_size = 0;
@@ -444,25 +483,48 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 					copy_run_size = 16384;
 				}
 
-				if (copy_run_size > 256)
+				bool bCompressed = false;
+
+				if (copy_run_size > 32)
 				{
 					// LZ4 Compress the chunk to be copied
+					int compSize = LZ4_compress_HC((char*)&pSrcFrame[ analyzeIndex ],
+											 (char*)&pWorkBuffer[2],
+											 copy_run_size,
+											 LZ4_COMPRESSBOUND( copy_run_size ),
+											 LZ4HC_CLEVEL_MAX );
+
+					float ratio = (float) compSize /  (float) copy_run_size;
+
+					//printf("%d/%d Ratio = %f\n", compSize, copy_run_size, ratio);
+
+					if (ratio <= 0.8f)
+					{
+						// If I save more than 20%, compress, otherwise copy?
+						unsigned short command = ((unsigned short)copy_run_size - 1);
+						*pWorkBuffer++ = (unsigned char)(command & 0xFF);
+						*pWorkBuffer++ = (unsigned char)((command>>8) & 0xFF);
+
+						pWorkBuffer += compSize;
+
+						bCompressed = true;
+					}
 				}
 
+				if (!bCompressed)
 				{
 					unsigned short command = 0x8000 | ((unsigned short)copy_run_size - 1);
 					*pWorkBuffer++ = (unsigned char)(command & 0xFF);
 					*pWorkBuffer++ = (unsigned char)((command>>8) & 0xFF);
 
-					for (int copyIndex = 0; copyIndex <= copy_run_size; ++copyIndex)
+					for (int copyIndex = 0; copyIndex < copy_run_size; ++copyIndex)
 					{
-						*pWorkBuffer++ = pFrame[ analyzeIndex + copyIndex ];
+						*pWorkBuffer++ = pSrcFrame[ analyzeIndex + copyIndex ];
 					}
-
-					sourceCursor += copy_run_size;
-					analyzeIndex += copy_run_size;
 				}
 
+				sourceCursor += copy_run_size;
+				analyzeIndex += copy_run_size;
 			}
 		}
 	}
@@ -473,6 +535,7 @@ int FanFile::EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned
 	// At ending, make sure pCanvas matches pFrame
 	memcpy(pCanvas, pFrame, bufferSize);
 
+	resultSize = (int)(pWorkBuffer - pWorkBufferStart);
 
 	return resultSize;
 }
@@ -593,24 +656,41 @@ void FanFile::LoadFromFile(const char* pFilePath)
 //
 void FanFile::UnpackClut(FanFile_CLUT* pCLUT)
 {
-	int numColors = (pCLUT->chunk_length - sizeof(FanFile_CLUT)) / 3;
+	int numColors = pCLUT->num_colors & 0x7FFF;
+	numColors += 1;
 
-	// BGR Triples
+	// Uncompressed
+	
+	// BGRA Quads
 	m_pal.iNumColors = numColors;
 
-	unsigned char* pBGR = ((unsigned char*) pCLUT) + sizeof(FanFile_CLUT);
+	unsigned char* pBGRA = ((unsigned char*) pCLUT) + sizeof(FanFile_CLUT);
 
 	m_pal.pColors = new FAN_Color[ numColors ];
 
-	for (int colorIndex = 0; colorIndex < numColors; ++colorIndex)
+	if (pCLUT->num_colors & 0x8000)
 	{
-		FAN_Color& color = m_pal.pColors[ colorIndex ];
+		// data is compressed
+		LZ4_decompress_fast((char*)pBGRA,
+							(char*)m_pal.pColors,
+							numColors * 4);
 
-		color.b = *pBGR++;
-		color.g = *pBGR++;
-		color.r = *pBGR++;
-		color.a = 0xFF;
 	}
+	else
+	{
+		memcpy(m_pal.pColors, pBGRA, numColors * 4);
+	}
+
+	//for (int colorIndex = 0; colorIndex < numColors; ++colorIndex)
+	//{
+	//	FAN_Color& color = m_pal.pColors[ colorIndex ];
+	//
+	//	color.b = *pBGR++;
+	//	color.g = *pBGR++;
+	//	color.r = *pBGR++;
+	//	color.a = *pBGR++;
+	//}
+	
 }
 
 //------------------------------------------------------------------------------
@@ -677,11 +757,17 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 
 	// Current Frame Number
 	int frame_num = 1;
+	int frame_count = GetFrameCount();
+	int cursor_position = 0;
+	unsigned char *pCurrentFrame = m_pPixelMaps[1];
+	size_t frame_size = m_widthPixels * m_heightPixels;
 
+	// start, frame 1, with a copy of the first frame
+	memcpy(pCurrentFrame, m_pPixelMaps[0], frame_size);
 
 	// First Code Word
-	codeword  = *pData++;
-	codeword |= (*pData++)<<8;
+	//codeword  = *pData++;
+	//codeword |= (*pData++)<<8;
 
 	// While not the end of the file
 	while (0xFFFF != codeword)
@@ -692,11 +778,28 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 		switch ((codeword >> 14)&0x3)
 		{
 		case 0: //LZ4 Decompress
-			//$$JGA TODO - Encoder also needs to do this
+			{
+				unsigned short original_size = (codeword & 0x3FFF) + 1;
+
+				int compressed_size = LZ4_decompress_fast((const char*)pData,
+														  (char*)&pCurrentFrame[ cursor_position ],
+														  original_size);
+
+				pData += compressed_size;
+				cursor_position += original_size;
+
+			}
 			break;
 		case 1: // Skip Bytes, Move Frame Cursor ahead
+			cursor_position += (codeword & 0x3FFF) + 1;
 			break;
 		case 2: // Copy Bytes to current cursor position
+			{
+				unsigned short copy_size = (codeword & 0x3FFF) + 1;
+				memcpy(pCurrentFrame + cursor_position, pData, copy_size);
+				cursor_position += copy_size;
+				pData += copy_size;
+			}
 			break;
 		case 3:
 		default:
@@ -708,6 +811,17 @@ void FanFile::UnpackFrames(FanFile_FRAM* pFRAM)
 					break;
 				case 0xE000:	// End of Frame
 					//$$JGA TODO - Extract Time from this word
+					cursor_position = 0;
+					frame_num++;
+					if (frame_num < frame_count)
+					{
+						pCurrentFrame = m_pPixelMaps[frame_num];
+						memcpy(pCurrentFrame, m_pPixelMaps[ frame_num - 1], frame_size);
+					}
+					else
+					{
+						//printf("help");
+					}
 					break;
 				default:
 					// Anything else, let's quit

@@ -201,7 +201,24 @@ static unsigned char* pPreviousCanvas = nullptr;
 	case DISPOSE_BACKGROUND:
 		//$$JGA Note, this might supposed to be just the sub-region of the current
 		//$$JGA Frame
-		memset(pPreviousCanvas, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+		//memset(pPreviousCanvas, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+		{
+			int top   = pGifImage->ImageDesc.Top;
+			int left  = pGifImage->ImageDesc.Left;
+			int width = pGifImage->ImageDesc.Width;
+			int height= pGifImage->ImageDesc.Height;
+
+			int canvasIndex = top * pGif->SWidth;
+			canvasIndex += left;
+
+			// Clear only the rect
+			for (int y = 0; y < height; ++y)
+			{
+				memset(pPreviousCanvas + canvasIndex, pGif->SBackGroundColor, width);
+				canvasIndex += pGif->SWidth;
+			}
+
+		}
 		break;
 
 	case DISPOSE_PREVIOUS:
