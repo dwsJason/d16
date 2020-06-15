@@ -115,10 +115,12 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 	FanFile_Header* pHeader = (FanFile_Header*)&bytes[0];
 
 	pHeader->f = 'F'; pHeader->a = 'A'; pHeader->n = 'N'; pHeader->m = 'M';
+
+	pHeader->file_length = (unsigned int)bytes.size(); // get some valid data in there
+
 	pHeader->version = 0x00;
 	pHeader->width  = m_widthPixels  & 0xFFFF;
 	pHeader->height = m_heightPixels & 0xFFFF;
-	pHeader->file_length = (unsigned int)bytes.size(); // get some valid data in there
 
 	pHeader->frame_count      = (unsigned short) (m_pPixelMaps.size() & 0xFFFF);
 	pHeader->frame_count_high = (unsigned char)  ((m_pPixelMaps.size() >> 16) & 0xFF);

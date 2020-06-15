@@ -31,10 +31,12 @@ typedef struct FAN_Color
 typedef struct FanFile_Header
 {
 	char 			f,a,n,m;  // 'F','A','N','M'
+
+	unsigned int 	file_length;  // In bytes, including the 16 byte header
+
 	unsigned char	version;  // 0x00 or 0x80 for Tiled
 	short			width;	  // In pixels
 	short			height;	  // In pixels
-	unsigned int 	file_length;  // In bytes, including the 16 byte header
 
 	unsigned short	frame_count;	// 3 bytes for the frame count
 	unsigned char   frame_count_high;
