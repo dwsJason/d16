@@ -25,42 +25,48 @@
 #include <map>
 #include <vector>
 
-// About Desktop OpenGL function loaders:
-//  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
-//  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
-//  You may use another loader/header of your choice (glext, glLoadGen, etc.), or chose to manually implement your own.
-#if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
-#include <GL/gl3w.h>    // Initialize with gl3wInit()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
-#include <GL/glew.h>    // Initialize with glewInit()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
-#include <glad/glad.h>  // Initialize with gladLoadGL()
-#else
-#include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
-#endif
+#include "sdl_helpers.h"
 
 // Statics
 int ImageDocument::s_uniqueId = 0;
 
 static SDL_Cursor* pEyeDropperCursor = nullptr;
 
-// Prototype for helper function, that should live in a some sort of helper
-// module, but so far does not
-GLuint
-SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
-
 //------------------------------------------------------------------------------
+// Animation Supporting Version
+ImageDocument::ImageDocument(std::string filename, std::string pathname, std::vector<SDL_Surface*> Images)
+	: ImageDocument(filename, pathname, Images[0])
+{
+	m_iDelayTimes.push_back(((long long)m_pSurfaces[0]->userdata)&0xFFFF);
 
+	// Copy the the remainng Images / and surfaces into the ImageDocument
+	for (int idx = 1; idx < Images.size(); ++idx)
+	{
+		m_pSurfaces.push_back(Images[idx]);
+		m_images.push_back(SDL_GL_LoadTexture(m_pSurfaces[idx], m_image_uv));
+		m_iDelayTimes.push_back(((long long)m_pSurfaces[idx]->userdata)&0xFFFF);
+	}
+
+	m_numSourceColors = CountUniqueColors();
+
+	m_bPlaying = true;
+
+}
+
+// Just a Static Image Version
 ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Surface *pImage)
 	: m_filename(filename)
 	, m_pathname(pathname)
-	, m_pSurface( pImage )
+	, m_bIsFirstRender(true)
+	, m_bPlaying(false)
+	, m_fDelayTime(0.0f)
+	, m_iFrameNo(0)
 	, m_zoom(1)
-	, m_targetImage(0)
 	, m_pTargetSurface(nullptr)
 	, m_numTargetColors(16)
 	, m_iDither(50)
 	, m_iPosterize(ePosterize444)
+	, m_iTargetColorCount(256)
 	, m_bOpen(true)
 	, m_bPanActive(false)
 	, m_bShowResizeUI(false)
@@ -68,24 +74,25 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 {
 	// Make sure the surface is in a supported format for eyedropper
 	//if (SDL_PIXELFORMAT_RGBA8888 != pImage->format->format)
-	if (4 != pImage->format->BytesPerPixel)
-	{
-		m_pSurface = SDL_SurfaceToRGBA( pImage );
-		SDL_FreeSurface( pImage );
-		pImage = m_pSurface;
-	}
+	//if (4 != pImage->format->BytesPerPixel)
+	//{
+	//	m_pSurface = SDL_SurfaceToRGBA( pImage );
+	//	SDL_FreeSurface( pImage );
+	//	pImage = m_pSurface;
+	//}
 
-	m_image = SDL_GL_LoadTexture(pImage, m_image_uv);
+	m_images.push_back(SDL_GL_LoadTexture(pImage, m_image_uv));
+	m_pSurfaces.push_back(pImage);
 
-	m_width  = pImage->w;
-	m_height = pImage->h;
+	m_width  = m_pSurfaces[0]->w;
+	m_height = m_pSurfaces[0]->h;
 
 	// If the image is small, automatically make it a little bigger
-	if (m_width < 640)
+	if ((m_width <= 320) && (m_height <= 200))
 	{
 		m_zoom = 2;
 
-		if (m_width <= 160)
+		if ((m_width <= 160) && (m_height <= 100))
 		{
 			m_zoom = 4;
 		}
@@ -112,155 +119,32 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 ImageDocument::~ImageDocument()
 {
 	// unregister / free the m_image
-	if (m_image)
+	if (m_images.size())
 	{
-		glDeleteTextures(1, &m_image);
-		m_image = 0;
+		glDeleteTextures((GLsizei)m_images.size(), &m_images[0]);
+		m_images.clear();
 	}
+
 	// unregister / free the m_pSurface
-	if (m_pSurface)
+	while (m_pSurfaces.size())
 	{
-		SDL_FreeSurface(m_pSurface);
-		m_pSurface = nullptr;
+		SDL_FreeSurface(m_pSurfaces[ m_pSurfaces.size() - 1 ]);
+		m_pSurfaces.pop_back();
 	}
 }
-#if 0
-void PutPixel32_nolock(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    Uint8 * pixel = (Uint8*)surface->pixels;
-    pixel += (y * surface->pitch) + (x * sizeof(Uint32));
-    *((Uint32*)pixel) = color;
-}
-
-void PutPixel24_nolock(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    Uint8 * pixel = (Uint8*)surface->pixels;
-    pixel += (y * surface->pitch) + (x * sizeof(Uint8) * 3);
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    pixel[0] = (color >> 24) & 0xFF;
-    pixel[1] = (color >> 16) & 0xFF;
-    pixel[2] = (color >> 8) & 0xFF;
-#else
-    pixel[0] = color & 0xFF;
-    pixel[1] = (color >> 8) & 0xFF;
-    pixel[2] = (color >> 16) & 0xFF;
-#endif
-}
-
-void PutPixel16_nolock(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    Uint8 * pixel = (Uint8*)surface->pixels;
-    pixel += (y * surface->pitch) + (x * sizeof(Uint16));
-    *((Uint16*)pixel) = color & 0xFFFF;
-}
-
-void PutPixel8_nolock(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    Uint8 * pixel = (Uint8*)surface->pixels;
-    pixel += (y * surface->pitch) + (x * sizeof(Uint8));
-    *pixel = color & 0xFF;
-}
-
-void PutPixel32(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    if( SDL_MUSTLOCK(surface) )
-        SDL_LockSurface(surface);
-    PutPixel32_nolock(surface, x, y, color);
-    if( SDL_MUSTLOCK(surface) )
-        SDL_UnlockSurface(surface);
-}
-
-void PutPixel24(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    if( SDL_MUSTLOCK(surface) )
-        SDL_LockSurface(surface);
-    PutPixel24_nolock(surface, x, y, color);
-    if( SDL_MUSTLOCK(surface) )
-        SDL_LockSurface(surface);
-}
-
-void PutPixel16(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    if( SDL_MUSTLOCK(surface) )
-        SDL_LockSurface(surface);
-    PutPixel16_nolock(surface, x, y, color);
-    if( SDL_MUSTLOCK(surface) )
-        SDL_UnlockSurface(surface);
-}
-
-void PutPixel8(SDL_Surface * surface, int x, int y, Uint32 color)
-{
-    if( SDL_MUSTLOCK(surface) )
-        SDL_LockSurface(surface);
-    PutPixel8_nolock(surface, x, y, color);
-    if( SDL_MUSTLOCK(surface) )
-        SDL_UnlockSurface(surface);
-}
-#endif
 
 //------------------------------------------------------------------------------
 
 int ImageDocument::CountUniqueColors()
 {
-    SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, m_width, m_height,
-											   32,
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
-                                 0x000000FF,
-                                 0x0000FF00, 0x00FF0000, 0xFF000000
-#else
-                                 0xFF000000,
-                                 0x00FF0000, 0x0000FF00, 0x000000FF
-#endif
-											   );
+	int totalColors = 0;
 
-	if (nullptr == pImage)
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
 	{
-		return 0;
+		totalColors += SDL_Surface_CountUniqueColors(m_pSurfaces[ idx ]);
 	}
 
-	// Copy the source image into 32bpp format
-	{
-		/* Save the alpha blending attributes */
-		SDL_Rect area;
-		SDL_BlendMode saved_mode;
-		SDL_GetSurfaceBlendMode(m_pSurface, &saved_mode);
-		SDL_SetSurfaceBlendMode(m_pSurface, SDL_BLENDMODE_NONE);
-
-		/* Copy the surface into the GL texture image */
-		area.x = 0;
-		area.y = 0;
-		area.w = m_pSurface->w;
-		area.h = m_pSurface->h;
-		SDL_BlitSurface(m_pSurface, &area, pImage, &area);
-
-		/* Restore the alpha blending attributes */
-		SDL_SetSurfaceBlendMode(m_pSurface, saved_mode);
-	}
-
-    if( SDL_MUSTLOCK(pImage) )
-        SDL_LockSurface(pImage);
-
-	std::map<Uint32,Uint32> histogram;
-
-	for (int y = 0; y < pImage->h; ++y)
-	{
-		for (int x = 0; x < pImage->w; ++x)
-		{
-			Uint8 * pixel = (Uint8*)pImage->pixels;
-			pixel += (y * pImage->pitch) + (x * sizeof(Uint32));
-
-			Uint32 color = *((Uint32*)pixel);
-
-			histogram[ color ] = 1;
-		}
-	}
-
-    if( SDL_MUSTLOCK(pImage) )
-        SDL_UnlockSurface(pImage);
-
-    SDL_FreeSurface(pImage);     /* No longer needed */
-
-	return (int)histogram.size();
+	return totalColors;
 }
 
 //------------------------------------------------------------------------------
@@ -277,9 +161,33 @@ void ImageDocument::Render()
 	// Force Target Palette
 	const float TOOLBAR_HEIGHT = 72.0f;
 
-	ImTextureID tex_id = (ImTextureID)((size_t) m_image ); 
+	ImTextureID tex_id = (ImTextureID)((size_t) m_images[0] ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
+
+	//--------------------------------------------------------------------------
+	// Animation Support
+	//--------------------------------------------------------------------------
+	if (m_bPlaying && m_images.size() > 1)
+	{
+		m_fDelayTime -= (100.0f / ImGui::GetIO().Framerate);
+
+		if (m_fDelayTime <= 0.0f)
+		{
+			m_iFrameNo++;
+			if (m_iFrameNo >= m_images.size())
+			{
+				m_iFrameNo = 0;
+			}
+
+			m_fDelayTime += (float)m_iDelayTimes[m_iFrameNo];
+		}
+
+		tex_id = (ImTextureID)((size_t)m_images[m_iFrameNo]);
+	}
+	//--------------------------------------------------------------------------
+
+	ImGuiIO& io = ImGui::GetIO();
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
@@ -287,7 +195,23 @@ void ImageDocument::Render()
 	float padding_h = (style.WindowPadding.y + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
 	padding_h += TOOLBAR_HEIGHT;
 
-	ImGui::SetNextWindowSize(ImVec2((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h), ImGuiCond_FirstUseEver);
+	//--------------------------------------------------------------------------
+	// Very First Render
+	//--------------------------------------------------------------------------
+	if (m_bIsFirstRender)
+	{
+		m_bIsFirstRender = false;
+		//
+		// I'm going crazy with some image windows, opening up, larger than the parent window
+		//
+		ImVec2 InitialSize((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h);
+
+		if (InitialSize.x > io.DisplaySize.x) InitialSize.x = io.DisplaySize.x;
+		if (InitialSize.y > io.DisplaySize.y) InitialSize.y = io.DisplaySize.y;
+
+		ImGui::SetNextWindowSize(InitialSize, ImGuiCond_FirstUseEver);
+	}
+	//--------------------------------------------------------------------------
 
 	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 
@@ -403,10 +327,23 @@ void ImageDocument::Render()
 
 	ImGui::SameLine();
 
-	if (ImGui::Button("Quantize Image"))
+	if (ImGui::Button("16"))
 	{
 		// Make it 16 colors
-		Quant();
+		Quant16();
+	}
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("Reduce / Remap Colors");
+		ImGui::EndTooltip();
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("256"))
+	{
+		Quant256();
 	}
 
 	if (ImGui::IsItemHovered())
@@ -513,6 +450,10 @@ void ImageDocument::Render()
 	}
 	//ImGui::NewLine();
 
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(80);
+	ImGui::InputInt("Colors", &m_iTargetColorCount);
+
 	//--------------------------------------------------------------------------
 
 	// Width and Height here needs to be based on the parent Window
@@ -575,9 +516,9 @@ void ImageDocument::Render()
 		    ImGui::EndPopup();
 		}
 
-		if (m_targetImage)
+		if (m_targetImages.size())
 		{
-			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImage ); 
+			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImages[ m_iFrameNo ] ); 
 
 			ImGui::SameLine();
 			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
@@ -588,7 +529,7 @@ void ImageDocument::Render()
 			{
 				if (ImGui::MenuItem("Keep Image"))
 				{
-					SetDocumentSurface( SDL_SurfaceToRGBA(m_pTargetSurface) );
+					SetDocumentSurface( /*SDL_SurfaceToRGBA(m_pTargetSurface)*/ m_pTargetSurfaces );
 				}
 				if (ImGui::MenuItem("Save as $C1"))
 				{
@@ -621,6 +562,38 @@ void ImageDocument::Render()
 															defaultFilename);
 
 				}
+
+				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
+				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveFANKey", "Save as FAN(bitmap)", ".fan\0\0",
+														   ".",
+															defaultFilename);
+
+				}
+
+				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Tiles)"))
+				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveFANTileKey", "Save as FAN(tiles)", ".fan\0\0",
+														   ".",
+															defaultFilename);
+
+				}
+
+
 				ImGui::EndPopup();
 			}
 		}
@@ -696,6 +669,26 @@ void ImageDocument::Render()
 		ImGuiFileDialog::Instance()->CloseDialog("SavePNGKey");
 	}
 
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SaveFAN( ImGuiFileDialog::Instance()->GetFilepathName(), false );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveFANKey");
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANTileKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SaveFAN( ImGuiFileDialog::Instance()->GetFilepathName(), true );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveFANTileKey");
+	}
+
 }
 
 //------------------------------------------------------------------------------
@@ -734,13 +727,13 @@ void ImageDocument::RenderEyeDropper()
 		px = floor(px);
 		py = floor(py);
 
-		if ((px >= m_pSurface->w) || (py >= m_pSurface->h))
+		if ((px >= m_pSurfaces[m_iFrameNo]->w) || (py >= m_pSurfaces[m_iFrameNo]->h))
 		{
 			ImGui::PopID();
 			return;	// Bail out if we're in a case that just doesn't work
 		}
 
-		Uint32 pixel = SDL_GetPixel(m_pSurface, (int)px, (int)py);
+		Uint32 pixel = SDL_GetPixel(m_pSurfaces[m_iFrameNo], (int)px, (int)py);
 
 		if (!m_bEyeDropDrag)
 		{
@@ -880,197 +873,19 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 }
 //------------------------------------------------------------------------------
 
-void ImageDocument::Quant()
+void ImageDocument::Quant16()
 {
 	// Do an actual color reduction on the source Image
 	// then generate an OGL Texture
-	LOG("Color Reduce - Go!\n");
+	LOG("Quant16 Color Reduce - Go!\n");
 
-    unsigned int width=(unsigned int)m_width;
-	unsigned int height=(unsigned int)m_height;
-    unsigned char *raw_rgba_pixels = nullptr;
+	int saveTargetColorCount = m_iTargetColorCount;
 
-	//-----------------------------------------------
+	m_iTargetColorCount = 16;
 
-	SDL_Surface *pImage = SDL_SurfaceToRGBA(m_pSurface);
+	Quant256();
 
-	if (nullptr == pImage)
-	{
-		return;
-	}
-
-    if( SDL_MUSTLOCK(pImage) )
-        SDL_LockSurface(pImage);
-
-	raw_rgba_pixels = (unsigned char*) pImage->pixels;
-
-	//-----------------------------------------------
-	// Since I'm not supporting Alpha, now is the time
-	// to pre-multiply Alpha, and set the alpha to 1
-
-	{
-		for (int y = 0; y < pImage->h; ++y)
-		{
-			unsigned char *pPixel = raw_rgba_pixels + (y * pImage->pitch);
-
-			for (int x = 0; x < pImage->w; ++x)
-			{
-				unsigned int a = pPixel[3];
-
-				if (a != 0xFF)
-				{
-					unsigned int r = pPixel[0];
-					unsigned int g = pPixel[1];
-					unsigned int b = pPixel[2];
-
-					r *= a; r>>=8;
-					g *= a; g>>=8;
-					b *= a; b>>=8;
-
-					a = 255;
-
-					pPixel[0] = (unsigned char)r;
-					pPixel[1] = (unsigned char)g;
-					pPixel[2] = (unsigned char)b;
-					pPixel[3] = (unsigned char)a;
-				}
-
-				pPixel+=4;
-			}
-		}
-	}
-
-	//-----------------------------------------------
-
-    liq_attr *handle = liq_attr_create();
-
-	liq_set_max_colors(handle, 16);
-	liq_set_speed(handle, 1);   // 1-10  (1 best quality)
-
-	int min_posterize = 4;
-	switch (m_iPosterize)
-	{
-	case ePosterize444:
-		min_posterize = 4;
-		break;
-	case ePosterize555:
-		min_posterize = 3;
-		break;
-	case ePosterize888:
-		min_posterize = 0;
-		break;
-	}
-
-	liq_set_min_posterization(handle, min_posterize);
-
-	//$$JGA Fixed Colors can be added to the input_image
-	//$$JGA which is going to be sweet
-    liq_image *input_image = liq_image_create_rgba(handle, raw_rgba_pixels, width, height, 0);
-
-	// Add the fixed colors
-	for (int idx = 0; idx < m_bLocks.size(); ++idx)
-	{
-		if (m_bLocks[idx])
-		{
-			liq_color color;
-			color.r = (unsigned char) (m_targetColors[idx].x * 255.0f);
-			color.g = (unsigned char) (m_targetColors[idx].y * 255.0f); 
-			color.b = (unsigned char) (m_targetColors[idx].z * 255.0f); 
-			color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
-			
-			// Add a Color
-			liq_image_add_fixed_color(input_image, color);
-		}
-	}
-
-	// You could set more options here, like liq_set_quality
-    liq_result *quantization_result;
-    if (liq_image_quantize(input_image, handle, &quantization_result) != LIQ_OK) {
-        LOG("Quantization failed, memory leaked\n");
-		return;
-    }
-
-    // Use libimagequant to make new image pixels from the palette
-
-    size_t pixels_size = width * height;
-    unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
-	liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
-//	liq_set_output_gamma(quantization_result, 1.0);
-
-    liq_write_remapped_image(quantization_result, input_image, raw_8bit_pixels, pixels_size);
-    const liq_palette *palette = liq_get_palette(quantization_result);
-
-	// Convert Results into a Surface ------------------------------------------
-
-	SDL_Surface *pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
-									raw_8bit_pixels, width, height,
-									8, width, SDL_PIXELFORMAT_INDEX8);
-	SDL_Palette *pPalette = SDL_AllocPalette( 16 );
-
-	SDL_SetPaletteColors(pPalette, (const SDL_Color*)palette->entries, 0, 16);
-
-	SDL_SetSurfacePalette(pTargetSurface, pPalette);
-
-	// Put the result colors back up in the tray, so we can see them
-	{
-		// take advantage, I know the locked colors all get grouped on the end of the result
-				// count the number of locked colors
-		int numLocked = 0;
-		for (int idx = 0; idx < m_bLocks.size(); ++idx)
-		{
-			if (m_bLocks[idx]) numLocked++;
-		}
-
-		// locked colors start at this index
-		int lockedBaseIndex = (int)m_bLocks.size() - numLocked;
-
-		int lockedIndex = 0;
-		int palIndex = 0;
-
-		for (int idx = 0; idx < m_targetColors.size(); ++idx)
-		{
-			liq_color color;
-
-			if (m_bLocks[idx])
-			{
-				color = palette->entries[lockedBaseIndex + lockedIndex];
-				lockedIndex++;
-			}
-			else
-				color = palette->entries[ palIndex++ ];
-
-			m_targetColors[ idx ].x = color.r / 255.0f;
-			m_targetColors[ idx ].y = color.g / 255.0f;
-			m_targetColors[ idx ].z = color.b / 255.0f;
-			m_targetColors[ idx ].w = color.a / 255.0f;
-		}
-	}
-
-	GLfloat about_image_uv[4];
-	m_targetImage = SDL_GL_LoadTexture(pTargetSurface, about_image_uv);
-
-    m_pTargetSurface = pTargetSurface;
-
-	// Free up the memory used by libquant -------------------------------------
-    liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
-    liq_image_destroy(input_image);
-    liq_attr_destroy(handle);
-
-	// SDL_CreateRGBSurfaceWithFormatFrom, makes you manage the raw pixels buffer
-	// instead of make a copy of it, so I'm supposed to free it manually, after
-	// the surface is free!
-    //free(raw_8bit_pixels);  // The surface owns these now
-
-	// Tell SDL to free it for me
-	//pTargetSurface->flags &= ~SDL_PREALLOC;
-
-	//-----------------------------------------------
-
-    if( SDL_MUSTLOCK(pImage) )
-        SDL_UnlockSurface(pImage);
-
-    SDL_FreeSurface(pImage);     /* No longer needed */
-
+	m_iTargetColorCount = saveTargetColorCount;
 }
 
 //------------------------------------------------------------------------------
@@ -1226,32 +1041,47 @@ void ImageDocument::RenderResizeDialog()
 
 	if (ImGui::Button("Ok", okSize))
 	{
-		if (scale_or_crop)
+		int saveFrameNo = m_iFrameNo;
+
+		for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
 		{
-			// Crop
-			// Resize, and justified copy
-			CropImage(iNewWidth, iNewHeight, iLitButtonIndex);
-		}
-		else
-		{
-			// Scale
-			// Resize and Resample
-			switch (item_current)
+			m_iFrameNo = idx;
+
+			m_width  = m_pSurfaces[ idx ]->w;
+			m_height = m_pSurfaces[ idx ]->h;
+
+			if (scale_or_crop)
 			{
-			case ePointSample:
-				PointSampleResize(iNewWidth,iNewHeight);
-				break;
-			case eBilinearSample:
-				LinearSampleResize(iNewWidth,iNewHeight);
-				break;
-			case eLanczos:
-				LanczosResize(iNewWidth, iNewHeight);
-				break;
-			case eAVIR:
-				AvirSampleResize(iNewWidth,iNewHeight,bDither);
-				break;
+				// Crop
+				// Resize, and justified copy
+				CropImage(iNewWidth, iNewHeight, iLitButtonIndex);
 			}
+			else
+			{
+				// Scale
+				// Resize and Resample
+				switch (item_current)
+				{
+				case ePointSample:
+					PointSampleResize(iNewWidth,iNewHeight);
+					break;
+				case eBilinearSample:
+					LinearSampleResize(iNewWidth,iNewHeight);
+					break;
+				case eLanczos:
+					LanczosResize(iNewWidth, iNewHeight);
+					break;
+				case eAVIR:
+					AvirSampleResize(iNewWidth,iNewHeight,bDither);
+					break;
+				}
+			}
+
 		}
+
+		m_iFrameNo = saveFrameNo;
+
+		m_numSourceColors = CountUniqueColors();
 
 		// Put some code here to dispatch the crop/resize
 		m_bShowResizeUI = false;
@@ -1275,6 +1105,8 @@ void ImageDocument::RenderResizeDialog()
 //
 void ImageDocument::CropImage(int iNewWidth, int iNewHeight, int iJustify)
 {
+	SDL_Surface *m_pSurface = m_pSurfaces[ m_iFrameNo ];
+
     SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iNewWidth, iNewHeight,
 											   32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
@@ -1352,7 +1184,7 @@ void ImageDocument::CropImage(int iNewWidth, int iNewHeight, int iJustify)
 
 
 	// Free up the source image, and opengl texture
-	SetDocumentSurface( pImage );
+	SetDocumentSurface( pImage, m_iFrameNo );
 }
 
 //------------------------------------------------------------------------------
@@ -1360,6 +1192,8 @@ void ImageDocument::CropImage(int iNewWidth, int iNewHeight, int iJustify)
 //------------------------------------------------------------------------------
 void ImageDocument::PointSampleResize(int iNewWidth, int iNewHeight)
 {
+	SDL_Surface *m_pSurface = m_pSurfaces[ m_iFrameNo ];
+
     SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iNewWidth, iNewHeight,
 											   32,
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
@@ -1406,11 +1240,13 @@ void ImageDocument::PointSampleResize(int iNewWidth, int iNewHeight)
 	}
 
 	//--------------------------
-	SetDocumentSurface( pImage );
+	SetDocumentSurface( pImage, m_iFrameNo );
 }
 //------------------------------------------------------------------------------
 void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 {
+	SDL_Surface *m_pSurface = m_pSurfaces[ m_iFrameNo ];
+
 	SDL_Surface *pSource = SDL_SurfaceToRGBA(m_pSurface);
 
 	if (pSource)
@@ -1492,13 +1328,15 @@ void ImageDocument::LinearSampleResize(int iNewWidth, int iNewHeight)
 		pDestImage = nullptr;
 //------------------------------------------
 
-		SetDocumentSurface( pImage );
+		SetDocumentSurface( pImage, m_iFrameNo );
 
 	}
 }
 //------------------------------------------------------------------------------
 void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
 {
+	SDL_Surface *m_pSurface = m_pSurfaces[ m_iFrameNo ];
+
 	Uint32* pPixels = SDL_SurfaceToUint32Array(m_pSurface);
 
 	if (pPixels)
@@ -1522,7 +1360,7 @@ void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
 
 		if (pSurface)
 		{
-			SetDocumentSurface( pSurface );
+			SetDocumentSurface( pSurface, m_iFrameNo );
 		}
 	}
 }
@@ -1530,6 +1368,8 @@ void ImageDocument::LanczosResize(int iNewWidth, int iNewHeight)
 //------------------------------------------------------------------------------
 void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither)
 {
+	SDL_Surface *m_pSurface = m_pSurfaces[ m_iFrameNo ];
+
 	Uint32* pPixels = SDL_SurfaceToUint32Array(m_pSurface);
 
 	if (pPixels)
@@ -1569,7 +1409,7 @@ void ImageDocument::AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither
 
 		if (pSurface)
 		{
-			SetDocumentSurface( pSurface );
+			SetDocumentSurface( pSurface, m_iFrameNo );
 		}
 	}
 }
@@ -1692,23 +1532,63 @@ SDL_Surface* ImageDocument::SDL_SurfaceFromRawRGBA(Uint32* pPixels, int iWidth, 
 
 //------------------------------------------------------------------------------
 
-void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
+void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface, int iFrameNo)
+{
+	// Free up the source image, and opengl texture
+
+		// unregister / free the m_image
+		if (m_images[ iFrameNo ])
+		{
+			glDeleteTextures(1, &m_images[ iFrameNo ]);
+			m_images[ iFrameNo ] = 0;
+		}
+
+		// unregister / free the m_pSurface
+		if (m_pSurfaces[ iFrameNo ])
+		{
+			SDL_FreeSurface(m_pSurfaces[ iFrameNo ]);
+			// Free the pixels, because I allocated them?
+			if (m_pSurfaces[ iFrameNo ]->flags & SDL_PREALLOC)
+				free(m_pSurfaces[ iFrameNo ]->pixels);
+
+			m_pSurfaces[ iFrameNo ] = nullptr;
+		}
+
+		// Set, and Register the new image
+		m_pSurfaces[ iFrameNo ] = pSurface;
+
+		m_width  = pSurface->w;
+		m_height = pSurface->h;
+
+		m_images[iFrameNo] = SDL_GL_LoadTexture(pSurface, m_image_uv);
+
+		// Update colors
+		//m_numSourceColors = CountUniqueColors();
+}
+
+//------------------------------------------------------------------------------
+
+
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::SetDocumentSurface(std::vector<SDL_Surface*> pSurfaces)
 {
 	// Free up the target, because it won't work right after a resize
-		if (m_targetImage)
+		if (m_targetImages.size())
 		{
-			glDeleteTextures(1, &m_targetImage);
-			m_targetImage = 0;
+			glDeleteTextures((GLsizei) m_targetImages.size(), &m_targetImages[0]);
+			m_targetImages.clear();
 		}
 
 		if (m_pTargetSurface)
 		{
 			// I want to accept the target here
-			if (pSurface != m_pTargetSurface)
+			if (pSurfaces[0] != m_pTargetSurface)
 			{
 				// Free the pixels, because I allocated them?
-				if (pSurface->flags & SDL_PREALLOC)
-					free(pSurface->pixels);
+				if (pSurfaces[0]->flags & SDL_PREALLOC)
+					free(pSurfaces[0]->pixels);
 
 				SDL_FreeSurface(m_pTargetSurface);
 			}
@@ -1719,24 +1599,27 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface)
 	// Free up the source image, and opengl texture
 
 		// unregister / free the m_image
-		if (m_image)
+		if (m_images.size())
 		{
-			glDeleteTextures(1, &m_image);
-			m_image = 0;
+			glDeleteTextures((GLsizei)m_images.size(), &m_images[0]);
+			m_images.clear();
 		}
 		// unregister / free the m_pSurface
-		if (m_pSurface)
+		while (m_pSurfaces.size())
 		{
-			SDL_FreeSurface(m_pSurface);
-			m_pSurface = nullptr;
+			SDL_FreeSurface(m_pSurfaces[ m_pSurfaces.size() - 1 ]);
+			m_pSurfaces.pop_back();
 		}
 
 		// Set, and Register the new image
-		m_pSurface = pSurface;
-		m_image = SDL_GL_LoadTexture(pSurface, m_image_uv);
+		m_pSurfaces = pSurfaces;
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			m_images.push_back(SDL_GL_LoadTexture(pSurfaces[idx], m_image_uv));
+		}
 
-		m_width  = pSurface->w;
-		m_height = pSurface->h;
+		m_width  = pSurfaces[0]->w;
+		m_height = pSurfaces[0]->h;
 
 		// Update colors
 		m_numSourceColors = CountUniqueColors();
@@ -1862,7 +1745,7 @@ void ImageDocument::SaveC1(std::string filenamepath)
 	}
 
 // Choose a surface to save
-	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurface;
+	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurfaces[0];
 
 	// Nibblized pixel data
 	for (int y = 0; y < 200; ++y)
@@ -1911,10 +1794,279 @@ void ImageDocument::SaveC1(std::string filenamepath)
 void ImageDocument::SavePNG(std::string filenamepath)
 {
 // Choose a surface to save
-	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurface;
+	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurfaces[0];
 
 	IMG_SavePNG(pImage, filenamepath.c_str());
 }
 
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+void ImageDocument::Quant256()
+{
+	LOG("Quant256\n");
+
+    unsigned int width=(unsigned int)m_width;
+	unsigned int height=(unsigned int)m_height;
+
+	std::vector<SDL_Surface*> pImages;
+	std::vector<unsigned char*> pRawPixels;
+
+
+	//-----------------------------------------------
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		SDL_Surface *pImage = SDL_SurfaceToRGBA(m_pSurfaces[idx]);
+
+		if (nullptr == pImage) return;
+
+		if( SDL_MUSTLOCK(pImage) )
+			SDL_LockSurface(pImage);
+
+		unsigned char* raw_rgba_pixels = (unsigned char*) pImage->pixels;
+
+		//-----------------------------------------------
+		// Since I'm not supporting Alpha, now is the time
+		// to pre-multiply Alpha, and set the alpha to 1
+
+		{
+			for (int y = 0; y < pImage->h; ++y)
+			{
+				unsigned char *pPixel = raw_rgba_pixels + (y * pImage->pitch);
+
+				for (int x = 0; x < pImage->w; ++x)
+				{
+					unsigned int a = pPixel[3];
+
+					if (a != 0xFF)
+					{
+						unsigned int r = pPixel[0];
+						unsigned int g = pPixel[1];
+						unsigned int b = pPixel[2];
+
+						r *= a; r>>=8;
+						g *= a; g>>=8;
+						b *= a; b>>=8;
+
+						a = 255;
+
+						pPixel[0] = (unsigned char)r;
+						pPixel[1] = (unsigned char)g;
+						pPixel[2] = (unsigned char)b;
+						pPixel[3] = (unsigned char)a;
+					}
+
+					pPixel+=4;
+				}
+			}
+		}
+
+		pImages.push_back(pImage);
+		pRawPixels.push_back(raw_rgba_pixels);
+	}
+
+	//-----------------------------------------------
+
+    liq_attr* attr_handle = liq_attr_create();
+
+	liq_set_max_colors(attr_handle, m_iTargetColorCount);
+	liq_set_speed(attr_handle, 1);   // 1-10  (1 best quality)
+
+	int min_posterize = 4;
+	switch (m_iPosterize)
+	{
+	case ePosterize444:
+		min_posterize = 4;
+		break;
+	case ePosterize555:
+		min_posterize = 3;
+		break;
+	case ePosterize888:
+		min_posterize = 0;
+		break;
+	}
+
+	liq_set_min_posterization(attr_handle, min_posterize);
+
+	liq_histogram* pHist = liq_histogram_create( attr_handle );
+
+	std::vector<liq_image*> input_images;
+
+	for (int rawIndex = 0; rawIndex < pRawPixels.size(); ++rawIndex)
+	{
+		//$$JGA Fixed Colors can be added to the input_image
+		//$$JGA which is going to be sweet
+
+		liq_image *input_image = liq_image_create_rgba(attr_handle, pRawPixels[ rawIndex ], width, height, 0);
+
+		// Add the fixed colors
+		for (int idx = 0; idx < m_bLocks.size(); ++idx)
+		{
+			if (m_bLocks[idx])
+			{
+				liq_color color;
+				color.r = (unsigned char) (m_targetColors[idx].x * 255.0f);
+				color.g = (unsigned char) (m_targetColors[idx].y * 255.0f); 
+				color.b = (unsigned char) (m_targetColors[idx].z * 255.0f); 
+				color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
+
+				// Add a Color
+				liq_image_add_fixed_color(input_image, color);
+			}
+		}
+
+		input_images.push_back(input_image);
+
+		liq_histogram_add_image(pHist, attr_handle, input_image);
+	}
+
+
+
+
+	// You could set more options here, like liq_set_quality
+    liq_result *quantization_result;
+    if (liq_histogram_quantize(pHist, attr_handle, &quantization_result) != LIQ_OK) {
+        LOG("Quantization failed, memory leaked\n");
+		return;
+    }
+
+    // Use libimagequant to make new image pixels from the palette
+	const liq_palette *palette = liq_get_palette(quantization_result);
+
+    size_t pixels_size = width * height;
+	liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
+//	liq_set_output_gamma(quantization_result, 1.0);
+
+	std::vector<SDL_Surface*> pResults;
+
+	for (int idx = 0; idx < input_images.size(); ++idx)
+	{
+		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
+
+		liq_write_remapped_image(quantization_result, input_images[ idx ], raw_8bit_pixels, pixels_size);
+
+		// Convert Results into a Surface ------------------------------------------
+
+		SDL_Surface *pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+										raw_8bit_pixels, width, height,
+										8, width, SDL_PIXELFORMAT_INDEX8);
+		SDL_Palette *pPalette = SDL_AllocPalette( m_iTargetColorCount );
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color*)palette->entries, 0, m_iTargetColorCount);
+
+		SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+		pResults.push_back(pTargetSurface);
+	}
+
+	// Put the result colors back up in the tray, so we can see them
+	{
+		// take advantage, I know the locked colors all get grouped on the end of the result
+				// count the number of locked colors
+		int numLocked = 0;
+		for (int idx = 0; idx < m_bLocks.size(); ++idx)
+		{
+			if (m_bLocks[idx]) numLocked++;
+		}
+
+		// locked colors start at this index
+		int lockedBaseIndex = (int)m_bLocks.size() - numLocked;
+
+		int lockedIndex = 0;
+		int palIndex = 0;
+
+		for (int idx = 0; idx < m_targetColors.size(); ++idx)
+		{
+			liq_color color;
+
+			if (m_bLocks[idx])
+			{
+				color = palette->entries[lockedBaseIndex + lockedIndex];
+				lockedIndex++;
+			}
+			else
+				color = palette->entries[ palIndex++ ];
+
+			m_targetColors[ idx ].x = color.r / 255.0f;
+			m_targetColors[ idx ].y = color.g / 255.0f;
+			m_targetColors[ idx ].z = color.b / 255.0f;
+			m_targetColors[ idx ].w = color.a / 255.0f;
+		}
+	}
+
+	// Fix up the GUI application junk
+
+	// We need to clear and free up the target image lists
+	//--------------------------------------------------------------------------
+	for (int idx = 0; idx < m_targetImages.size(); ++idx)
+	{
+		if (m_targetImages[idx])
+		{
+			glDeleteTextures(1, &m_targetImages[idx]);
+			m_targetImages[idx] = 0;
+		}
+
+		SDL_Surface* pSurface = m_pTargetSurfaces[idx];
+
+		// Free the pixels, because I allocated them?
+		if (pSurface->flags & SDL_PREALLOC)
+			free(pSurface->pixels);
+
+		SDL_FreeSurface(pSurface);
+		m_pTargetSurfaces[idx] = nullptr;
+	}
+	m_targetImages.clear();
+	m_pTargetSurfaces.clear();
+	//--------------------------------------------------------------------------
+
+	GLfloat about_image_uv[4];
+	for (int idx = 0; idx < pResults.size(); ++idx)
+	{
+		m_targetImages.push_back(SDL_GL_LoadTexture(pResults[idx], about_image_uv));
+		m_pTargetSurfaces.push_back(pResults[idx]);
+	}
+
+	//m_targetImage = m_targetImages[0];
+    m_pTargetSurface = m_pTargetSurfaces[0];
+
+	// Free up the memory used by libquant -------------------------------------
+    liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+
+	while (input_images.size())
+	{
+		liq_image_destroy(input_images[input_images.size()-1]);
+		input_images.pop_back();
+	}
+
+    liq_attr_destroy(attr_handle);
+
+	// SDL_CreateRGBSurfaceWithFormatFrom, makes you manage the raw pixels buffer
+	// instead of make a copy of it, so I'm supposed to free it manually, after
+	// the surface is free!
+    //free(raw_8bit_pixels);  // The surface owns these now
+
+	//-----------------------------------------------
+
+	while (pImages.size())
+	{
+		SDL_Surface *pImage = pImages[ pImages.size() - 1 ];
+		pImages.pop_back();
+
+		if( SDL_MUSTLOCK(pImage) )
+			SDL_UnlockSurface(pImage);
+
+		SDL_FreeSurface(pImage);     /* No longer needed */
+	}
+
+}
+
+//------------------------------------------------------------------------------
+// Save as Foenix Animation
+//
+void ImageDocument::SaveFAN(std::string filenamepath, bool bTiled)
+{
+// Choose a surface to save
+	SDL_IMG_SaveFAN(m_pTargetSurfaces, filenamepath.c_str(), bTiled);
+}
 //------------------------------------------------------------------------------
 
