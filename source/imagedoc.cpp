@@ -57,6 +57,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, std::ve
 ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Surface *pImage)
 	: m_filename(filename)
 	, m_pathname(pathname)
+	, m_bIsFirstRender(true)
 	, m_bPlaying(false)
 	, m_fDelayTime(0.0f)
 	, m_iFrameNo(0)
@@ -188,22 +189,29 @@ void ImageDocument::Render()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-
 	ImGuiStyle& style = ImGui::GetStyle();
 
 	float padding_w = (style.WindowPadding.x + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
 	float padding_h = (style.WindowPadding.y + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
 	padding_h += TOOLBAR_HEIGHT;
 
-	//
-	// I'm going crazy with some image windows, opening up, larger than the parent window
-	//
-	ImVec2 InitialSize((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h);
+	//--------------------------------------------------------------------------
+	// Very First Render
+	//--------------------------------------------------------------------------
+	if (m_bIsFirstRender)
+	{
+		m_bIsFirstRender = false;
+		//
+		// I'm going crazy with some image windows, opening up, larger than the parent window
+		//
+		ImVec2 InitialSize((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h);
 
-	if (InitialSize.x > io.DisplaySize.x) InitialSize.x = io.DisplaySize.x;
-	if (InitialSize.y > io.DisplaySize.y) InitialSize.y = io.DisplaySize.y;
+		if (InitialSize.x > io.DisplaySize.x) InitialSize.x = io.DisplaySize.x;
+		if (InitialSize.y > io.DisplaySize.y) InitialSize.y = io.DisplaySize.y;
 
-	ImGui::SetNextWindowSize(InitialSize, ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(InitialSize, ImGuiCond_FirstUseEver);
+	}
+	//--------------------------------------------------------------------------
 
 	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 

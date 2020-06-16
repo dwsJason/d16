@@ -92,6 +92,8 @@ private:
 	std::string m_filename;
 	std::string m_pathname;
 
+	bool m_bIsFirstRender;
+
 	// Source Image Things
 	GLfloat m_image_uv[4];    // uv coordinates
 
