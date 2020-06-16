@@ -87,11 +87,11 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	m_height = m_pSurfaces[0]->h;
 
 	// If the image is small, automatically make it a little bigger
-	if (m_width < 640)
+	if ((m_width <= 320) && (m_height <= 200))
 	{
 		m_zoom = 2;
 
-		if (m_width <= 160)
+		if ((m_width <= 160) && (m_height <= 100))
 		{
 			m_zoom = 4;
 		}
@@ -164,7 +164,9 @@ void ImageDocument::Render()
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
 
+	//--------------------------------------------------------------------------
 	// Animation Support
+	//--------------------------------------------------------------------------
 	if (m_bPlaying && m_images.size() > 1)
 	{
 		m_fDelayTime -= (100.0f / ImGui::GetIO().Framerate);
@@ -177,12 +179,15 @@ void ImageDocument::Render()
 				m_iFrameNo = 0;
 			}
 
-			//m_iDelayTime = ((int)m_pSurfaces[m_iFrameNo]->userdata)&0xFFFF;
 			m_fDelayTime += (float)m_iDelayTimes[m_iFrameNo];
 		}
 
 		tex_id = (ImTextureID)((size_t)m_images[m_iFrameNo]);
 	}
+	//--------------------------------------------------------------------------
+
+	ImGuiIO& io = ImGui::GetIO();
+
 
 	ImGuiStyle& style = ImGui::GetStyle();
 
@@ -190,7 +195,15 @@ void ImageDocument::Render()
 	float padding_h = (style.WindowPadding.y + style.FrameBorderSize + style.ChildBorderSize) * 2.0f;
 	padding_h += TOOLBAR_HEIGHT;
 
-	ImGui::SetNextWindowSize(ImVec2((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h), ImGuiCond_FirstUseEver);
+	//
+	// I'm going crazy with some image windows, opening up, larger than the parent window
+	//
+	ImVec2 InitialSize((m_width*m_zoom)+padding_w, (m_height*m_zoom)+padding_h);
+
+	if (InitialSize.x > io.DisplaySize.x) InitialSize.x = io.DisplaySize.x;
+	if (InitialSize.y > io.DisplaySize.y) InitialSize.y = io.DisplaySize.y;
+
+	ImGui::SetNextWindowSize(InitialSize, ImGuiCond_FirstUseEver);
 
 	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 
