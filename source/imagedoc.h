@@ -110,6 +110,11 @@ private:
 
 	int m_width;
 	int m_height;
+
+	// if we keep previousZoom, we can give IMGUI
+	// some hints to keep the window from scrolling
+	// all weird during the zoom
+	int m_previousZoom;
 	int m_zoom;
 
 	// Destination Image Things

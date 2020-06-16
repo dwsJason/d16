@@ -87,6 +87,8 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	m_width  = m_pSurfaces[0]->w;
 	m_height = m_pSurfaces[0]->h;
 
+	//--------------------------------------------------------------------------
+	// Initial Zoom
 	// If the image is small, automatically make it a little bigger
 	if ((m_width <= 320) && (m_height <= 200))
 	{
@@ -97,6 +99,8 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 			m_zoom = 4;
 		}
 	}
+	m_previousZoom = m_zoom;
+	//--------------------------------------------------------------------------
 
 	// Assign a unique Window Name
 	m_windowName = filename + "##" + std::to_string(s_uniqueId++);
@@ -464,12 +468,30 @@ void ImageDocument::Render()
 	window_size.x += style.ChildBorderSize*2.0f;
 	window_size.y += style.ChildBorderSize*2.0f;
 
+	if (m_previousZoom != m_zoom)
+	{
+		ImVec2 ContentSize((float)m_width*m_zoom, (float)m_height*m_zoom);
+
+		ContentSize.x += style.ChildBorderSize*2.0f;
+		ContentSize.y += style.ChildBorderSize*2.0f;
+
+		if (m_targetImages.size())
+		{
+			// If we have a second image take into account
+			ContentSize.x *= 2.0f;
+			// We also need to add in the space between the images, that is
+			ContentSize.x += ImGui::GetStyle().ItemSpacing.x;
+		}
+		ImGui::SetNextWindowContentSize( ContentSize );
+
+	}
+
 	ImGui::BeginChild("Source", ImVec2(window_size.x,
 									   window_size.y ), false,
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_HorizontalScrollbar |
-						  ImGuiWindowFlags_NoScrollWithMouse |
-						  ImGuiWindowFlags_AlwaysAutoResize);
+						  ImGuiWindowFlags_NoScrollWithMouse   |
+						  ImGuiWindowFlags_AlwaysAutoResize );
 
 //-------------------------------- Resize Image --------------------------------
 
@@ -544,6 +566,9 @@ void ImageDocument::Render()
 														   ".",
 															defaultFilename);
 
+					ImGui::SetWindowFocus("SaveC1Key");
+
+
 				}
 				//if (ImGui::MenuItem("Save as (32Bpp)PNG+PAL"))
 				//{
@@ -561,6 +586,7 @@ void ImageDocument::Render()
 														   ".",
 															defaultFilename);
 
+					ImGui::SetWindowFocus("SavePNGKey");
 				}
 
 				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
@@ -575,6 +601,9 @@ void ImageDocument::Render()
 					ImGuiFileDialog::Instance()->OpenModal("SaveFANKey", "Save as FAN(bitmap)", ".fan\0\0",
 														   ".",
 															defaultFilename);
+
+					ImGui::SetWindowFocus("SaveFANKey");
+
 
 				}
 
@@ -591,6 +620,7 @@ void ImageDocument::Render()
 														   ".",
 															defaultFilename);
 
+					ImGui::SetWindowFocus("SaveFANTileKey");
 				}
 
 
@@ -779,6 +809,9 @@ void ImageDocument::RenderEyeDropper()
 //------------------------------------------------------------------------------
 void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 {
+	// Keep Track of Previous Zoom
+	m_previousZoom = m_zoom;
+
 	bool bHasFocus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
 	bHasFocus = bHasFocus && ImGui::IsWindowHovered();
