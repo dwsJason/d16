@@ -1,0 +1,256 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\source\main.cpp" />
+    <ClCompile Include="..\libs\imgui\examples\libs\gl3w\GL\gl3w.c">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\imgui\imgui.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\imgui\imgui_demo.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\imgui\imgui_draw.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\imgui\examples\imgui_impl_opengl3.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\imgui\examples\imgui_impl_sdl.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\imgui\imgui_widgets.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\common\log.cpp">
+      <Filter>source\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\icon.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.cpp">
+      <Filter>libs\ImGuiFileDialog</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\kmeans.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\libimagequant.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\mediancut.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\mempool.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\nearest.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\pam.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\libimagequant-msvc\blur.c">
+      <Filter>libs\libimagequant</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\imagedoc.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\paldoc.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\common\limage.cpp">
+      <Filter>source\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\common\cursor.cpp">
+      <Filter>source\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\toolbar.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\source\common\concurrent_queue.h">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\examples\libs\gl3w\GL\gl3w.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\examples\libs\gl3w\GL\glcorearb.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\imconfig.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\imgui.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\examples\imgui_impl_opengl3.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\examples\imgui_impl_sdl.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\imgui\imgui_internal.h">
+      <Filter>libs\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\boolinvec.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\floatinvec.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\internal.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\matrix.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\quaternion.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\vecidx.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\vector.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\sse\vectormath.hpp">
+      <Filter>libs\vectormath\sse</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\scalar\matrix.hpp">
+      <Filter>libs\vectormath\scalar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\scalar\quaternion.hpp">
+      <Filter>libs\vectormath\scalar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\scalar\vector.hpp">
+      <Filter>libs\vectormath\scalar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\scalar\vectormath.hpp">
+      <Filter>libs\vectormath\scalar</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\common.hpp">
+      <Filter>libs\vectormath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\vec2d.hpp">
+      <Filter>libs\vectormath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\vectormath\vectormath.hpp">
+      <Filter>libs\vectormath</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\common\log.h">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.h">
+      <Filter>libs\ImGuiFileDialog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialogConfig.h">
+      <Filter>libs\ImGuiFileDialog</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\blur.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\kmeans.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\libimagequant.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\mediancut.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\mempool.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\nearest.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\libimagequant-msvc\pam.h">
+      <Filter>libs\libimagequant</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\imagedoc.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\paldoc.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\common\limage.h">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\avir\avir.h">
+      <Filter>libs\avir</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\avir\avir_dil.h">
+      <Filter>libs\avir</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\avir\avir_float4_sse.h">
+      <Filter>libs\avir</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\avir\avir_float8_avx.h">
+      <Filter>libs\avir</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\avir\lancir.h">
+      <Filter>libs\avir</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\common\cursor.h">
+      <Filter>source\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\toolbar.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>resources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="libs">
+      <UniqueIdentifier>{b8fb5019-a341-4eed-b09d-4fba2fcc6a31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8650d5e4-3ccb-4d51-a1c2-7694c3fa9c06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\imgui">
+      <UniqueIdentifier>{52459441-6121-44c6-8742-7f27c3378b13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\vectormath">
+      <UniqueIdentifier>{c5078cd8-2e4c-4151-8614-f85ed7ee5f52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\common">
+      <UniqueIdentifier>{e572bd88-9591-4a93-803d-7737f6a167f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\vectormath\scalar">
+      <UniqueIdentifier>{4737bf0c-3daf-4014-b048-86f4a58c725a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\vectormath\sse">
+      <UniqueIdentifier>{40e43027-1c8b-4544-baf9-bb220091f312}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\ImGuiFileDialog">
+      <UniqueIdentifier>{9f3a7a34-aa5b-42bf-be51-ccfb1f05e159}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\libimagequant">
+      <UniqueIdentifier>{4c3672b3-705a-4b92-8f0a-9151538f6d6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\avir">
+      <UniqueIdentifier>{bd150040-da32-4d3a-826b-ce06aa2eeab7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{f9cd2e21-876b-4474-b763-de17bc6ec850}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\libs\imgui\misc\natvis\imgui.natvis">
+      <Filter>libs\imgui</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="d16.rc">
+      <Filter>resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\data\icon32.ico">
+      <Filter>resources</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

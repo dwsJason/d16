@@ -1,0 +1,308 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BBAEB705-1669-40F3-8567-04CF6A991F4C}</ProjectGuid>
+    <RootNamespace>d16</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)$(Configuration)\</IntDir>
+    <IncludePath>$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\libs\SDL2_image-2.0.5\lib\x86;..\libs\SDL2-2.0.10\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL2_image.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2-2.0.10\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy SDL DLL Files</Message>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2_image-2.0.5\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PreLinkEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\libs\SDL2_image-2.0.5\lib\x64;..\libs\SDL2-2.0.10\lib\x64;..\libs\udt4\win\x64\Debug;..\libs\box2d\build\src\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL2_image.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
+      <IgnoreSpecificDefaultLibraries>msvcrt.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2-2.0.10\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy SDL DLL Files</Message>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2_image-2.0.5\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PreLinkEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\libs\SDL2_image-2.0.5\lib\x86;..\libs\SDL2-2.0.10\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL2_image.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+    </Link>
+    <CustomBuildStep>
+      <Command>
+      </Command>
+    </CustomBuildStep>
+    <PostBuildEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2-2.0.10\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy SDL DLL Files</Message>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2_image-2.0.5\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PreLinkEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\libs\SDL2_image-2.0.5\lib\x64;..\libs\SDL2-2.0.10\lib\x64;..\libs\udt4\win\x64\Release;..\libs\box2d\build\src\RelWithDebInfo;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL2_image.lib;SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2-2.0.10\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy SDL DLL Files</Message>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <PreLinkEvent>
+      <Command>copy /y $(ProjectDir)..\libs\SDL2_image-2.0.5\lib\$(PlatformTarget)\*.dll $(OutDir)</Command>
+    </PreLinkEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.cpp" />
+    <ClCompile Include="..\libs\imgui\imgui.cpp" />
+    <ClCompile Include="..\libs\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\libs\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\libs\imgui\examples\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\libs\imgui\examples\imgui_impl_sdl.cpp" />
+    <ClCompile Include="..\libs\imgui\examples\libs\gl3w\GL\gl3w.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\blur.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\kmeans.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\libimagequant.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\mediancut.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\mempool.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\nearest.c" />
+    <ClCompile Include="..\libs\libimagequant-msvc\pam.c" />
+    <ClCompile Include="..\source\common\cursor.cpp" />
+    <ClCompile Include="..\source\common\limage.cpp" />
+    <ClCompile Include="..\source\common\log.cpp" />
+    <ClCompile Include="..\source\icon.cpp" />
+    <ClCompile Include="..\source\imagedoc.cpp" />
+    <ClCompile Include="..\source\main.cpp" />
+    <ClCompile Include="..\source\paldoc.cpp" />
+    <ClCompile Include="..\source\toolbar.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\libs\avir\avir.h" />
+    <ClInclude Include="..\libs\avir\avir_dil.h" />
+    <ClInclude Include="..\libs\avir\avir_float4_sse.h" />
+    <ClInclude Include="..\libs\avir\avir_float8_avx.h" />
+    <ClInclude Include="..\libs\avir\lancir.h" />
+    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.h" />
+    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
+    <ClInclude Include="..\libs\imgui\imconfig.h" />
+    <ClInclude Include="..\libs\imgui\imgui.h" />
+    <ClInclude Include="..\libs\imgui\imgui_internal.h" />
+    <ClInclude Include="..\libs\imgui\examples\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\libs\imgui\examples\imgui_impl_sdl.h" />
+    <ClInclude Include="..\libs\imgui\examples\libs\gl3w\GL\gl3w.h" />
+    <ClInclude Include="..\libs\imgui\examples\libs\gl3w\GL\glcorearb.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\blur.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\kmeans.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\libimagequant.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\mediancut.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\mempool.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\nearest.h" />
+    <ClInclude Include="..\libs\libimagequant-msvc\pam.h" />
+    <ClInclude Include="..\libs\vectormath\common.hpp" />
+    <ClInclude Include="..\libs\vectormath\scalar\matrix.hpp" />
+    <ClInclude Include="..\libs\vectormath\scalar\quaternion.hpp" />
+    <ClInclude Include="..\libs\vectormath\scalar\vector.hpp" />
+    <ClInclude Include="..\libs\vectormath\scalar\vectormath.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\boolinvec.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\floatinvec.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\internal.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\matrix.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\quaternion.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\vecidx.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\vector.hpp" />
+    <ClInclude Include="..\libs\vectormath\sse\vectormath.hpp" />
+    <ClInclude Include="..\libs\vectormath\vec2d.hpp" />
+    <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
+    <ClInclude Include="..\source\common\concurrent_queue.h" />
+    <ClInclude Include="..\source\common\cursor.h" />
+    <ClInclude Include="..\source\common\limage.h" />
+    <ClInclude Include="..\source\common\log.h" />
+    <ClInclude Include="..\source\imagedoc.h" />
+    <ClInclude Include="..\source\paldoc.h" />
+    <ClInclude Include="..\source\toolbar.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\libs\imgui\misc\natvis\imgui.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="d16.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\data\icon32.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

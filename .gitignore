@@ -1,0 +1,15 @@
+*.vpj
+*.vpw
+*.vpwhist
+*.vtg
+vcxproj/.vs/
+vcxproj/imgui.ini
+vcxproj/Debug/
+vcxproj/Release/
+libs/udt4/src/udt.tlog/
+libs/udt4/win/x64/Release/udt.tlog/
+libs/udt4/win/x64/Debug/udt.tlog/
+libs/udt4/win/.vs/
+*.bsc
+*.exp
+*.idb
