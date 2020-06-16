@@ -480,7 +480,7 @@ void ImageDocument::Render()
 			// If we have a second image take into account
 			ContentSize.x *= 2.0f;
 			// We also need to add in the space between the images, that is
-			ContentSize.x += ImGui::GetStyle().ItemSpacing.x;
+//			ContentSize.x += ImGui::GetStyle().ItemSpacing.x;
 		}
 		ImGui::SetNextWindowContentSize( ContentSize );
 
@@ -542,7 +542,7 @@ void ImageDocument::Render()
 		{
 			ImTextureID target_tex_id = (ImTextureID)((size_t) m_targetImages[ m_iFrameNo ] ); 
 
-			ImGui::SameLine();
+			ImGui::SameLine(0.0f,0.0f);
 			ImGui::Image(target_tex_id, ImVec2((float)m_width*m_zoom, (float)m_height*m_zoom), uv0, uv1, ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.5f));
 
 //-------------------  Target Image Context Menu -------------------------------
