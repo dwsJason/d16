@@ -539,20 +539,20 @@ void ImageDocument::Render()
 			ImGui::Separator();
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Rotate 90 CW(Right)"))
+			if (ImGui::MenuItem("Rotate 90 Right/CW"))
 			{
 			}
-			if (ImGui::MenuItem("Rotate 90 CCW(Left)"))
+			if (ImGui::MenuItem("Rotate 90 Left/CCW"))
 			{
 			}
 
 			ImGui::Separator();
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("H-Flip"))
+			if (ImGui::MenuItem("Mirror Horizontal"))
 			{
 			}
-			if (ImGui::MenuItem("V-Flip"))
+			if (ImGui::MenuItem("Mirror Vertical"))
 			{
 			}
 
