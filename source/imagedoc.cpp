@@ -535,6 +535,27 @@ void ImageDocument::Render()
 			{
 				bOpenResizeModal = true;
 			}
+
+			ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Rotate 90 CW(Right)"))
+			{
+			}
+			if (ImGui::MenuItem("Rotate 90 CCW(Left)"))
+			{
+			}
+
+			ImGui::Separator();
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("H-Flip"))
+			{
+			}
+			if (ImGui::MenuItem("V-Flip"))
+			{
+			}
+
 		    ImGui::EndPopup();
 		}
 
