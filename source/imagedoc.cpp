@@ -577,6 +577,10 @@ void ImageDocument::Render()
 				{
 					SetDocumentSurface( m_pTargetSurfaces );
 				}
+
+				ImGui::Separator();
+				ImGui::Separator();
+
 				if (ImGui::MenuItem("Save as $C1"))
 				{
 					std::string defaultFilename = m_filename;

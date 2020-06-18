@@ -476,6 +476,7 @@ void MainMenuBarUI()
 			}
 
 			ImGui::Separator();
+			ImGui::Separator();
 			#if 0 // Show them disabled, until I implement them
 			if (ImGui::MenuItem("Save"))
 			{
@@ -489,6 +490,7 @@ void MainMenuBarUI()
 			ImGui::TextDisabled("Save");
 			ImGui::TextDisabled("Save as...");
 			#endif
+			ImGui::Separator();
 			ImGui::Separator();
 			if (ImGui::MenuItem("Quit", "Alt+F4"))
 			{
@@ -505,6 +507,7 @@ void MainMenuBarUI()
 			//{
 			//}
 
+			ImGui::Separator();
 			ImGui::Separator();
 
 			if (ImGui::MenuItem("Palettes", nullptr, show_palette_window))
