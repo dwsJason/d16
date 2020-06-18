@@ -2234,12 +2234,94 @@ void ImageDocument::RotateLeft()
 
 void ImageDocument::MirrorHorizontal()
 {
+	// Results
+	std::vector<SDL_Surface*> pImages;
+
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		Uint32* pSourcePixels = SDL_SurfaceToUint32Array(m_pSurfaces[idx]);
+		Uint32 *pDestPixels = new Uint32[m_width * m_height];
+
+		int SourceWidth = m_width;
+		int SourceHeight = m_height;
+		int DestWidth  = m_width;
+		int DestHeight = m_height;
+
+		// Do 90 degree clockwise copy
+		for (int DestY = 0; DestY < DestHeight; ++DestY)
+		{
+			for (int DestX = 0; DestX < DestWidth; ++DestX)
+			{
+				int DestIndex   = (DestY * DestWidth) + DestX;
+
+				int SourceX = (SourceWidth-1) - DestX;
+				int SourceY = DestY;
+
+				int SourceIndex = (SourceY * SourceWidth) + SourceX;
+
+				pDestPixels[ DestIndex ] = pSourcePixels[ SourceIndex ];
+			}
+		}
+
+		delete[] pSourcePixels;
+		pSourcePixels = nullptr;
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, DestWidth, DestHeight);
+
+		pImages.push_back(pSurface);
+
+		delete[] pDestPixels;
+		pDestPixels = nullptr;
+	}
+
+	SetDocumentSurface( pImages );
 }
 
 //------------------------------------------------------------------------------
 
 void ImageDocument::MirrorVertical()
 {
+	// Results
+	std::vector<SDL_Surface*> pImages;
+
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		Uint32* pSourcePixels = SDL_SurfaceToUint32Array(m_pSurfaces[idx]);
+		Uint32 *pDestPixels = new Uint32[m_width * m_height];
+
+		int SourceWidth = m_width;
+		int SourceHeight = m_height;
+		int DestWidth  = m_width;
+		int DestHeight = m_height;
+
+		// Do 90 degree clockwise copy
+		for (int DestY = 0; DestY < DestHeight; ++DestY)
+		{
+			for (int DestX = 0; DestX < DestWidth; ++DestX)
+			{
+				int DestIndex   = (DestY * DestWidth) + DestX;
+
+				int SourceX = DestX;
+				int SourceY = (SourceHeight-1) - DestY;
+
+				int SourceIndex = (SourceY * SourceWidth) + SourceX;
+
+				pDestPixels[ DestIndex ] = pSourcePixels[ SourceIndex ];
+			}
+		}
+
+		delete[] pSourcePixels;
+		pSourcePixels = nullptr;
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, DestWidth, DestHeight);
+
+		pImages.push_back(pSurface);
+
+		delete[] pDestPixels;
+		pDestPixels = nullptr;
+	}
+
+	SetDocumentSurface( pImages );
 }
 
 //------------------------------------------------------------------------------
