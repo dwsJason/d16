@@ -2140,6 +2140,47 @@ void ImageDocument::SaveFAN(std::string filenamepath, bool bTiled)
 
 void ImageDocument::RotateRight()
 {
+	// Results
+	std::vector<SDL_Surface*> pImages;
+
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		Uint32* pSourcePixels = SDL_SurfaceToUint32Array(m_pSurfaces[idx]);
+		Uint32 *pDestPixels = new Uint32[m_height * m_width];
+
+		int SourceWidth = m_width;
+		int SourceHeight = m_height;
+		int DestWidth  = m_height;
+		int DestHeight = m_width;
+
+		// Do 90 degree clockwise copy
+		for (int DestY = 0; DestY < DestHeight; ++DestY)
+		{
+			for (int DestX = 0; DestX < DestWidth; ++DestX)
+			{
+				int DestIndex   = (DestY * DestWidth) + DestX;
+
+				int SourceX = DestY;
+				int SourceY = (SourceHeight - 1) - DestX;
+
+				int SourceIndex = (SourceY * SourceWidth) + SourceX;
+
+				pDestPixels[ DestIndex ] = pSourcePixels[ SourceIndex ];
+			}
+		}
+
+		delete[] pSourcePixels;
+		pSourcePixels = nullptr;
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, DestWidth, DestHeight);
+
+		pImages.push_back(pSurface);
+
+		delete[] pDestPixels;
+		pDestPixels = nullptr;
+	}
+
+	SetDocumentSurface( pImages );
 }
 
 //------------------------------------------------------------------------------
