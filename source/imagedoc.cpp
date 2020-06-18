@@ -62,7 +62,6 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_fDelayTime(0.0f)
 	, m_iFrameNo(0)
 	, m_zoom(1)
-	, m_pTargetSurface(nullptr)
 	, m_numTargetColors(16)
 	, m_iDither(50)
 	, m_iPosterize(ePosterize444)
@@ -541,9 +540,11 @@ void ImageDocument::Render()
 
 			if (ImGui::MenuItem("Rotate 90 Right/CW"))
 			{
+				RotateRight();
 			}
 			if (ImGui::MenuItem("Rotate 90 Left/CCW"))
 			{
+				RotateLeft();
 			}
 
 			ImGui::Separator();
@@ -551,9 +552,11 @@ void ImageDocument::Render()
 
 			if (ImGui::MenuItem("Mirror Horizontal"))
 			{
+				MirrorHorizontal();
 			}
 			if (ImGui::MenuItem("Mirror Vertical"))
 			{
+				MirrorVertical();
 			}
 
 		    ImGui::EndPopup();
@@ -572,7 +575,7 @@ void ImageDocument::Render()
 			{
 				if (ImGui::MenuItem("Keep Image"))
 				{
-					SetDocumentSurface( /*SDL_SurfaceToRGBA(m_pTargetSurface)*/ m_pTargetSurfaces );
+					SetDocumentSurface( m_pTargetSurfaces );
 				}
 				if (ImGui::MenuItem("Save as $C1"))
 				{
@@ -1622,8 +1625,6 @@ void ImageDocument::SetDocumentSurface(SDL_Surface* pSurface, int iFrameNo)
 
 //------------------------------------------------------------------------------
 
-
-
 //------------------------------------------------------------------------------
 
 void ImageDocument::SetDocumentSurface(std::vector<SDL_Surface*> pSurfaces)
@@ -1635,19 +1636,28 @@ void ImageDocument::SetDocumentSurface(std::vector<SDL_Surface*> pSurfaces)
 			m_targetImages.clear();
 		}
 
-		if (m_pTargetSurface)
+		if (m_pTargetSurfaces.size())
 		{
-			// I want to accept the target here
-			if (pSurfaces[0] != m_pTargetSurface)
+			for (int idx = 0; idx < pSurfaces.size(); ++idx)
 			{
-				// Free the pixels, because I allocated them?
-				if (pSurfaces[0]->flags & SDL_PREALLOC)
-					free(pSurfaces[0]->pixels);
+				// Do not delete targets that don't exist
+				// Do not delete a target, that is now becoming a source
 
-				SDL_FreeSurface(m_pTargetSurface);
+				if ( (m_pTargetSurfaces.size() < idx) &&
+					 (pSurfaces[idx] != m_pTargetSurfaces[idx]) )
+				{
+					// Free the pixels, because I allocated them?
+					if (m_pTargetSurfaces[idx]->flags & SDL_PREALLOC)
+					{
+						free(m_pTargetSurfaces[idx]->pixels);
+						m_pTargetSurfaces[idx]->pixels = nullptr;
+					}
+
+					SDL_FreeSurface(m_pTargetSurfaces[ idx ]);
+					m_pTargetSurfaces[ idx ] = nullptr;
+
+				}
 			}
-
-			m_pTargetSurface = nullptr;
 		}
 
 	// Free up the source image, and opengl texture
@@ -1799,7 +1809,7 @@ void ImageDocument::SaveC1(std::string filenamepath)
 	}
 
 // Choose a surface to save
-	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurfaces[0];
+	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[0] : m_pSurfaces[0];
 
 	// Nibblized pixel data
 	for (int y = 0; y < 200; ++y)
@@ -1848,7 +1858,7 @@ void ImageDocument::SaveC1(std::string filenamepath)
 void ImageDocument::SavePNG(std::string filenamepath)
 {
 // Choose a surface to save
-	SDL_Surface* pImage = m_pTargetSurface ? m_pTargetSurface : m_pSurfaces[0];
+	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[0] : m_pSurfaces[0];
 
 	IMG_SavePNG(pImage, filenamepath.c_str());
 }
@@ -2081,7 +2091,7 @@ void ImageDocument::Quant256()
 	}
 
 	//m_targetImage = m_targetImages[0];
-    m_pTargetSurface = m_pTargetSurfaces[0];
+    //m_pTargetSurface = m_pTargetSurfaces[0];
 
 	// Free up the memory used by libquant -------------------------------------
     liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
@@ -2122,5 +2132,29 @@ void ImageDocument::SaveFAN(std::string filenamepath, bool bTiled)
 // Choose a surface to save
 	SDL_IMG_SaveFAN(m_pTargetSurfaces, filenamepath.c_str(), bTiled);
 }
+//------------------------------------------------------------------------------
+
+void ImageDocument::RotateRight()
+{
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::RotateLeft()
+{
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::MirrorHorizontal()
+{
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::MirrorVertical()
+{
+}
+
 //------------------------------------------------------------------------------
 

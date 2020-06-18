@@ -72,6 +72,11 @@ private:
 	void LanczosResize(int iNewWidth, int iNewHeight);
 	void AvirSampleResize(int iNewWidth, int iNewHeight, bool bDither);
 
+	void RotateRight();
+	void RotateLeft();
+	void MirrorHorizontal();
+	void MirrorVertical();
+
 	void RenderEyeDropper();
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
@@ -118,8 +123,6 @@ private:
 	int m_zoom;
 
 	// Destination Image Things
-	//GLuint m_targetImage; // GL Image Number
-	SDL_Surface* m_pTargetSurface;
 	std::vector<GLuint> m_targetImages; // GL Images
 	std::vector<SDL_Surface*> m_pTargetSurfaces;
 
