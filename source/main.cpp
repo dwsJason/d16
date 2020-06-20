@@ -29,9 +29,30 @@ void MainMenuBarUI();
 
 //------------------------------------------------------------------------------
 // Local helper functions
-static bool endsWith(const std::string& s, const std::string& suffix)
+
+static std::string toLower(const std::string s)
 {
-    return s.rfind(suffix) == (s.size()-suffix.size());
+	std::string result = s;
+
+	for (int idx = 0; idx < result.size(); ++idx)
+	{
+		result[ idx ] = tolower(result[idx]);
+	}
+
+	return result;
+}
+
+// Case Insensitive
+static bool endsWith(const std::string& S, const std::string& SUFFIX)
+{
+	bool bResult = false;
+
+	std::string s = toLower(S);
+	std::string suffix = toLower(SUFFIX);
+
+    bResult = s.rfind(suffix) == (s.size()-suffix.size());
+
+	return bResult;
 }
 //------------------------------------------------------------------------------
 static int alphaSort(const struct dirent **a, const struct dirent **b)
@@ -211,27 +232,10 @@ int main(int, char**)
 			{
 				std::string filename = ent->d_name;
 
-				int len = (int)filename.size();
-
-				if (len > 4)
+				if (endsWith(filename, ".pal"))
 				{
-					int extensionOffset = len - 4;
-
-					if ('.' == filename[extensionOffset++])
-					{
-						if ('p' == tolower(filename[extensionOffset++]))
-						{
-							if ('a' == tolower(filename[extensionOffset++]))
-							{
-								if ('l' == tolower(filename[extensionOffset++]))
-								{
-									LOG("%s\n", filename.c_str());
-
-									PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, vPath+"\\"+filename ));
-								}
-							}
-						}
-					}
+					LOG("%s\n", filename.c_str());
+					PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, vPath+"\\"+filename ));
 				}
 			}
 		}
