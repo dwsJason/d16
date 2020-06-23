@@ -80,6 +80,7 @@ private:
 	void RenderEyeDropper();
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
+	void RenderTimeLine();
 
 	void SaveC1(std::string filenamepath);
 	void SavePNG(std::string filenamepath);

@@ -700,8 +700,13 @@ void ImageDocument::Render()
 //------------------------------------------------------------------------------
 
 
-
 	ImGui::EndChild();
+
+
+	if (m_pSurfaces.size())
+	{
+		RenderTimeLine();
+	}
 
 	ImGui::End();
 
@@ -933,7 +938,39 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 
 }
 //------------------------------------------------------------------------------
+void ImageDocument::RenderTimeLine()
+{
+	ImVec2 parentPosition = ImGui::GetWindowPos();
+	ImVec2 parentSize     = ImGui::GetWindowSize();
 
+	ImVec2 windowPosition = parentPosition;
+	ImVec2 windowSize = parentSize;
+	
+	// Size
+	windowSize.y = 64.0f;
+//	ImGui::SetNextWindowContentSize( windowSize );
+
+	// Position
+	windowPosition.y = parentPosition.y + parentSize.y - windowSize.y;
+	ImGui::SetNextWindowPos(windowPosition);
+
+	ImGui::BeginChild("TimeLine", windowSize,
+						  false,
+						  ImGuiWindowFlags_NoMove |
+						  ImGuiWindowFlags_HorizontalScrollbar |
+						  ImGuiWindowFlags_NoScrollWithMouse   |
+						  ImGuiWindowFlags_AlwaysAutoResize );
+
+	ImGui::SetNextItemWidth(windowSize.x);
+	static int frameNumber = 0;
+	static float timePosition = 0.0f;
+	ImGui::SliderInt("##SliderFrame", &frameNumber, 0, (int)m_pSurfaces.size(), "Frame %d");
+	ImGui::SetNextItemWidth(windowSize.x);
+	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, 10.0f, "Time %.3f");
+	ImGui::EndChild();
+
+}
+//------------------------------------------------------------------------------
 void ImageDocument::Quant16()
 {
 	// Do an actual color reduction on the source Image
