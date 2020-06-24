@@ -973,11 +973,11 @@ void ImageDocument::RenderTimeLine()
 	ImVec2 windowSize = parentSize;
 	
 	// Size
-	windowSize.y = 64.0f;
-//	ImGui::SetNextWindowContentSize( windowSize );
+	windowSize.y = 96.0f;
+
 
 	// Position
-	windowPosition.y = parentPosition.y + parentSize.y - windowSize.y;
+	windowPosition.y = parentPosition.y + parentSize.y - windowSize.y - 16.0f;
 	ImGui::SetNextWindowPos(windowPosition);
 
 	ImGui::BeginChild("TimeLine", windowSize,
@@ -993,6 +993,18 @@ void ImageDocument::RenderTimeLine()
 	ImGui::SliderInt("##SliderFrame", &frameNumber, 0, (int)m_pSurfaces.size(), "Frame %d");
 	ImGui::SetNextItemWidth(windowSize.x);
 	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, 10.0f, "Time %.3f");
+
+	// Some Buttons
+	Toolbar* toolBar = Toolbar::GToolbar;
+
+	if (toolBar)
+	{
+		toolBar->ImageButton(0,13); ImGui::SameLine();
+		toolBar->ImageButton(0,11); ImGui::SameLine();
+		toolBar->ImageButton(2,11); ImGui::SameLine();
+		toolBar->ImageButton(0,12); ImGui::SameLine();
+	}
+
 	ImGui::EndChild();
 
 }

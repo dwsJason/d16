@@ -78,7 +78,6 @@ void Toolbar::Render()
 
 static ImVec4 bg_color = ImVec4(0,0,0,0);
 static ImVec4 tint_color = ImVec4(1,1,1,1);
-	// These are 20x12 - weird but that's what DreamGrafix uses
 static const	ImVec2 buttonSize = ImVec2(20*2,12*2);
 
 static const char* helpStrings[] = 
@@ -164,5 +163,24 @@ void Toolbar::SetFocusWindow(const char* pFocusID)
 {
 	m_focusWindow = pFocusID;
 }
+//------------------------------------------------------------------------------
+// Share our ImageButtons with the rest of the Application
+// Right now, that might just be the timeline / scrubber
+//
+bool Toolbar::ImageButton(int col, int row, int* pressed)
+{
+static ImVec4 bg_color = ImVec4(0,0,0,0);
+static ImVec4 tint_color = ImVec4(1,1,1,1);
+static const	ImVec2 buttonSize = ImVec2(20*2,12*2);
+
+	// Set the UV coordinates
+	SetButtonImage(col + ((pressed && *pressed) ? 1 : 0), row);
+
+	return ImGui::ImageButton((ImTextureID)(m_GLImage),
+						   buttonSize, m_uv0, m_uv1, 0,
+						   bg_color, tint_color);
+
+}
+
 //------------------------------------------------------------------------------
 
