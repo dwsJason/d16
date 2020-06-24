@@ -14,6 +14,11 @@ enum ToolBarMode
 	eEyeDropper,
 	eResizeImage,
 
+	eRotate90Right,
+	eRotate90Left,
+	eMirrorHorizontal,
+	eMirrorVertical,
+
 	eToolBarMode_COUNT
 };
 

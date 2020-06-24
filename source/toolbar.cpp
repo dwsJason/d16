@@ -3,13 +3,18 @@
 //
 #include "toolbar.h"
 
+#include <SDL_image.h>
+#include "log.h"
+
+#include "sdl_helpers.h"
+
+
+#if 0
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <SDL.h>
-#include <SDL_image.h>
-#include "log.h"
 
 
 // This bit here is also dumb
@@ -30,6 +35,7 @@
 // Again, this should be in some sort of helper, or util header
 extern GLuint
 SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
+#endif
 
 //------------------------------------------------------------------------------
 Toolbar* Toolbar::GToolbar = nullptr;
@@ -107,7 +113,11 @@ static const char* helpStrings[] =
 {
 	"Pan and Zoom",
 	"Eye Dropper",
-	"Resize Image"
+	"Resize Image",
+	"Rotate Image\n90 Right/CW",
+	"Rotate Image\n90 Left/CCW",
+	"Mirror Image\nHorizontal",
+	"Mirror Image\nVertical"
 };
 
 static const int buttonXY[][2] =
@@ -115,6 +125,10 @@ static const int buttonXY[][2] =
 	{0,6},  // hand
 	{0,8},  // eye dropper
 	{6,9},  // resize
+	{6,10}, // rotate right
+	{4,8},  // rotate left
+	{4,3},  // h-flip
+	{6,11}, // v-flip
 
 };
 

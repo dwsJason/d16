@@ -659,10 +659,36 @@ void ImageDocument::Render()
 
 		// Glue for the Toolbar button
 		if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
-		if (eResizeImage == Toolbar::GToolbar->GetCurrentMode())
 		{
-			bOpenResizeModal = true;
-			Toolbar::GToolbar->SetPreviousMode();
+			int toolBarMode = Toolbar::GToolbar->GetCurrentMode();
+
+			switch (toolBarMode)
+			{
+			case eResizeImage:
+				bOpenResizeModal = true;
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eRotate90Right:
+				RotateRight();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eRotate90Left:
+				RotateLeft();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eMirrorHorizontal:
+				MirrorHorizontal();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eMirrorVertical:
+				MirrorVertical();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+
+			default:
+				// nothing, probably pan or something
+				break;
+			}
 		}
 
 		if (bOpenResizeModal)
