@@ -172,14 +172,49 @@ bool Toolbar::ImageButton(int col, int row, int* pressed)
 static ImVec4 bg_color = ImVec4(0,0,0,0);
 static ImVec4 tint_color = ImVec4(1,1,1,1);
 static const	ImVec2 buttonSize = ImVec2(20*2,12*2);
+static int lastHovered = -1;
+
+	int wasHovered = lastHovered;
+	bool bDoHover = ImGui::IsWindowHovered(ImGuiFocusedFlags_RootAndChildWindows);
+
+	if (!bDoHover)
+	{
+		wasHovered = -1;
+	}
+
+	int id = (col * 100) + row; // I know this is going to cause some
+								// render issues in windows that are not
+								// focused
+
+	ImGui::PushID( id );
+
+	if (bDoHover && id == lastHovered)
+	{
+		lastHovered = -1;
+	}
+
+	tint_color.w = wasHovered==id ? 0.7f : 1.0f; // So it does something when you hover
 
 	// Set the UV coordinates
 	SetButtonImage(col + ((pressed && *pressed) ? 1 : 0), row);
 
-	return ImGui::ImageButton((ImTextureID)(m_GLImage),
+
+	bool result = ImGui::ImageButton((ImTextureID)(m_GLImage),
 						   buttonSize, m_uv0, m_uv1, 0,
 						   bg_color, tint_color);
 
+	if (ImGui::IsItemHovered())
+	{
+		//ImGui::BeginTooltip();
+		//	ImGui::Text(helpStrings[ idx ]);
+		//ImGui::EndTooltip();
+
+		lastHovered = id;
+	}
+
+	ImGui::PopID();
+
+	return result;
 }
 
 //------------------------------------------------------------------------------
