@@ -598,6 +598,24 @@ void ImageDocument::Render()
 
 
 				}
+
+				if (ImGui::MenuItem("Save as $C2"))
+				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveC2Key", "Save as $C2", "#C20000\0.c2\0\0",
+														   ".",
+															defaultFilename);
+
+					ImGui::SetWindowFocus("SaveC2Key");
+				}
+
+
 				//if (ImGui::MenuItem("Save as (32Bpp)PNG+PAL"))
 				//{
 				//}
@@ -746,6 +764,16 @@ void ImageDocument::Render()
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveC1Key");
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveC2Key"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SaveC2( ImGuiFileDialog::Instance()->GetFilepathName() );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveC2Key");
 	}
 
 	if (ImGuiFileDialog::Instance()->FileDialog("SavePNGKey"))
@@ -1961,7 +1989,15 @@ static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor)
 
 	return closestIndex;
 }
+//------------------------------------------------------------------------------
+// Save As Paintworks Preferred File Format
+// which was designed by a not a smart person
+//
+void ImageDocument::SaveC2(std::string filenamepath)
+{
+}
 
+//------------------------------------------------------------------------------
 void ImageDocument::SaveC1(std::string filenamepath)
 {
 // Copy of the C1 memory
