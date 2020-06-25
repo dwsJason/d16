@@ -164,7 +164,7 @@ void ImageDocument::Render()
 	// Force Target Palette
 	const float TOOLBAR_HEIGHT = 72.0f;
 
-	ImTextureID tex_id = (ImTextureID)((size_t) m_images[0] ); 
+	ImTextureID tex_id = (ImTextureID)((size_t) m_images[m_iFrameNo] ); 
 	ImVec2 uv0 = ImVec2(m_image_uv[0],m_image_uv[1]);
 	ImVec2 uv1 = ImVec2(m_image_uv[2],m_image_uv[3]);
 
@@ -729,7 +729,7 @@ void ImageDocument::Render()
 	ImGui::EndChild();
 
 
-	if (m_pSurfaces.size())
+	if (m_pSurfaces.size() > 1)
 	{
 		RenderTimeLine();
 	}
@@ -973,7 +973,7 @@ void ImageDocument::RenderTimeLine()
 	ImVec2 windowSize = parentSize;
 	
 	// Size
-	windowSize.y = 96.0f;
+	windowSize.y = 128.0f;
 
 
 	// Position
@@ -987,23 +987,40 @@ void ImageDocument::RenderTimeLine()
 						  ImGuiWindowFlags_NoScrollWithMouse   |
 						  ImGuiWindowFlags_AlwaysAutoResize );
 
-	ImGui::SetNextItemWidth(windowSize.x);
-	static int frameNumber = 0;
-	static float timePosition = 0.0f;
-	ImGui::SliderInt("##SliderFrame", &frameNumber, 0, (int)m_pSurfaces.size(), "Frame %d");
-	ImGui::SetNextItemWidth(windowSize.x);
-	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, 10.0f, "Time %.3f");
-
 	// Some Buttons
 	Toolbar* toolBar = Toolbar::GToolbar;
 
 	if (toolBar)
 	{
-		toolBar->ImageButton(0,13); ImGui::SameLine();
-		toolBar->ImageButton(0,11); ImGui::SameLine();
-		toolBar->ImageButton(2,11); ImGui::SameLine();
-		toolBar->ImageButton(0,12); ImGui::SameLine();
+		float xPos = 8.0f;
+		ImGui::SameLine(xPos);
+		toolBar->ImageButton(0,13); ImGui::SameLine(xPos+=40.0f);
+		if(toolBar->ImageButton(0,11,m_bPlaying))
+		{
+			m_bPlaying = !m_bPlaying;
+		}
+		ImGui::SameLine(xPos+=40.0f);
+
+		//toolBar->ImageButton(2,11); ImGui::SameLine();
+		toolBar->ImageButton(0,12); ImGui::SameLine(xPos+=40.0f);
+
+		static int hz = 0;
+		ImGui::SetNextItemWidth(64);
+		ImGui::Combo("##Snap", &hz, "50HZ\0" "59.94\0" "60HZ\0" "100HZ\0\0");
 	}
+
+	// Some Sliders
+	ImGui::SetNextItemWidth(windowSize.x);
+	int frameNumber = m_iFrameNo+1;
+	static float timePosition = 0.0f;
+	ImGui::SliderInt("##SliderFrame", &frameNumber, 1, (int)m_pSurfaces.size(), "Frame %d");
+	m_iFrameNo = frameNumber-1;
+
+	ImGui::SetNextItemWidth(windowSize.x);
+	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, 10.0f, "Time %.3f");
+
+	// Dope Sheet?
+
 
 	ImGui::EndChild();
 

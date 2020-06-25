@@ -36,7 +36,7 @@ static std::string toLower(const std::string s)
 
 	for (int idx = 0; idx < result.size(); ++idx)
 	{
-		result[ idx ] = tolower(result[idx]);
+		result[ idx ] = (char)tolower(result[idx]);
 	}
 
 	return result;

@@ -167,7 +167,7 @@ void Toolbar::SetFocusWindow(const char* pFocusID)
 // Share our ImageButtons with the rest of the Application
 // Right now, that might just be the timeline / scrubber
 //
-bool Toolbar::ImageButton(int col, int row, int* pressed)
+bool Toolbar::ImageButton(int col, int row, bool pressed)
 {
 static ImVec4 bg_color = ImVec4(0,0,0,0);
 static ImVec4 tint_color = ImVec4(1,1,1,1);
@@ -196,7 +196,7 @@ static int lastHovered = -1;
 	tint_color.w = wasHovered==id ? 0.7f : 1.0f; // So it does something when you hover
 
 	// Set the UV coordinates
-	SetButtonImage(col + ((pressed && *pressed) ? 1 : 0), row);
+	SetButtonImage(col + (pressed ? 1 : 0), row);
 
 
 	bool result = ImGui::ImageButton((ImTextureID)(m_GLImage),

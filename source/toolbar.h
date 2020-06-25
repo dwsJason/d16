@@ -39,7 +39,7 @@ public:
 	void SetFocusWindow(const char* pFocusID);
 
 	// Provide access to our bitmap buttons, so anyone who wants them
-	bool ImageButton(int col, int row, int* pressed = nullptr);
+	bool ImageButton(int col, int row, bool pressed = false);
 
 	static Toolbar* GToolbar;
 
