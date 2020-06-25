@@ -967,6 +967,9 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 void ImageDocument::RenderTimeLine()
 {
 
+	float timeSeconds = 5.0f;
+	float fHZ = 100.0f;
+
 	float DopeSheetHeight = ImGui::GetFrameHeightWithSpacing() * 2 + 30;
 
 	ImVec2 parentPosition = ImGui::GetWindowPos();
@@ -1020,7 +1023,7 @@ void ImageDocument::RenderTimeLine()
 	m_iFrameNo = frameNumber-1;
 
 	ImGui::SetNextItemWidth(windowSize.x);
-	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, 10.0f, "Time %.3f");
+	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, timeSeconds, "Time %.3f");
 
 	ImGui::EndChild();
 
@@ -1029,6 +1032,48 @@ void ImageDocument::RenderTimeLine()
 	ImGui::BeginChild("scrolling", ImVec2(0, DopeSheetHeight), true,
 					  ImGuiWindowFlags_NoScrollWithMouse|
 					  ImGuiWindowFlags_HorizontalScrollbar);
+
+	float step = 10.0f;
+	int frameCountByTime = ((int)(timeSeconds * fHZ)) + 1;
+
+	for (int x = 10; x < frameCountByTime; x+=10)
+	{
+		ImGui::SameLine(x * step);
+		ImGui::Text("%d", x);
+	}
+
+	ImVec2 winPos = ImGui::GetWindowPos();
+	winPos.y += 30.0f;
+	winPos.x -= ImGui::GetScrollX();
+
+
+	ImVec2 points[ 2 ];
+
+	for (int x = 0; x < frameCountByTime; ++x)
+	{
+		ImVec2 pos = ImVec2(winPos.x + (x * step), winPos.y);
+		points[ 0 ] = pos;
+		if (x % 10)
+		{
+			pos.y += 15.0f;
+		}
+		else
+		{
+			pos.y += 30.0f;
+		}
+		points[ 1 ] = pos;
+
+		ImGui::GetWindowDrawList()->AddLine(
+			points[ 0 ],
+			points[ 1 ],
+			0x80808080,
+			0.5f
+			);
+
+	}
+
+
+	#if 0
 	int lines = 2;
 	for (int line = 0; line < lines; line++)
 	{
@@ -1051,6 +1096,7 @@ void ImageDocument::RenderTimeLine()
 			ImGui::PopID();
 		}
 	}
+	#endif
 
 	ImGui::EndChild();
 
