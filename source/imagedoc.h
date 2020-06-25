@@ -106,6 +106,14 @@ private:
 	// Turns out we now support Animation, weird
 	std::vector<GLuint> m_images; // GL Images
 	std::vector<SDL_Surface*> m_pSurfaces;
+
+	//
+	// For editing, and playing having a present time, that is a real time
+	// makes more sense than a list of delay times, this way each frame
+	// gets to live in a "global" spot on the timeline
+	//
+	std::vector<float> m_fPresentTimes;  // this can be the time in seconds
+
 	std::vector<int> m_iDelayTimes;
 
 	bool m_bPlaying; 	// Is Animation Playing

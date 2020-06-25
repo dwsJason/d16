@@ -1055,7 +1055,14 @@ void ImageDocument::RenderTimeLine()
 		points[ 0 ] = pos;
 		if (x % 10)
 		{
-			pos.y += 15.0f;
+			if (x % 5)
+			{
+				pos.y += 15.0f;
+			}
+			else
+			{
+				pos.y += 22.0f;
+			}
 		}
 		else
 		{
