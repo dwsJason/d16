@@ -402,7 +402,6 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface, std::map<Uint32,Uint32>
 
 void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath, bool bTiled)
 {
-	(void)pFilePath;
 	(void)bTiled;
 
 	if (pSurfaces.size())
