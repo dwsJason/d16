@@ -2003,18 +2003,12 @@ static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor)
 	return closestIndex;
 }
 //------------------------------------------------------------------------------
-// Save As Paintworks Preferred File Format
-// which was designed by a not a smart person
-//
-void ImageDocument::SaveC2(std::string filenamepath)
-{
-}
 
-//------------------------------------------------------------------------------
-void ImageDocument::SaveC1(std::string filenamepath)
+unsigned char* ImageDocument::CreateC1Data(int frameNo)
 {
+	unsigned char *c1data = new unsigned char[ 0x8000 ];
+
 // Copy of the C1 memory
-	unsigned char c1data[ 0x8000 ];
 	memset(c1data, 0, 0x8000 );
 
 // Get a copy of the clut
@@ -2037,7 +2031,7 @@ void ImageDocument::SaveC1(std::string filenamepath)
 	}
 
 // Choose a surface to save
-	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[0] : m_pSurfaces[0];
+	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[frameNo] : m_pSurfaces[frameNo];
 
 	// Nibblized pixel data
 	for (int y = 0; y < 200; ++y)
@@ -2067,14 +2061,54 @@ void ImageDocument::SaveC1(std::string filenamepath)
 		pPal[ idx ] = targetColor;
 	}
 
+	return c1data;
+}
 
+//------------------------------------------------------------------------------
+// Save As Paintworks Preferred File Format
+// which was designed by a not a smart person
+//
+void ImageDocument::SaveC2(std::string filenamepath)
+{
+	// First Collect a list of C1 images
+	// $C1 is just the 32KB blob of data, as it sits in the IIgs video memory
+	std::vector<unsigned char*> c1Images;
+
+	for (int frameIndex = 0; frameIndex < m_pSurfaces.size(); ++frameIndex)
+	{
+		c1Images.push_back( CreateC1Data( frameIndex ) );
+	}
+
+	// Then Serialize out a valid C2 animation into memory
+
+	// then finally write it out to a file
+
+	// We need to free the C1Data here since it's not a proper object
+	while (c1Images.size())
+	{
+		delete[] c1Images[0];
+		c1Images.erase(c1Images.begin());
+	}
+}
+
+//------------------------------------------------------------------------------
+void ImageDocument::SaveC1(std::string filenamepath)
+{
+// Copy of the C1 memory
+	unsigned char* c1data;
+
+	c1data = CreateC1Data(m_iFrameNo);
+	
 	// Serialize to disk
+	if (c1data)
 	{
 		FILE* file = fopen(filenamepath.c_str(), "wb");
 
 		fwrite(c1data, 1, 0x8000, file);
 
 		fclose(file);
+
+		delete[] c1data;
 	}
 
 }

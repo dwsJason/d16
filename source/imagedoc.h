@@ -63,6 +63,9 @@ public:
 private:
 
 	int CountUniqueColors();
+
+	unsigned char* CreateC1Data(int frameNo);
+
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant16();
 	void Quant256();
