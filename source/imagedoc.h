@@ -64,7 +64,9 @@ private:
 
 	int CountUniqueColors();
 
+	//$$JGA TODO - move this crap into a separate file/ class
 	unsigned char* CreateC1Data(int frameNo);
+	std::vector<unsigned char> C2EncodeFrame(unsigned char* pPrev, unsigned char* pNext);
 
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant16();

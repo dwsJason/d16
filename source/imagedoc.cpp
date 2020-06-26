@@ -2073,6 +2073,7 @@ void ImageDocument::SaveC2(std::string filenamepath)
 	// First Collect a list of C1 images
 	// $C1 is just the 32KB blob of data, as it sits in the IIgs video memory
 	std::vector<unsigned char*> c1Images;
+	std::vector<unsigned char> c2Data;
 
 	for (int frameIndex = 0; frameIndex < m_pSurfaces.size(); ++frameIndex)
 	{
@@ -2080,6 +2081,46 @@ void ImageDocument::SaveC2(std::string filenamepath)
 	}
 
 	// Then Serialize out a valid C2 animation into memory
+	std::vector<unsigned char> c2data;
+
+	unsigned char* pPrevFrame = c1Images[0];
+
+	// The first 32k of a C2 Animation, is just a regular uncompressed
+	// $C1 image
+	c2Data.resize( 0x8000 );
+	memcpy( &c2Data[0], pPrevFrame, 0x8000);
+
+	// Insert space for the length of the animation
+	c2Data.resize( c2Data.size() + sizeof(unsigned int));
+
+	// Tick Rate of this file (it will be 1)
+	// ultimately to support variable rate, I will inject blank frames
+	c2Data.push_back(1);
+	c2Data.push_back(0);
+	c2Data.push_back(0);
+	c2Data.push_back(0);
+
+	// This is some kind of length, that we just set to it's own size
+	c2Data.push_back(4);
+	c2Data.push_back(0);
+	c2Data.push_back(0);
+	c2Data.push_back(0);
+
+	for (int frameIndex = 1; frameIndex < c1Images.size(); ++frameIndex)
+	{
+		unsigned char* pCurrentFrame = c1Images[ frameIndex ];
+
+		std::vector<unsigned char> bytes = C2EncodeFrame(pPrevFrame, pCurrentFrame);
+
+		size_t offset = c2Data.size();
+
+		// Make room for new frame
+		c2Data.resize(c2Data.size() + bytes.size());
+
+		// Insert the frame
+		memcpy(&c2Data[ offset ], &bytes[0], bytes.size());
+	}
+
 
 	// then finally write it out to a file
 
@@ -2089,6 +2130,60 @@ void ImageDocument::SaveC2(std::string filenamepath)
 		delete[] c1Images[0];
 		c1Images.erase(c1Images.begin());
 	}
+}
+
+//------------------------------------------------------------------------------
+std::vector<unsigned char> ImageDocument::C2EncodeFrame(unsigned char* pPrev, unsigned char* pNext)
+{
+	std::vector<unsigned char> bytes;
+
+	// Constants
+	const int PixelBytes    = 0x7DC8; // pixels + 200 SCBS
+	const int PaletteOffset = 0x7E00; // palette offset
+	const int PaletteBytes  = 0x200;  // number of bytes in the palette
+
+	// Encode Pixels + SCBs
+	for (int index = 0; index < PixelBytes; ++index)
+	{
+		if (pPrev[ index ] != pNext[ index ])
+		{
+			// Save out the delta cursor position in memory
+			bytes.push_back( (unsigned char) (index & 0xFF ));
+			bytes.push_back( (unsigned char) ((index>>8) & 0xFF));
+
+	        // save out the data that change in the position
+		    bytes.push_back( pNext[ index ] );
+			index+=1;
+			bytes.push_back( pNext[ index ] );
+		}
+	}
+
+	// note, we are skipping the screen hole (between the SCBs and the Palette)
+
+	// Encode the palettes separate, so that colors can be updated in lockstep
+	// as best we can
+
+	for (int index = PaletteOffset; index < (PaletteOffset + PaletteBytes); index+=2)
+	{
+		if ((pPrev[ index ] != pNext[ index ])|| (pPrev[index+1] != pNext[index+1]))
+		{
+			// We have a delta, save out the index
+			bytes.push_back( (unsigned char) (index & 0xFF));
+			bytes.push_back( (unsigned char) ((index>>8) & 0xFF));
+
+			// Save out the, data
+            bytes.push_back( (unsigned char) pNext[ index + 0 ]);
+			bytes.push_back( (unsigned char) pNext[ index + 1 ]);
+		}
+	}
+
+	// Insert end of frame code
+	bytes.push_back(0x00);
+	bytes.push_back(0x00);
+	bytes.push_back(0xFF);
+	bytes.push_back(0xFF);
+
+	return bytes;
 }
 
 //------------------------------------------------------------------------------
