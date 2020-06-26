@@ -142,10 +142,16 @@ int ImageDocument::CountUniqueColors()
 {
 	int totalColors = 0;
 
+	m_numUniqueColors.resize(m_pSurfaces.size());
+
+	std::map<Uint32,Uint32> histogram;
+
 	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
 	{
-		totalColors += SDL_Surface_CountUniqueColors(m_pSurfaces[ idx ]);
+		m_numUniqueColors[idx] = SDL_Surface_CountUniqueColors(m_pSurfaces[ idx ], &histogram);
 	}
+
+	totalColors = (int)histogram.size();
 
 	return totalColors;
 }
@@ -230,7 +236,14 @@ void ImageDocument::Render()
 //	ImGui::Text("Source:");
 //	ImGui::SameLine();
 
-	ImGui::TextColored(ImVec4(0.7f,0.7f,0.7f,1.0f),"%d Colors", m_numSourceColors);
+	if (m_numUniqueColors.size() > 1)
+	{
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%d/%d Colors", m_numUniqueColors[m_iFrameNo], m_numSourceColors);
+	}
+	else
+	{
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%d Colors", m_numSourceColors);
+	}
 	ImGui::SameLine();
 	ImGui::TextColored(ImVec4(0.7f,0.7f,0.7f,1.0f),"%d x %d Pixels",m_width,m_height);
 	//ImGui::SameLine();
@@ -2407,7 +2420,7 @@ void ImageDocument::RotateLeft()
 		Uint32 *pDestPixels = new Uint32[m_height * m_width];
 
 		int SourceWidth = m_width;
-		int SourceHeight = m_height;
+		int SourceHeight = m_height; (void)SourceHeight;
 		int DestWidth  = m_height;
 		int DestHeight = m_width;
 
@@ -2454,7 +2467,7 @@ void ImageDocument::MirrorHorizontal()
 		Uint32 *pDestPixels = new Uint32[m_width * m_height];
 
 		int SourceWidth = m_width;
-		int SourceHeight = m_height;
+		int SourceHeight = m_height; (void)SourceHeight;
 		int DestWidth  = m_width;
 		int DestHeight = m_height;
 

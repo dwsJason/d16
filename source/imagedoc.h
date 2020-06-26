@@ -122,6 +122,7 @@ private:
 	int  m_iFrameNo;	// Currently Displayed Frame Number
 
 	int m_numSourceColors;
+	std::vector<int> m_numUniqueColors;
 
 	int m_width;
 	int m_height;

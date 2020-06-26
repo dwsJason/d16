@@ -328,7 +328,7 @@ std::vector<SDL_Surface*> SDL_FAN_Load(const char* pFilePath)
 
 //------------------------------------------------------------------------------
 
-int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
+int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface, std::map<Uint32,Uint32>* pGlobalHistogram )
 {
 	int width  = pSurface->w;
 	int height = pSurface->h;
@@ -371,7 +371,7 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
     if( SDL_MUSTLOCK(pImage) )
         SDL_LockSurface(pImage);
 
-	std::map<Uint32,Uint32> histogram;
+	std::map<Uint32,Uint32> local_histogram;
 
 	for (int y = 0; y < pImage->h; ++y)
 	{
@@ -382,7 +382,11 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
 
 			Uint32 color = *((Uint32*)pixel);
 
-			histogram[ color ] = 1;
+			local_histogram[ color ] = 1;
+			if (pGlobalHistogram)
+			{
+				(*pGlobalHistogram)[color] = 1;
+			}
 		}
 	}
 
@@ -391,7 +395,7 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface)
 
     SDL_FreeSurface(pImage);     /* No longer needed */
 
-	return (int)histogram.size();
+	return (int)local_histogram.size();
 }
 
 //------------------------------------------------------------------------------
