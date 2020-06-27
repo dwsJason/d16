@@ -2125,10 +2125,10 @@ void ImageDocument::SaveC2(std::string filenamepath)
 	if (c1Images.size() <= 1)
 	{
 		// Insert end of frame code
-		bytes.push_back(0x00);
-		bytes.push_back(0x00);
-		bytes.push_back(0xFF);
-		bytes.push_back(0xFF);
+		c2Data.push_back(0x00);
+		c2Data.push_back(0x00);
+		c2Data.push_back(0xFF);
+		c2Data.push_back(0xFF);
 	}
 
 
