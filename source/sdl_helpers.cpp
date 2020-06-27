@@ -503,7 +503,7 @@ void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath,
 
 //------------------------------------------------------------------------------
 
-SDL_Surface* SDL_C1DataToSurface(std::vector<unsigned char>& bytes)
+SDL_Surface* SDL_C1DataToSurface(unsigned char* bytes)
 {
 	SDL_Surface* pSurface = nullptr;
 
@@ -559,7 +559,11 @@ SDL_Surface* SDL_C1DataToSurface(std::vector<unsigned char>& bytes)
 
 SDL_Surface* SDL_C2GetSurface(C2File& c2File, int frameNo)
 {
-	return nullptr;
+	const std::vector<unsigned char*>& c1datas = c2File.GetPixelMaps();
+
+	SDL_Surface* pResult = SDL_C1DataToSurface(c1datas[ frameNo ]);
+
+	return pResult;
 }
 
 //------------------------------------------------------------------------------
@@ -607,7 +611,7 @@ SDL_Surface* SDL_C1_Load(const char* pFilePath)
 
 	if (0x8000 == bytes.size())
 	{
-		pResult = SDL_C1DataToSurface(bytes);
+		pResult = SDL_C1DataToSurface(&bytes[0]);
 	}
 
 	return pResult;

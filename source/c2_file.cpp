@@ -105,16 +105,19 @@ void C2File::LoadFromFile(const char* pFilePath)
 
 		// While we're not at the end of the file
 		unsigned short offset = 0;
+		unsigned short prev_offset = 0;
 		unsigned short data   = 0xFFFF;
 		while (file_offset <= eof_size)
 		{
+			prev_offset = offset;
+
 			offset  = (unsigned short)bytes[ file_offset++ ];
 			offset |= ((unsigned short)bytes[ file_offset++ ])<<8;
 
 			data  = (unsigned short)bytes[ file_offset++ ];
 			data |= ((unsigned short)bytes[ file_offset++ ])<<8;
 
-			if ((offset == 0)&&(data == 0xFFFF))
+			if (((offset == 0)&&(data == 0xFFFF))||(offset < prev_offset))
 			{
 				// End of Frame, capture a copy
 				pFrame  = new unsigned char[ 0x8000 ];

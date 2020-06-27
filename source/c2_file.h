@@ -57,8 +57,7 @@ public:
 	int GetWidth()  { return m_widthPixels; }
 	int GetHeight() { return m_heightPixels; }
 
-	//const FAN_Palette& GetPalette() { return m_pal; }
-	const std::vector<unsigned char*> GetPixelMaps() { return m_pC1PixelMaps; }
+	const std::vector<unsigned char*>& GetPixelMaps() { return m_pC1PixelMaps; }
 
 private:
 
