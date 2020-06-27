@@ -579,6 +579,8 @@ void FanFile::LoadFromFile(const char* pFilePath)
 		delete[] m_pPixelMaps[idx];
 		m_pPixelMaps[ idx ] = nullptr;
 	}
+	m_pPixelMaps.clear();
+
 	//--------------------------------------------------------------------------
 	
 
@@ -675,7 +677,7 @@ void FanFile::LoadFromFile(const char* pFilePath)
 
 //------------------------------------------------------------------------------
 //
-//  Move data out of the CLUT b;ock into the unpacked class structure
+//  Move data out of the CLUT block into the unpacked class structure
 //
 void FanFile::UnpackClut(FanFile_CLUT* pCLUT)
 {
