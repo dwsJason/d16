@@ -78,7 +78,7 @@ static void AddFileFilters()
 	{
 		".PNG",".TIF",".TGA",".GIF",".FAN",".JPG",".JFIF",".LBM",
 		".BMP",".WEBP",".PAL",".C1",".C2",
-		"C1#0000","C2#0000"
+		"#C10000","#C20000"
 	};
 
 	for (int idx = 0; idx < (sizeof(extensions)/sizeof(char*)); ++idx )
@@ -577,11 +577,11 @@ void MainMenuBarUI()
 
 			  SDL_Surface *image = nullptr;
 
-			  if (endsWith(pathName, ".c1") || endsWith(pathName, "c1#0000"))
+			  if (endsWith(pathName, ".c1") || endsWith(pathName, "#c10000"))
 			  {
 				  image = SDL_C1_Load(pathName.c_str());
 			  }
-			  else if (endsWith(pathName, ".c2") || endsWith(pathName, "c2#0000"))
+			  else if (endsWith(pathName, ".c2") || endsWith(pathName, "#c20000"))
 			  {
 				  // Paintworks Animation
 				  std::vector<SDL_Surface*> frames = SDL_C2_Load(pathName.c_str());
