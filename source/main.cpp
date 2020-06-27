@@ -71,6 +71,28 @@ bool bAppDone = false; // Set true to quit App
 
 //------------------------------------------------------------------------------
 
+static void AddFileFilters()
+{
+	// upper case list
+	char* extensions[] =
+	{
+		".PNG",".TIF",".TGA",".GIF",".FAN",".JPG",".JFIF",".LBM",
+		".BMP",".WEBP",".PAL",".C1",".C2",
+		"C1#0000","C2#0000"
+	};
+
+	for (int idx = 0; idx < (sizeof(extensions)/sizeof(char*)); ++idx )
+	{
+		ImGuiFileDialog::Instance()->SetFilterColor(extensions[ idx ], ImVec4(0,1,0,1));
+
+		// Add them all, as lowercase too
+		std::string lowercase = toLower( extensions[ idx ] );
+		ImGuiFileDialog::Instance()->SetFilterColor(lowercase.c_str(), ImVec4(0,1,0,1));
+	}
+}
+
+//------------------------------------------------------------------------------
+
 // Main code
 int main(int, char**)
 {
@@ -189,7 +211,7 @@ int main(int, char**)
 
 	LOG("Dream16 Compiled %s %s\n", __DATE__, __TIME__);
 
-	//SDL_Delay(1000);
+	AddFileFilters();
 
 	// Set File Type Filter Colors, because that won't look weird
 	ImGuiFileDialog::Instance()->SetFilterColor(".png", ImVec4(0,1,0,1));
@@ -555,7 +577,11 @@ void MainMenuBarUI()
 
 			  SDL_Surface *image = nullptr;
 
-			  if (endsWith(pathName, ".c2"))
+			  if (endsWith(pathName, ".c1") || endsWith(pathName, "c1#0000"))
+			  {
+				  image = SDL_C1_Load(pathName.c_str());
+			  }
+			  else if (endsWith(pathName, ".c2") || endsWith(pathName, "c2#0000"))
 			  {
 				  // Paintworks Animation
 				  std::vector<SDL_Surface*> frames = SDL_C2_Load(pathName.c_str());

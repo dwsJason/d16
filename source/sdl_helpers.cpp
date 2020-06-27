@@ -512,4 +512,11 @@ std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath)
 
 //------------------------------------------------------------------------------
 
+SDL_Surface* SDL_C1_Load(const char* pFilePath)
+{
+	SDL_Surface* pResult = nullptr;
+
+	return pResult;
+}
+//------------------------------------------------------------------------------
 
