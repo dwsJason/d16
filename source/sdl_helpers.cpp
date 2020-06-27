@@ -503,6 +503,60 @@ void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath,
 
 //------------------------------------------------------------------------------
 
+SDL_Surface* SDL_C1DataToSurface(std::vector<unsigned char>& bytes)
+{
+	SDL_Surface* pSurface = nullptr;
+
+	// Convert to 256 color index image. then take that into a surface
+	unsigned char* pRawPixels = new unsigned char[ 320 * 200 ];
+
+	// Get the pixels (no 640, and no fill mode)
+	for (int y = 0; y < 200; ++y)
+	{
+		unsigned char pal_index = bytes[ 0x7D00 + y ] << 4;
+
+		int source_index = y * 160;
+		int dest_index = y * 320;
+
+		for (int x = 0; x < 320; x+=2)
+		{
+			unsigned char source_pixel = bytes[ source_index + (x>>1) ];
+
+			pRawPixels[ dest_index + x + 0 ] = ((source_pixel>>4) & 0xF) | pal_index;
+			pRawPixels[ dest_index + x + 1 ] = ((source_pixel>>0) & 0xF) | pal_index;
+		}
+	}
+
+	// GS Colors to SDL Colors
+	unsigned short* pColors = (unsigned short*)&bytes[0x7E00];
+	SDL_Palette *pPalette = SDL_AllocPalette(256);
+
+	for (int idx = 0; idx < 256; ++idx)
+	{
+		SDL_Color outColor;
+		unsigned short inColor = pColors[ idx ];
+
+		outColor.r = ((inColor >> 8) & 0xF);
+		outColor.r|= outColor.r<<4;
+		outColor.g = ((inColor >> 4) & 0xF);
+		outColor.g|= outColor.g<<4;
+		outColor.b = ((inColor >> 0) & 0xF);
+		outColor.b|= outColor.b<<4;
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+	}
+
+	pSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pRawPixels, 320, 200,
+		8, 320, SDL_PIXELFORMAT_INDEX8);
+
+	SDL_SetSurfacePalette(pSurface, pPalette);
+
+	return pSurface;
+}
+
+//------------------------------------------------------------------------------
+
 SDL_Surface* SDL_C2GetSurface(C2File& c2File, int frameNo)
 {
 	return nullptr;
@@ -531,7 +585,30 @@ std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath)
 
 SDL_Surface* SDL_C1_Load(const char* pFilePath)
 {
+	std::vector<unsigned char> bytes;
 	SDL_Surface* pResult = nullptr;
+
+	// Read the file into memory
+	FILE* pFile = nullptr;
+	errno_t err = fopen_s(&pFile, pFilePath, "rb");
+
+	if (0==err)
+	{
+		fseek(pFile, 0, SEEK_END);
+		size_t length = ftell(pFile);	// get file size
+		fseek(pFile, 0, SEEK_SET);
+
+		bytes.resize( length );			// make sure buffer is large enough
+
+		// Read in the file
+		fread(&bytes[0], sizeof(unsigned char), bytes.size(), pFile);
+		fclose(pFile);
+	}
+
+	if (0x8000 == bytes.size())
+	{
+		pResult = SDL_C1DataToSurface(bytes);
+	}
 
 	return pResult;
 }
