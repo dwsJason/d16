@@ -6,9 +6,11 @@
 
 #include "sdl_helpers.h"
 
+#include "c2_file.h"  // Support Paintworks Animation File
 #include "fan_file.h" // Support for Foenix Animation File
 
-// include the oldest, crustiest gif library out there
+// include the oldest, crustiest gif library out there, it forces you to
+// learn all the little details about gif, when it should just make it easy
 #include "gif_lib.h"
 
 #include "log.h"
@@ -519,7 +521,7 @@ std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath)
 	for (int idx = 0; idx < numFrames; ++idx)
 	{
 		SDL_Surface* pSurface = SDL_C2GetSurface(c2File, idx);
-		result.push_back(pSurface);
+		results.push_back(pSurface);
 	}
 
 	return results;
