@@ -35,41 +35,25 @@ C2File::C2File(const char *pFilePath)
 C2File::~C2File()
 {
 	// Free Up the memory
-	for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
+	for (int idx = 0; idx < m_pC1PixelMaps.size(); ++idx)
 	{
-		delete[] m_pPixelMaps[idx];
-		m_pPixelMaps[ idx ] = nullptr;
+		delete[] m_pC1PixelMaps[idx];
+		m_pC1PixelMaps[ idx ] = nullptr;
 	}
 }
-
-//------------------------------------------------------------------------------
-//
-// Make a Copy of the image data
-//
-//void C2File::AddImages( const std::vector<unsigned char*>& pPixelMaps )
-//{
-//	int numPixels = m_widthPixels * m_heightPixels;
-//
-//	for (int idx = 0; idx < pPixelMaps.size(); ++idx)
-//	{
-//		unsigned char* pPixels = new unsigned char[ numPixels ];
-//		memcpy(pPixels, pPixelMaps[ idx ], numPixels);
-//		m_pPixelMaps.push_back( pPixels );
-//	}
-//}
 
 //------------------------------------------------------------------------------
 
 void C2File::LoadFromFile(const char* pFilePath)
 {
 	// Free Up the memory
-	for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
+	for (int idx = 0; idx < m_pC1PixelMaps.size(); ++idx)
 	{
-		delete[] m_pPixelMaps[idx];
-		m_pPixelMaps[ idx ] = nullptr;
+		delete[] m_pC1PixelMaps[idx];
+		m_pC1PixelMaps[ idx ] = nullptr;
 	}
 
-	m_pPixelMaps.clear();
+	m_pC1PixelMaps.clear();
 	//--------------------------------------------------------------------------
 
 	std::vector<unsigned char> bytes;
@@ -94,73 +78,29 @@ void C2File::LoadFromFile(const char* pFilePath)
 
 	if (bytes.size())
 	{
-#if 0
 		size_t file_offset = 0;	// File Cursor
 
 		// Bytes are in the buffer, so let's start looking at what we have
-		FanFile_Header* pHeader = (FanFile_Header*) &bytes[0];
+		C2File_Header* pHeader = (C2File_Header*) &bytes[0];
 
 		// Early out if things don't look right
 		if (!pHeader->IsValid((unsigned int)bytes.size()))
 			return;
 
-		m_widthPixels = pHeader->width;
-		m_heightPixels = pHeader->height;
+		// Grab Initial Frame, and put it in the list
 
-		if (pHeader->version & 0x80)
-		{
-			// We need to UnSwizzle the Data to "see" it correctly on PC
-			// we leave it alone if we're on C256 Device, and use tiles
-			printf("$$TODO JGA UnSwizzle Tiles\n");
-		}
-
-		// Go ahead and allocate the bitmaps
-		unsigned int frameCount = (pHeader->frame_count_high << 16) | pHeader->frame_count;
-		unsigned int frameSize = pHeader->width * pHeader->height;
-
-		for (unsigned int idx = 0; idx < frameCount; ++idx)
-		{
-			unsigned char* pFrame = new unsigned char[ frameSize ];
-			m_pPixelMaps.push_back(pFrame);
-		}
+		unsigned char* pFrame = new unsigned char[ 0x8000 ];
+		m_pC1PixelMaps.push_back(pFrame);
+		memcpy(pFrame, &bytes[0], 0x8000);
 
 		//----------------------------------------------------------------------
-		// Process Chunks as we encounter them
-		file_offset += sizeof(FanFile_Header);
+		// Process Frames as we encounter them
+		file_offset += sizeof(C2File_Header);
 
 		// While we're not at the end of the file
 		while (file_offset < bytes.size())
 		{
-			// This is pretty dumb, just get it done
-			// These are the types I understand
-			// every chunk is supposed to contain a value chunk_length
-			// at offset +4, so that we can ignore ones we don't understand
-			FanFile_CLUT* pCLUT = (FanFile_CLUT*)&bytes[ file_offset ];
-			FanFile_INIT* pINIT = (FanFile_INIT*)&bytes[ file_offset ];
-			FanFile_FRAM* pFRAM = (FanFile_FRAM*)&bytes[ file_offset ];
-
-			FanFile_CHUNK* pCHUNK = (FanFile_CHUNK*)&bytes[ file_offset ];
-
-			if (pCLUT->IsValid())
-			{
-				// We have a CLUT Chunk
-				UnpackClut(pCLUT);
-			}
-			else if (pINIT->IsValid())
-			{
-				// We have an initial frame chunk
-				UnpackInitialFrame(pINIT);
-			}
-			else if (pFRAM->IsValid())
-			{
-				// We have a packed frames chunk
-				UnpackFrames(pFRAM);
-			}
-
-			file_offset += pCHUNK->chunk_length;
-
 		}
-#endif
 	}
 
 }

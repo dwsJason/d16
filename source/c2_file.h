@@ -33,7 +33,7 @@ typedef struct C2File_Header
 // If you're doing C, just get rid of these methods
 	bool IsValid(unsigned int fileLength)
 	{
-		if (file_length != fileLength)
+		if ((file_length+0x8008) != fileLength)
 			return false;				// size isn't right
 
 		return true;
@@ -46,39 +46,26 @@ typedef struct C2File_Header
 class C2File
 {
 public:
-	// Create a Blank Fan File
-	//C2File();
-	// Load in a Fan File
+	// Load in a C2 File
 	C2File(const char *pFilePath);
 
 	~C2File();
 
-	// Creation
-	//void SetPalette( const FAN_Palette& palette );
-	//void AddImages( const std::vector<unsigned char*>& pPixelMaps );
-	//void SaveToFile(const char* pFilenamePath);
-
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
-	int GetFrameCount() { return (int)m_pPixelMaps.size(); }
+	int GetFrameCount() { return (int)m_pC1PixelMaps.size(); }
 	int GetWidth()  { return m_widthPixels; }
 	int GetHeight() { return m_heightPixels; }
 
 	//const FAN_Palette& GetPalette() { return m_pal; }
-	const std::vector<unsigned char*> GetPixelMaps() { return m_pPixelMaps; }
+	const std::vector<unsigned char*> GetPixelMaps() { return m_pC1PixelMaps; }
 
 private:
-
-	//void UnpackClut(FanFile_CLUT* pCLUT);
-	//void UnpackInitialFrame(FanFile_INIT* pINIT);
-	//void UnpackFrames(FanFile_FRAM* pFRAM);
-
-	//int EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned char* pWorkBuffer, size_t bufferSize );
 
 	int m_widthPixels;		// Width of image in pixels
 	int m_heightPixels;		// Height of image in pixels
 
-	std::vector<unsigned char*> m_pPixelMaps;
+	std::vector<unsigned char*> m_pC1PixelMaps;
 
 };
 

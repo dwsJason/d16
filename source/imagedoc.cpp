@@ -2131,8 +2131,6 @@ void ImageDocument::SaveC2(std::string filenamepath)
 		c2Data.push_back(0xFF);
 	}
 
-
-
 	// update the length field
 	int length = (int)c2Data.size();
 	length -= 0x8008;
