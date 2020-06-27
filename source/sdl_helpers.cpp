@@ -500,3 +500,16 @@ void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath,
 }
 
 //------------------------------------------------------------------------------
+
+std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+
+
+	return results;
+}
+
+//------------------------------------------------------------------------------
+
+

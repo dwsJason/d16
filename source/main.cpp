@@ -215,6 +215,8 @@ int main(int, char**)
 	ImGuiFileDialog::Instance()->SetFilterColor(".BMP", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".WEBP", ImVec4(0,1,0,1));
 	ImGuiFileDialog::Instance()->SetFilterColor(".PAL", ImVec4(0,1,0,1));
+	ImGuiFileDialog::Instance()->SetFilterColor(".c2", ImVec4(0,1,0,1));
+	ImGuiFileDialog::Instance()->SetFilterColor(".C2", ImVec4(0,1,0,1));
 
 	{
 		// Scan preset palette directory
@@ -553,7 +555,19 @@ void MainMenuBarUI()
 
 			  SDL_Surface *image = nullptr;
 
-			  if (endsWith(pathName, ".fan"))
+			  if (endsWith(pathName, ".c2"))
+			  {
+				  // Paintworks Animation
+				  std::vector<SDL_Surface*> frames = SDL_C2_Load(pathName.c_str());
+
+				  LOG("C2_Load %d Frames\n", frames.size());
+				  if (frames.size())
+				  {
+					  LOG("Loaded %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
+				  }
+			  }
+			  else if (endsWith(pathName, ".fan"))
 			  {
 				  // Foenix Animation
 				  std::vector<SDL_Surface*> frames = SDL_FAN_Load(pathName.c_str());
@@ -564,8 +578,6 @@ void MainMenuBarUI()
 					  LOG("Loaded %s\n", it->second.c_str());
 					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
 				  }
-
-
 			  }
 			  else if (endsWith(pathName, ".gif"))
 			  {
