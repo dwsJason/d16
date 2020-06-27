@@ -89,20 +89,50 @@ void C2File::LoadFromFile(const char* pFilePath)
 
 		// Grab Initial Frame, and put it in the list
 
-		unsigned char* pFrame = new unsigned char[ 0x8000 ];
+		unsigned char* pFrame  = new unsigned char[ 0x8000 ];
+		unsigned char* pCanvas = new unsigned char[ 0x8000 ]; // each frame changes the canvas
 		m_pC1PixelMaps.push_back(pFrame);
 		memcpy(pFrame, &bytes[0], 0x8000);
+		memcpy(pCanvas, &bytes[0], 0x8000);
 
 		//----------------------------------------------------------------------
 		// Process Frames as we encounter them
 		file_offset += sizeof(C2File_Header);
 
-		// While we're not at the end of the file
-		while (file_offset < bytes.size())
-		{
-		}
-	}
+		// Since we always pull 4 bytes
+		// let's keep us from pulling bytes outside our buffer
+		size_t eof_size = bytes.size() - 4;
 
+		// While we're not at the end of the file
+		unsigned short offset = 0;
+		unsigned short data   = 0xFFFF;
+		while (file_offset <= eof_size)
+		{
+			offset  = (unsigned short)bytes[ file_offset++ ];
+			offset |= ((unsigned short)bytes[ file_offset++ ])<<8;
+
+			data  = (unsigned short)bytes[ file_offset++ ];
+			data |= ((unsigned short)bytes[ file_offset++ ])<<8;
+
+			if ((offset == 0)&&(data == 0xFFFF))
+			{
+				// End of Frame, capture a copy
+				pFrame  = new unsigned char[ 0x8000 ];
+				memcpy(pFrame, pCanvas, 0x8000);
+				m_pC1PixelMaps.push_back(pFrame);
+			}
+			else
+			{
+				// Apply Change to the Canvas
+				offset &= 0x7FFF; // force the offset into the Canvas
+				// probably should ignore offsets outside the canvas
+				pCanvas[ offset ] = data & 0xFF;
+				pCanvas[ offset+1 ] = (data >> 8) & 0xFF;
+			}
+		}
+
+		delete[] pCanvas;
+	}
 }
 
 //------------------------------------------------------------------------------
