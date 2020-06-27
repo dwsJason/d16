@@ -501,11 +501,26 @@ void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath,
 
 //------------------------------------------------------------------------------
 
+SDL_Surface* SDL_C2GetSurface(C2File& c2File, int frameNo)
+{
+	return nullptr;
+}
+
+//------------------------------------------------------------------------------
+
 std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath)
 {
 	std::vector<SDL_Surface*> results;
 
+	C2File c2File(pFilePath);
 
+	int numFrames = c2File.GetFrameCount();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+		SDL_Surface* pSurface = SDL_C2GetSurface(c2File, idx);
+		result.push_back(pSurface);
+	}
 
 	return results;
 }
