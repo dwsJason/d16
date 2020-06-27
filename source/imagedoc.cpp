@@ -2121,8 +2121,24 @@ void ImageDocument::SaveC2(std::string filenamepath)
 		memcpy(&c2Data[ offset ], &bytes[0], bytes.size());
 	}
 
+	// update the length field
+	int length = (int)c2Data.size();
+	length -= 0x8008;
+
+	c2Data[0x8000] = (unsigned char) ((length>> 0) & 0xFF);
+	c2Data[0x8001] = (unsigned char) ((length>> 8) & 0xFF);
+	c2Data[0x8002] = (unsigned char) ((length>>16) & 0xFF);
+	c2Data[0x8003] = (unsigned char) ((length>>24) & 0xFF);
 
 	// then finally write it out to a file
+
+	{
+		FILE* file = fopen(filenamepath.c_str(), "wb");
+
+		fwrite(&c2data[0], 1, c2data.size(), file);
+
+		fclose(file);
+	}
 
 	// We need to free the C1Data here since it's not a proper object
 	while (c1Images.size())
