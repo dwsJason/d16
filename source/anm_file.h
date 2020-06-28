@@ -25,7 +25,6 @@ typedef struct ANM_Color
 	unsigned char a;
 } ANM_Color;
 
-#pragma pack(pop)
 //------------------------------------------------------------------------------
 
 typedef struct ANM_Range
@@ -39,7 +38,7 @@ typedef struct ANM_Range
 typedef struct ANM_LargePage
 {
 	u16 baseRecord; // number of the first record in this large page
-	u16 nRecord;	// number of records in lp
+	u16 nRecords;	// number of records in lp
 				    // bit 15 of "nRecords" == "has continuation from previous lp".
 					// bit 14 of "nRecords" == "final record continues on next lp".
 	u16 nBytes;		// Total number of bytes of contents, excluding header
@@ -55,7 +54,7 @@ typedef struct ANM_Header
 					  // delta for looping animation
 	u16 maxRecsPerLp; // records permitted in a loop, 256 FOR NOW
 	u16 lpfTableOffset; // Absolute seek position of lpfTable (1280 for now)
-			          // lpt talbe is an array of 256 large page structures
+			          // lpt table is an array of 256 large page structures
 					  // that is used to facilitate finding records in an anim
 					  // file without having to seek through all of the Large
 					  // Pages to find which one a specific record lives in.
@@ -126,10 +125,15 @@ typedef struct ANM_Header
 		if (1 != bitmaptype)
 			return false;
 
+		if (1280 != lpfTableOffset)
+			return false;
+
 		return true;
 	}
 
 } ANM_Header;
+
+#pragma pack(pop)
 
 //------------------------------------------------------------------------------
 typedef struct ANM_Palette
@@ -158,6 +162,9 @@ public:
 	const std::vector<unsigned char*> GetPixelMaps() { return m_pPixelMaps; }
 
 private:
+
+	void DecodeFrame(unsigned char* pDest, unsigned char* pSource);
+	unsigned char* FindRecord(ANM_Header* pHeader, int frameNo);
 
 	int m_widthPixels;		// Width of image in pixels
 	int m_heightPixels;		// Height of image in pixels
