@@ -12,7 +12,7 @@
 
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler
-//static_assert(sizeof(FanFile_Header)==16, "FanFile_Header is supposed to be 16 bytes");
+static_assert(sizeof(ANM_Header)==2816, "ANM_Header is supposed to be 2816 bytes");
 
 //------------------------------------------------------------------------------
 // Load in a FanFile constructor
@@ -88,6 +88,21 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 	if (bytes.size())
 	{
 		size_t file_offset = 0;	// File Cursor
+
+		ANM_Header* pHeader = (ANM_Header*)&bytes[0];
+
+		if (pHeader->IsValid())
+		{
+			// Looks Valid
+
+			// I don't support palette animation, just just grab
+			// the palette from the header
+
+
+			// Now grab first frame of animation
+
+			// loop through and grab the rest of the frames
+		}
 	}
 
 }
