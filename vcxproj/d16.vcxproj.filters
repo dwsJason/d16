@@ -110,6 +110,9 @@
     <ClCompile Include="..\source\c2_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\anm_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -536,6 +539,9 @@
       <Filter>source\common</Filter>
     </ClInclude>
     <ClInclude Include="..\source\c2_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\anm_file.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

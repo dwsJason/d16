@@ -77,7 +77,7 @@ static void AddFileFilters()
 	char* extensions[] =
 	{
 		".PNG",".TIF",".TGA",".GIF",".FAN",".JPG",".JFIF",".LBM",
-		".BMP",".WEBP",".PAL",".C1",".C2",
+		".BMP",".WEBP",".ANM",".PAL",".C1",".C2",
 		"#C10000","#C20000"
 	};
 
@@ -211,34 +211,8 @@ int main(int, char**)
 
 	LOG("Dream16 Compiled %s %s\n", __DATE__, __TIME__);
 
-	AddFileFilters();
-
 	// Set File Type Filter Colors, because that won't look weird
-	ImGuiFileDialog::Instance()->SetFilterColor(".png", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".tif", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".tga", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".gif", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".fan", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".jpg", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".jfif", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".lbm", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".bmp", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".webp", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".pal", ImVec4(0,1,0,1));
-	// keep the uppercase around, until we aren't using a stupid file dialog 
-	ImGuiFileDialog::Instance()->SetFilterColor(".PNG", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".TIF", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".TGA", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".GIF", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".FAN", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".JPG", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".JFIF", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".LBM", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".BMP", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".WEBP", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".PAL", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".c2", ImVec4(0,1,0,1));
-	ImGuiFileDialog::Instance()->SetFilterColor(".C2", ImVec4(0,1,0,1));
+	AddFileFilters();
 
 	{
 		// Scan preset palette directory
@@ -576,8 +550,24 @@ void MainMenuBarUI()
 			  std::string pathName = it->second;
 
 			  SDL_Surface *image = nullptr;
+			  if (endsWith(pathName, ".anm"))
+			  {
+				  // Deluxe Paint Animation File
+				  // I'm only implementing the importing of these files, so that
+				  // I can view clay-fighter pencil sketches, without dosbox
+				  // Paintworks Animation
+				  std::vector<SDL_Surface*> frames = SDL_ANM_Load(pathName.c_str());
 
-			  if (endsWith(pathName, ".c1") || endsWith(pathName, "#c10000"))
+				  LOG("ANM_Load %d Frames\n", frames.size());
+				  if (frames.size())
+				  {
+					  LOG("Loaded %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
+				  }
+
+
+			  }
+			  else if (endsWith(pathName, ".c1") || endsWith(pathName, "#c10000"))
 			  {
 				  image = SDL_C1_Load(pathName.c_str());
 			  }

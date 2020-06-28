@@ -6,6 +6,7 @@
 
 #include "sdl_helpers.h"
 
+#include "anm_file.h" // Support Deluxe Animation File
 #include "c2_file.h"  // Support Paintworks Animation File
 #include "fan_file.h" // Support for Foenix Animation File
 
@@ -615,6 +616,18 @@ SDL_Surface* SDL_C1_Load(const char* pFilePath)
 	}
 
 	return pResult;
+}
+//------------------------------------------------------------------------------
+//
+// Import a Deluxe animate file as a bunch of SDL Surfaces
+//
+std::vector<SDL_Surface*> SDL_ANM_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+	(void)pFilePath;
+
+	return results;
 }
 //------------------------------------------------------------------------------
 
