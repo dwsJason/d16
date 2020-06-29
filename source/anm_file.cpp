@@ -123,8 +123,8 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 			unsigned char* pCanvas = new unsigned char[ 320 * 200 ];
 			memset(pCanvas, 0, 320*200);
 
+			// Now grab first frame of animation
 			unsigned char* pData = FindRecord(pHeader, 0);
-
 			DecodeFrame(pCanvas, pData);
 
 			unsigned char* pFrame = new unsigned char[320 * 200];
@@ -132,25 +132,15 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 			m_pPixelMaps.push_back(pFrame);
 
 
-			// Now grab first frame of animation
 
 			// loop through and grab the rest of the frames
 			for (int frameNo = 1; frameNo < (int)pHeader->nFrames; ++frameNo)
 			{
-				unsigned char* pFramePointer = FindRecord(pHeader, frameNo);
-
-				// 66 magic frame IDnum
-				assert(66 == pFramePointer[0]);
-
-				assert(0 == pFramePointer[1]); // if we hit this, we need to
-										       // add support for the extrabytes
-
-				// Assume no extra bytes field
-				pFramePointer += 2;
+				pData = FindRecord(pHeader, frameNo);
 
 				// Now we're pointed at compressed data, probably
-
 				DecodeFrame(pCanvas, pData);
+
 				pFrame = new unsigned char[320 * 200];
 				memcpy(pFrame, pCanvas, 320 * 200 );
 				m_pPixelMaps.push_back(pFrame);
@@ -189,11 +179,11 @@ void AnmFile::DecodeFrame(unsigned char* pDest, unsigned char* pSource)
 			if (0 == count)
 			{
 				// longOp
-				i16 longOp = (i16)pSource[0];
-				longOp |= ((i16)pSource[1])<<8;
+				u16 longOp = (u16)pSource[0];
+				longOp |= ((u16)pSource[1])<<8;
 				pSource += 2;
 
-				if (longOp <= 0)
+				if ((longOp & 0x8000)||(0 == longOp))
 				{
 					// Not Long skip
 					if (0 == longOp)
@@ -295,6 +285,15 @@ unsigned char* AnmFile::FindRecord(ANM_Header* pHeader, int frameNo)
 					{
 						pResult += pRecordSizes[ idx ];
 					}
+
+					// 66 magic frame IDnum
+					assert(66 == pResult[0]);
+
+					assert(0 == pResult[1]); // if we hit this, we need to
+												   // add support for the extrabytes
+
+					// Assume no extra bytes field
+					pResult += 2;
 
 					break;
 				}
