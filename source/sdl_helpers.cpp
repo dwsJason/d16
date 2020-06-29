@@ -564,6 +564,10 @@ SDL_Surface* SDL_C2GetSurface(C2File& c2File, int frameNo)
 
 	SDL_Surface* pResult = SDL_C1DataToSurface(c1datas[ frameNo ]);
 
+	// Stuff in the Delay Time
+	int delayTime = 4; 	// hard coded for now
+	pResult->userdata = (void *)((long long)(delayTime & 0xFFFF));
+
 	return pResult;
 }
 
@@ -618,6 +622,50 @@ SDL_Surface* SDL_C1_Load(const char* pFilePath)
 	return pResult;
 }
 //------------------------------------------------------------------------------
+
+SDL_Surface* SDL_ANM_GetSurface(AnmFile& animFile, int frameNo)
+{
+	SDL_Surface* pTargetSurface = nullptr;
+
+	const ANM_Palette& clut = animFile.GetPalette();
+	const std::vector<unsigned char*>& pPixelMaps = animFile.GetPixelMaps();
+
+	int width  = animFile.GetWidth();
+	int height = animFile.GetHeight();
+
+	unsigned char* pRawPixels = new unsigned char[ width * height ];
+	memcpy(pRawPixels, pPixelMaps[ frameNo ], width * height);
+
+	pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pRawPixels, width, height,
+		8, width, SDL_PIXELFORMAT_INDEX8);
+
+	SDL_Palette *pPalette = SDL_AllocPalette(clut.iNumColors);
+
+	// ANM Colors to SDL Colors
+	for (int idx = 0; idx < clut.iNumColors; ++idx)
+	{
+		ANM_Color inColor = clut.pColors[ idx ];
+		SDL_Color outColor;
+		outColor.r = inColor.r;
+		outColor.g = inColor.g;
+		outColor.b = inColor.b;
+		outColor.a = inColor.a;
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+	}
+
+	SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+	// Stuff in the Delay Time
+	int delayTime = 4; 	// hard coded for now
+	pTargetSurface->userdata = (void *)((long long)(delayTime & 0xFFFF));
+
+	return pTargetSurface;
+}
+
+
+//------------------------------------------------------------------------------
 //
 // Import a Deluxe animate file as a bunch of SDL Surfaces
 //
@@ -625,7 +673,15 @@ std::vector<SDL_Surface*> SDL_ANM_Load(const char* pFilePath)
 {
 	std::vector<SDL_Surface*> results;
 
-	(void)pFilePath;
+	AnmFile animFile(pFilePath);
+
+	int numFrames = animFile.GetFrameCount();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+		SDL_Surface* pSurface = SDL_ANM_GetSurface(animFile, idx);
+		results.push_back(pSurface);
+	}
 
 	return results;
 }

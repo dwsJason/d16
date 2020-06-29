@@ -90,6 +90,10 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 	{
 		//size_t file_offset = 0;	// File Cursor
 
+		m_widthPixels = 320;
+		m_heightPixels = 200;
+		m_numColors = 256;
+
 		ANM_Header* pHeader = (ANM_Header*)&bytes[0];
 
 		if (pHeader->IsValid())
@@ -110,6 +114,8 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 				color.g = (u8)((srcColor >> 8) & 0xFF);
 				color.b = (u8)((srcColor >> 16) & 0xFF);
 				color.a = 255;
+
+				m_pal.pColors[ idx ] = color;
 			}
 
 			// This is another format that applies delta changes
@@ -176,9 +182,9 @@ void AnmFile::DecodeFrame(unsigned char* pDest, unsigned char* pSource)
 				*pDest++ = pixel;
 			}
 		}
-		else
+		else if (opcode & 0x80)
 		{
-			unsigned char count = opcode - 0x80;
+			unsigned char count = opcode & 0x7F;
 
 			if (0 == count)
 			{
@@ -228,6 +234,14 @@ void AnmFile::DecodeFrame(unsigned char* pDest, unsigned char* pSource)
 			{
 				// Short Skip
 				pDest += count;
+			}
+		}
+		else
+		{
+			// short dump
+			while (opcode--)
+			{
+				*pDest++ = *pSource++;
 			}
 		}
 	}
