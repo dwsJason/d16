@@ -88,17 +88,29 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 
 	if (bytes.size())
 	{
-		size_t file_offset = 0;	// File Cursor
+		//size_t file_offset = 0;	// File Cursor
 
 		ANM_Header* pHeader = (ANM_Header*)&bytes[0];
 
 		if (pHeader->IsValid())
 		{
-			unsigned char* FirstLPage = &bytes[ sizeof(ANM_Header) ];
+			//unsigned char* FirstLPage = &bytes[ sizeof(ANM_Header) ];
 			// Looks Valid
 
 			// I don't support palette animation, just just grab
 			// the palette from the header
+			m_pal.iNumColors = 256;
+			m_pal.pColors = new ANM_Color[ 256 ];
+			for (int idx = 0; idx < 256; ++idx)
+			{
+				u32 srcColor = pHeader->palette[ idx ];
+
+				ANM_Color color;
+				color.r = (u8)(srcColor & 0xFF);
+				color.g = (u8)((srcColor >> 8) & 0xFF);
+				color.b = (u8)((srcColor >> 16) & 0xFF);
+				color.a = 255;
+			}
 
 			// This is another format that applies delta changes
 			// to a reference buffer
@@ -111,6 +123,7 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 
 			unsigned char* pFrame = new unsigned char[320 * 200];
 			memcpy(pFrame, pCanvas, 320 * 200 );
+			m_pPixelMaps.push_back(pFrame);
 
 
 			// Now grab first frame of animation
@@ -131,19 +144,93 @@ void AnmFile::LoadFromFile(const char* pFilePath)
 
 				// Now we're pointed at compressed data, probably
 
+				DecodeFrame(pCanvas, pData);
+				pFrame = new unsigned char[320 * 200];
+				memcpy(pFrame, pCanvas, 320 * 200 );
+				m_pPixelMaps.push_back(pFrame);
 			}
 		}
 	}
-
 }
 
 //------------------------------------------------------------------------------
 //
 // RunSkipDump, not documented in animfile.txt, so that's helpful
-// 
+//
+// Ported from ANIMA.ASM
 //
 void AnmFile::DecodeFrame(unsigned char* pDest, unsigned char* pSource)
 {
+	while (true)
+	{
+		unsigned char opcode = *pSource++;
+
+		if (0 == opcode)
+		{
+			// This is a run
+			unsigned char count = *pSource++; // count
+			unsigned char pixel = *pSource++; // pixel value
+
+			while (count--)
+			{
+				*pDest++ = pixel;
+			}
+		}
+		else
+		{
+			unsigned char count = opcode - 0x80;
+
+			if (0 == count)
+			{
+				// longOp
+				i16 longOp = (i16)pSource[0];
+				longOp |= ((i16)pSource[1])<<8;
+				pSource += 2;
+
+				if (longOp <= 0)
+				{
+					// Not Long skip
+					if (0 == longOp)
+					{
+						break;	// end of frame
+					}
+					else
+					{
+						longOp &= 0x7FFF;
+						if (longOp >= 0x4000)
+						{
+							// longRun
+							longOp &= 0x3FFF;
+							unsigned char pixel = *pSource++; // pixel value
+							while (longOp--)
+							{
+								*pDest++ = pixel;
+							}
+
+						}
+						else
+						{
+							// longDump
+							while (longOp--)
+							{
+								*pDest++ = *pSource++;
+							}
+						}
+					}
+				}
+				else
+				{
+					// long skip
+					pDest += longOp;
+				}
+			}
+			else
+			{
+				// Short Skip
+				pDest += count;
+			}
+		}
+	}
 }
 
 //------------------------------------------------------------------------------
