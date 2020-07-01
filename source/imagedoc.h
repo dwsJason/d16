@@ -118,8 +118,6 @@ private:
 	// makes more sense than a list of delay times, this way each frame
 	// gets to live in a "global" spot on the timeline
 	//
-	std::vector<float> m_fPresentTimes;  // this can be the time in seconds
-
 	std::vector<int> m_iDelayTimes;
 
 	bool m_bPlaying; 	// Is Animation Playing

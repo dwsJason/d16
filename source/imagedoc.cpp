@@ -1007,8 +1007,23 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 //------------------------------------------------------------------------------
 void ImageDocument::RenderTimeLine()
 {
+	float timeSeconds = 0.0f;
 
-	float timeSeconds = 5.0f;
+	std::vector<float> tickTimes;
+
+	// Total up the time in seconds
+	// probably should cache this
+	for (int idx = 0; idx < m_iDelayTimes.size(); ++idx)
+	{
+		tickTimes.push_back( timeSeconds );
+		timeSeconds += (float) m_iDelayTimes[ idx ];
+	}
+
+	timeSeconds /= 100.0f;
+
+	//--------------------------------------------------------------------------
+
+
 	float fHZ = 100.0f;
 
 	float DopeSheetHeight = ImGui::GetFrameHeightWithSpacing() * 2 + 30;
@@ -1059,12 +1074,28 @@ void ImageDocument::RenderTimeLine()
 	// Some Sliders
 	ImGui::SetNextItemWidth(windowSize.x);
 	int frameNumber = m_iFrameNo+1;
-	static float timePosition = 0.0f;
-	ImGui::SliderInt("##SliderFrame", &frameNumber, 1, (int)m_pSurfaces.size(), "Frame %d");
-	m_iFrameNo = frameNumber-1;
+
+	if (ImGui::SliderInt("##SliderFrame", &frameNumber, 1, (int)m_pSurfaces.size(), "Frame %d"))
+	{
+		m_bPlaying = false;
+		m_iFrameNo = frameNumber-1;
+	}
 
 	ImGui::SetNextItemWidth(windowSize.x);
-	ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, timeSeconds, "Time %.3f");
+	float timePosition = tickTimes[ m_iFrameNo ] / 100.0f;
+	if (ImGui::SliderFloat("##SliderTime", &timePosition, 0.0f, timeSeconds, "Time %.3f"))
+	{
+		m_bPlaying = false;
+
+		for (int idx = (int)(tickTimes.size()-1); idx >= 0; --idx)
+		{
+			if ((timePosition*100.0f) >= tickTimes[ idx ])
+			{
+				m_iFrameNo = idx;
+				break;
+			}
+		}
+	}
 
 	ImGui::EndChild();
 
@@ -1074,18 +1105,33 @@ void ImageDocument::RenderTimeLine()
 					  ImGuiWindowFlags_NoScrollWithMouse|
 					  ImGuiWindowFlags_HorizontalScrollbar);
 
+	//ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+
+	float x_padding = 8.0f;
+
 	float step = 10.0f;
 	int frameCountByTime = ((int)(timeSeconds * fHZ)) + 1;
 
-	for (int x = 10; x < frameCountByTime; x+=10)
+	// Numbers on the Dope Sheet (this is what determines the scroll size)
+	// since ImGui doesn't pay any attention to primitives I render below
+	// the numbers
+	for (int x = 0; x < frameCountByTime; x+=10)
 	{
-		ImGui::SameLine(x * step);
+		ImGui::SameLine(x_padding + (x * step));
 		ImGui::Text("%d", x);
 	}
 
+	// A little extra to make sure the last bit of time can be scrolled into
+	// view
+	ImGui::SameLine(x_padding + (frameCountByTime * step));
+	ImGui::Text("");
+
+
+	// Ruler on the Dope Sheet
 	ImVec2 winPos = ImGui::GetWindowPos();
 	winPos.y += 30.0f;
 	winPos.x -= ImGui::GetScrollX();
+	winPos.x += (x_padding);
 
 
 	ImVec2 points[ 2 ];
@@ -1120,6 +1166,23 @@ void ImageDocument::RenderTimeLine()
 
 	}
 
+	// Frame Markers on the Dope Sheet
+
+	winPos.x += 0.5f; // for my visual sanity
+
+	for (int idx = 0; idx < tickTimes.size(); ++idx)
+	{
+		ImVec2 pos = ImVec2(winPos.x + (step * tickTimes[idx]), winPos.y + 30.0f);
+		if (m_iFrameNo == idx)
+		{
+			ImGui::GetWindowDrawList()->AddCircleFilled(pos, 5.0f, 0xC0C0C0C0);
+		}
+		else
+		{
+			ImGui::GetWindowDrawList()->AddCircle(pos, 5.0f, 0x80808080);
+		}
+	}
+
 
 	#if 0
 	int lines = 2;
@@ -1146,6 +1209,7 @@ void ImageDocument::RenderTimeLine()
 	}
 	#endif
 
+	//ImGui::PopStyleVar();
 	ImGui::EndChild();
 
 }
