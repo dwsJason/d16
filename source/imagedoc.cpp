@@ -2145,7 +2145,6 @@ void ImageDocument::SaveC2(std::string filenamepath)
 	}
 
 	// Then Serialize out a valid C2 animation into memory
-	std::vector<unsigned char> c2data;
 
 	unsigned char* pPrevFrame = c1Images[0];
 
@@ -2175,6 +2174,8 @@ void ImageDocument::SaveC2(std::string filenamepath)
 		unsigned char* pCurrentFrame = c1Images[ frameIndex ];
 
 		std::vector<unsigned char> bytes = C2EncodeFrame(pPrevFrame, pCurrentFrame);
+
+		pPrevFrame = pCurrentFrame;
 
 		size_t offset = c2Data.size();
 
@@ -2209,7 +2210,7 @@ void ImageDocument::SaveC2(std::string filenamepath)
 	{
 		FILE* file = fopen(filenamepath.c_str(), "wb");
 
-		fwrite(&c2data[0], 1, c2data.size(), file);
+		fwrite(&c2Data[0], 1, c2Data.size(), file);
 
 		fclose(file);
 	}
