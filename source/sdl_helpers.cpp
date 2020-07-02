@@ -543,6 +543,7 @@ SDL_Surface* SDL_C1DataToSurface(unsigned char* bytes)
 		outColor.g|= outColor.g<<4;
 		outColor.b = ((inColor >> 0) & 0xF);
 		outColor.b|= outColor.b<<4;
+		outColor.a = 255;
 
 		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
 	}
