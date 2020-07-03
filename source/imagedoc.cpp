@@ -1054,21 +1054,189 @@ void ImageDocument::RenderTimeLine()
 
 	if (toolBar)
 	{
+		// Start of the Bar
 		float xPos = 8.0f;
 		ImGui::SameLine(xPos);
-		toolBar->ImageButton(0,13); ImGui::SameLine(xPos+=40.0f);
+
+		// First Frame ---------------------------------------------------------
+		if (toolBar->ImageButton(4,13))
+		{
+			m_bPlaying = false;
+			m_iFrameNo = 0;
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+				ImGui::Text("First");
+			ImGui::EndTooltip();
+		}
+
+		ImGui::SameLine(xPos+=40.0f);
+
+		// Back 1 Frame --------------------------------------------------------
+		if (toolBar->ImageButton(0,13))
+		{
+			m_bPlaying = false;
+			m_iFrameNo--;
+			if (m_iFrameNo < 0)
+			{
+				m_iFrameNo = m_pSurfaces.size() - 1;
+			}
+		}
+
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+				ImGui::Text("Previous");
+			ImGui::EndTooltip();
+		}
+
+		ImGui::SameLine(xPos+=40.0f);
+
+
+		// Reverse Play --------------------------------------------------------
+		if(toolBar->ImageButton(4,11))
+		{
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+				ImGui::Text("Play\nBackwards");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+
+		// Forward Play --------------------------------------------------------
 		if(toolBar->ImageButton(0,11,m_bPlaying))
 		{
 			m_bPlaying = !m_bPlaying;
 		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text(m_bPlaying ? "Stop" : "Play");
+			ImGui::EndTooltip();
+		}
 		ImGui::SameLine(xPos+=40.0f);
 
-		//toolBar->ImageButton(2,11); ImGui::SameLine();
-		toolBar->ImageButton(0,12); ImGui::SameLine(xPos+=40.0f);
+		// Forward 1 Frame -----------------------------------------------------
+
+		if (toolBar->ImageButton(0,12))
+		{
+			m_bPlaying = false;
+			m_iFrameNo++;
+			if (m_iFrameNo >= m_pSurfaces.size())
+			{
+				m_iFrameNo = 0;
+			}
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Next");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+
+		// Last Frame ----------------------------------------------------------
+
+		if (toolBar->ImageButton(4,12))
+		{
+			m_bPlaying = false;
+			m_iFrameNo = m_pSurfaces.size() - 1;
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Last");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+
+		// Other Options
 
 		static int hz = 0;
 		ImGui::SetNextItemWidth(64);
 		ImGui::Combo("##Snap", &hz, "50HZ\0" "59.94\0" "60HZ\0" "100HZ\0\0");
+
+		// Mode Buttons
+		ImGui::SameLine(xPos+=64.0f);
+		// Reposition Frame  (no changes to time)
+		toolBar->ImageButton(0,14);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Move\nReorder");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Adjust single Frame Time (allows timeline to grow / shrink)
+		toolBar->ImageButton(2,14);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Frame Time");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Stretch Shrink on the left
+		toolBar->ImageButton(6,14);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Scale Time Left");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Position with Stretch Shrink all frames in the timeline
+		toolBar->ImageButton(4,14);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Scale Time");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Stretch Shrink on the right
+		toolBar->ImageButton(0,15);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Scale Time Right");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Cut
+		toolBar->ImageButton(4,6);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Cut");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Copy
+		toolBar->ImageButton(6,0);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Copy");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+		// Paste
+		toolBar->ImageButton(4,7);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Paste");
+			ImGui::EndTooltip();
+		}
+
+		ImGui::SameLine(xPos+=40.0f);
+
+
+		ImGui::NewLine();
 	}
 
 	// Some Sliders
