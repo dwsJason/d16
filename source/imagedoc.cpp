@@ -1080,7 +1080,7 @@ void ImageDocument::RenderTimeLine()
 			m_iFrameNo--;
 			if (m_iFrameNo < 0)
 			{
-				m_iFrameNo = m_pSurfaces.size() - 1;
+				m_iFrameNo = (int)m_pSurfaces.size() - 1;
 			}
 		}
 
@@ -1143,7 +1143,7 @@ void ImageDocument::RenderTimeLine()
 		if (toolBar->ImageButton(4,12))
 		{
 			m_bPlaying = false;
-			m_iFrameNo = m_pSurfaces.size() - 1;
+			m_iFrameNo = (int)m_pSurfaces.size() - 1;
 		}
 		if (ImGui::IsItemHovered())
 		{
@@ -1277,7 +1277,9 @@ void ImageDocument::RenderTimeLine()
 
 	ImGui::EndChild();
 
-	// Dope Sheet?
+	// Dope Sheet
+
+	ImGuiIO& io = ImGui::GetIO();
 
 	ImGui::BeginChild("scrolling", ImVec2(0, DopeSheetHeight), true,
 					  ImGuiWindowFlags_NoScrollWithMouse|
@@ -1348,6 +1350,14 @@ void ImageDocument::RenderTimeLine()
 
 	winPos.x += 0.5f; // for my visual sanity
 
+	// Track which index is closest to the mouse
+	bool bHovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows);
+
+	int closestIndex = 0;
+	ImVec2 closestPos(winPos.x, winPos.y + 30.0f);
+	ImVec2 delta = ImVec2(closestPos.x - io.MousePos.x, closestPos.y - io.MousePos.y);
+	float closestDist = (delta.x*delta.x) + (delta.y*delta.y);
+
 	for (int idx = 0; idx < tickTimes.size(); ++idx)
 	{
 		ImVec2 pos = ImVec2(winPos.x + (step * tickTimes[idx]), winPos.y + 30.0f);
@@ -1359,6 +1369,50 @@ void ImageDocument::RenderTimeLine()
 		{
 			ImGui::GetWindowDrawList()->AddCircle(pos, 5.0f, 0x80808080);
 		}
+
+		if (bHovered)
+		{
+			delta = ImVec2(pos.x - io.MousePos.x, pos.y - io.MousePos.y);
+			float dist = (delta.x*delta.x) + (delta.y*delta.y);
+
+			if (dist < closestDist)
+			{
+				closestIndex = idx;
+				closestDist = dist;
+				closestPos = pos;
+			}
+		}
+	}
+
+	if (bHovered)
+	{
+		// Render out a highlight for the closest point on the timeline
+		// A Hollow Circle
+		ImGui::GetWindowDrawList()->AddCircle(closestPos, 6.0f, 0xFF00C000);
+
+		ImVec2 nextPos = closestPos;
+		nextPos.x += ((m_iDelayTimes[ closestIndex ] * step));
+		nextPos.y -= 20.0f;
+
+		// Vertical Line, above the bubble
+		ImGui::GetWindowDrawList()->AddLine(ImVec2(closestPos.x, closestPos.y - 5.0f),
+											ImVec2(closestPos.x, closestPos.y - 30.0f),
+											0xF000C000,
+											3.0f);
+
+
+		// A line to repesent the time used
+		ImGui::GetWindowDrawList()->AddLine(ImVec2(closestPos.x, nextPos.y),
+											nextPos,
+											0xC000C000,
+											10.0f);
+
+		// An End marker for the Time Used
+		ImGui::GetWindowDrawList()->AddLine(ImVec2(nextPos.x, nextPos.y - 10.0f),
+											ImVec2(nextPos.x, nextPos.y + 10.0f),
+											0xF000C000,
+											3.0f);
+
 	}
 
 
