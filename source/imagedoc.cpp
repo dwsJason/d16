@@ -1232,8 +1232,18 @@ void ImageDocument::RenderTimeLine()
 			ImGui::Text("Paste");
 			ImGui::EndTooltip();
 		}
-
 		ImGui::SameLine(xPos+=40.0f);
+
+		// Keep Timeline in View
+		toolBar->ImageButton(0,16);
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::Text("Timeline Follow");
+			ImGui::EndTooltip();
+		}
+		ImGui::SameLine(xPos+=40.0f);
+
 
 
 		ImGui::NewLine();
