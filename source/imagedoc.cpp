@@ -1180,14 +1180,14 @@ void ImageDocument::RenderTimeLine()
 		}
 		ImGui::SameLine(xPos+=40.0f);
 		// Stretch Shrink on the left
-		toolBar->ImageButton(6,14);
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("Scale Time Left");
-			ImGui::EndTooltip();
-		}
-		ImGui::SameLine(xPos+=40.0f);
+		//toolBar->ImageButton(6,14);
+		//if (ImGui::IsItemHovered())
+		//{
+		//	ImGui::BeginTooltip();
+		//	ImGui::Text("Scale Time Left");
+		//	ImGui::EndTooltip();
+		//}
+		//ImGui::SameLine(xPos+=40.0f);
 		// Position with Stretch Shrink all frames in the timeline
 		toolBar->ImageButton(4,14);
 		if (ImGui::IsItemHovered())
@@ -1198,14 +1198,14 @@ void ImageDocument::RenderTimeLine()
 		}
 		ImGui::SameLine(xPos+=40.0f);
 		// Stretch Shrink on the right
-		toolBar->ImageButton(0,15);
-		if (ImGui::IsItemHovered())
-		{
-			ImGui::BeginTooltip();
-			ImGui::Text("Scale Time Right");
-			ImGui::EndTooltip();
-		}
-		ImGui::SameLine(xPos+=40.0f);
+		//toolBar->ImageButton(0,15);
+		//if (ImGui::IsItemHovered())
+		//{
+		//	ImGui::BeginTooltip();
+		//	ImGui::Text("Scale Time Right");
+		//	ImGui::EndTooltip();
+		//}
+		//ImGui::SameLine(xPos+=40.0f);
 		// Cut
 		toolBar->ImageButton(4,6);
 		if (ImGui::IsItemHovered())
@@ -1375,6 +1375,8 @@ void ImageDocument::RenderTimeLine()
 			delta = ImVec2(pos.x - io.MousePos.x, pos.y - io.MousePos.y);
 			float dist = (delta.x*delta.x) + (delta.y*delta.y);
 
+			// only get the closest point, that is to to the left of the mouse
+			if (delta.x <= 0.0f)
 			if (dist < closestDist)
 			{
 				closestIndex = idx;
