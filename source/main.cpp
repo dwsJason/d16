@@ -78,7 +78,7 @@ static void AddFileFilters()
 	{
 		".PNG",".TIF",".TGA",".GIF",".FAN",".JPG",".JFIF",".LBM",
 		".BMP",".WEBP",".ANM",".PAL",".C1",".C2",
-		"#C10000","#C20000"
+		"#C10000","#C20000",".GSLA"
 	};
 
 	for (int idx = 0; idx < (sizeof(extensions)/sizeof(char*)); ++idx )
@@ -565,7 +565,6 @@ void MainMenuBarUI()
 					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
 				  }
 
-
 			  }
 			  else if (endsWith(pathName, ".c1") || endsWith(pathName, "#c10000"))
 			  {
@@ -577,6 +576,18 @@ void MainMenuBarUI()
 				  std::vector<SDL_Surface*> frames = SDL_C2_Load(pathName.c_str());
 
 				  LOG("C2_Load %d Frames\n", frames.size());
+				  if (frames.size())
+				  {
+					  LOG("Loaded %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
+				  }
+			  }
+			  else if (endsWith(pathName, ".gsla"))
+			  {
+				  //GS Lzb Animation File (DG Animation File)
+				  std::vector<SDL_Surface*> frames = SDL_GSLA_Load(pathName.c_str());
+
+				  LOG("GSLA_Load %d Frames\n", frames.size());
 				  if (frames.size())
 				  {
 					  LOG("Loaded %s\n", it->second.c_str());

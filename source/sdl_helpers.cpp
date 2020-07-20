@@ -6,9 +6,10 @@
 
 #include "sdl_helpers.h"
 
-#include "anm_file.h" // Support Deluxe Animation File
-#include "c2_file.h"  // Support Paintworks Animation File
-#include "fan_file.h" // Support for Foenix Animation File
+#include "anm_file.h"  // Support Deluxe Animation File
+#include "c2_file.h"   // Support Paintworks Animation File
+#include "fan_file.h"  // Support for Foenix Animation File
+#include "gsla_file.h" // Support for GSLA Animation File
 
 // include the oldest, crustiest gif library out there, it forces you to
 // learn all the little details about gif, when it should just make it easy
@@ -586,6 +587,32 @@ std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath)
 	{
 		SDL_Surface* pSurface = SDL_C2GetSurface(c2File, idx);
 		results.push_back(pSurface);
+	}
+
+	return results;
+}
+
+//------------------------------------------------------------------------------
+
+std::vector<SDL_Surface*> SDL_GSLA_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+	GSLAFile gslaFile(pFilePath);
+
+	int numFrames = gslaFile.GetFrameCount();
+
+	const std::vector<unsigned char*>& c1datas = gslaFile.GetPixelMaps();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+		SDL_Surface* pResult = SDL_C1DataToSurface(c1datas[ idx ]);
+
+		// Stuff in the Delay Time
+		int delayTime = 4; 	// hard coded for now
+		pResult->userdata = (void *)((long long)(delayTime & 0xFFFF));
+
+		results.push_back(pResult);
 	}
 
 	return results;

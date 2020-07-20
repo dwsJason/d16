@@ -113,6 +113,12 @@
     <ClCompile Include="..\source\anm_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\gsla_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\lzb.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -542,6 +548,12 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="..\source\anm_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\gsla_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\lzb.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

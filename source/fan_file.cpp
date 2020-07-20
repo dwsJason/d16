@@ -270,7 +270,7 @@ void FanFile::SaveToFile(const char* pFilenamePath)
 		pFRAM->f = 'F'; pFRAM->r = 'R'; pFRAM->a = 'A'; pFRAM->m = 'M';
 		pFRAM->chunk_length = 0; // Temporary Chunk Size
 
-		// Initializae Canvas with the initial frame
+		// Initialize Canvas with the initial frame
 		unsigned char* pCanvas = new unsigned char[ decompressed_size ];
 		memcpy(pCanvas, pSourceData, decompressed_size);
 
