@@ -640,7 +640,7 @@ void ImageDocument::Render()
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveC2Key", "Save as $C2", "#C20000\0.c2\0\0",
+					ImGuiFileDialog::Instance()->OpenModal("SaveC2Key", "Save as $C2", ".c2\0#C20000\0\0",
 														   ".",
 															defaultFilename);
 
