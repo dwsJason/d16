@@ -596,7 +596,7 @@ void ImageDocument::Render()
 				ImGui::Separator();
 				ImGui::Separator();
 
-				if (ImGui::MenuItem("Save as GSLA"))
+				if (ImGui::MenuItem("Save as GSLA") )
 				{
 					std::string defaultFilename = m_filename;
 
