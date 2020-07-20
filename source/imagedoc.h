@@ -91,6 +91,7 @@ private:
 	void SaveC2(std::string filenamepath);
 	void SavePNG(std::string filenamepath);
 	void SaveFAN(std::string filenamepath, bool bTiled = false);
+	void SaveGSLA(std::string filenamepath);
 
 	void SetDocumentSurface(std::vector<SDL_Surface*> pSurfaces);
 	void SetDocumentSurface(SDL_Surface* pSurface, int iFrameNo);

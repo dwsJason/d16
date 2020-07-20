@@ -27,6 +27,8 @@
 
 #include "sdl_helpers.h"
 
+#include "gsla_file.h"
+
 // Statics
 int ImageDocument::s_uniqueId = 0;
 
@@ -594,6 +596,23 @@ void ImageDocument::Render()
 				ImGui::Separator();
 				ImGui::Separator();
 
+				if (ImGui::MenuItem("Save as GSLA"))
+				{
+					std::string defaultFilename = m_filename;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal("SaveGSLAKey", "Save as GSLA", ".gsla\0\0",
+														   ".",
+															defaultFilename);
+
+					ImGui::SetWindowFocus("SaveGSLAKey");
+				}
+
+
 				if (ImGui::MenuItem("Save as $C1"))
 				{
 					std::string defaultFilename = m_filename;
@@ -787,6 +806,16 @@ void ImageDocument::Render()
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveC2Key");
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveGSLAKey"))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			SaveGSLA( ImGuiFileDialog::Instance()->GetFilepathName() );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveGSLAKey");
 	}
 
 	if (ImGuiFileDialog::Instance()->FileDialog("SavePNGKey"))
@@ -2363,8 +2392,58 @@ unsigned char* ImageDocument::CreateC1Data(int frameNo)
 }
 
 //------------------------------------------------------------------------------
+// Save As GS Lzb Animation Format
+// 
+// Proposed replacement for Paintworks Animations
+//
+void ImageDocument::SaveGSLA(std::string filenamepath)
+{
+	// First Collect a list of C1 images
+	// $C1 is just the 32KB blob of data, as it sits in the IIgs video memory
+	std::vector<unsigned char*> c1Images;
+
+	for (int frameIndex = 0; frameIndex < m_pSurfaces.size(); ++frameIndex)
+	{
+		c1Images.push_back( CreateC1Data( frameIndex ) );
+	}
+
+	// Now the gsla support class can do the heavy lifting
+
+	GSLAFile anim(320,200, 0x8000);
+
+	anim.AddImages(c1Images);
+
+	anim.SaveToFile(filenamepath.c_str());
+
+	#if 1
+	{
+		// Verify the conversion is good
+		// Load the file back in
+		GSLAFile verify(filenamepath.c_str());
+
+		const std::vector<unsigned char *> &frames = verify.GetPixelMaps();
+
+		for (int idx = 0; idx < frames.size(); ++idx)
+		{
+			int result = memcmp(c1Images[idx % c1Images.size()], frames[idx], verify.GetFrameSize());
+			LOG("Verify Frame %d - %s\n", idx, result ? "Failed" : "Good");
+		}
+	}
+	#endif
+
+	// Free the memory
+	for (int idx = 0; idx < c1Images.size(); ++idx)
+	{
+		delete[] c1Images[idx];
+		c1Images[idx] = nullptr;
+	}
+
+
+}
+
+//------------------------------------------------------------------------------
 // Save As Paintworks Preferred File Format
-// which was designed by a not a smart person
+// which was has a very simple design
 //
 void ImageDocument::SaveC2(std::string filenamepath)
 {
