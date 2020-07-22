@@ -104,7 +104,8 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	//--------------------------------------------------------------------------
 
 	// Assign a unique Window Name
-	m_windowName = filename + "##" + std::to_string(s_uniqueId++);
+	m_uniqId = "##" + std::to_string(s_uniqueId++);
+	m_windowName = filename + m_uniqId;
 
 	m_numSourceColors = CountUniqueColors();
 
@@ -599,34 +600,37 @@ void ImageDocument::Render()
 				if (ImGui::MenuItem("Save as GSLA") )
 				{
 					std::string defaultFilename = m_filename;
+					std::string dialogKey = "SaveGSLAKey" + m_uniqId;
 
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveGSLAKey", "Save as GSLA", ".gsla\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as GSLA", ".gsla\0\0",
 														   ".",
 															defaultFilename);
 
-					ImGui::SetWindowFocus("SaveGSLAKey");
+					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 
 
 				if (ImGui::MenuItem("Save as $C1"))
 				{
 					std::string defaultFilename = m_filename;
+					std::string dialogKey = "SaveC1Key" + m_uniqId;
+
 
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveC1Key", "Save as $C1", "#C10000\0.c1\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as $C1", "#C10000\0.c1\0\0",
 														   ".",
 															defaultFilename);
 
-					ImGui::SetWindowFocus("SaveC1Key");
+					ImGui::SetWindowFocus(dialogKey.c_str());
 
 
 				}
@@ -635,16 +639,18 @@ void ImageDocument::Render()
 				{
 					std::string defaultFilename = m_filename;
 
+					std::string dialogKey = "SaveC2Key" + m_uniqId;
+
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveC2Key", "Save as $C2", ".c2\0#C20000\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as $C2", ".c2\0#C20000\0\0",
 														   ".",
 															defaultFilename);
 
-					ImGui::SetWindowFocus("SaveC2Key");
+					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 
 
@@ -654,33 +660,35 @@ void ImageDocument::Render()
 				if (ImGui::MenuItem("Save as PNG"))
 				{
 					std::string defaultFilename = m_filename;
+					std::string dialogKey = "SavePNGKey" + m_uniqId;
 
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SavePNGKey", "Save as PNG", ".png\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as PNG", ".png\0\0",
 														   ".",
 															defaultFilename);
 
-					ImGui::SetWindowFocus("SavePNGKey");
+					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 
 				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
 				{
 					std::string defaultFilename = m_filename;
+					std::string dialogKey = "SaveFANKey" + m_uniqId;
 
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveFANKey", "Save as FAN(bitmap)", ".fan\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as FAN(bitmap)", ".fan\0\0",
 														   ".",
 															defaultFilename);
 
-					ImGui::SetWindowFocus("SaveFANKey");
+					ImGui::SetWindowFocus(dialogKey.c_str());
 
 
 				}
@@ -688,17 +696,18 @@ void ImageDocument::Render()
 				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Tiles)"))
 				{
 					std::string defaultFilename = m_filename;
+					std::string dialogKey = "SaveFANTileKey" + m_uniqId;
 
 					if (defaultFilename.size() > 4)
 					{
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal("SaveFANTileKey", "Save as FAN(tiles)", ".fan\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as FAN(tiles)", ".fan\0\0",
 														   ".",
 															defaultFilename);
 
-					ImGui::SetWindowFocus("SaveFANTileKey");
+					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 
 
@@ -788,64 +797,64 @@ void ImageDocument::Render()
 
 // Save File Dialog Stuff
 
-	if (ImGuiFileDialog::Instance()->FileDialog("SaveC1Key"))
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveC1Key" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
 			SaveC1( ImGuiFileDialog::Instance()->GetFilepathName() );
 		}
 
-		ImGuiFileDialog::Instance()->CloseDialog("SaveC1Key");
+		ImGuiFileDialog::Instance()->CloseDialog("SaveC1Key" + m_uniqId);
 	}
 
-	if (ImGuiFileDialog::Instance()->FileDialog("SaveC2Key"))
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveC2Key" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
 			SaveC2( ImGuiFileDialog::Instance()->GetFilepathName() );
 		}
 
-		ImGuiFileDialog::Instance()->CloseDialog("SaveC2Key");
+		ImGuiFileDialog::Instance()->CloseDialog("SaveC2Key" + m_uniqId);
 	}
 
-	if (ImGuiFileDialog::Instance()->FileDialog("SaveGSLAKey"))
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveGSLAKey" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
 			SaveGSLA( ImGuiFileDialog::Instance()->GetFilepathName() );
 		}
 
-		ImGuiFileDialog::Instance()->CloseDialog("SaveGSLAKey");
+		ImGuiFileDialog::Instance()->CloseDialog("SaveGSLAKey" + m_uniqId);
 	}
 
-	if (ImGuiFileDialog::Instance()->FileDialog("SavePNGKey"))
+	if (ImGuiFileDialog::Instance()->FileDialog("SavePNGKey" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
 			SavePNG( ImGuiFileDialog::Instance()->GetFilepathName() );
 		}
 
-		ImGuiFileDialog::Instance()->CloseDialog("SavePNGKey");
+		ImGuiFileDialog::Instance()->CloseDialog("SavePNGKey" + m_uniqId);
 	}
 
-	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANKey"))
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANKey" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
 			SaveFAN( ImGuiFileDialog::Instance()->GetFilepathName(), false );
 		}
 
-		ImGuiFileDialog::Instance()->CloseDialog("SaveFANKey");
+		ImGuiFileDialog::Instance()->CloseDialog("SaveFANKey" + m_uniqId);
 	}
 
-	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANTileKey"))
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANTileKey" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
 		{
 			SaveFAN( ImGuiFileDialog::Instance()->GetFilepathName(), true );
 		}
 
-		ImGuiFileDialog::Instance()->CloseDialog("SaveFANTileKey");
+		ImGuiFileDialog::Instance()->CloseDialog("SaveFANTileKey" + m_uniqId);
 	}
 
 }

@@ -101,6 +101,7 @@ private:
 	Uint32* SDL_SurfaceToUint32Array(SDL_Surface* pSurface);
 	Uint32 SDL_GetPixel(SDL_Surface* pSurface, int x, int y);
 
+	std::string m_uniqId;
 	std::string m_windowName;
 	std::string m_filename;
 	std::string m_pathname;
