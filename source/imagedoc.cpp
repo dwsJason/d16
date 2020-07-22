@@ -2277,16 +2277,24 @@ Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
 			if( SDL_MUSTLOCK(pSurface) )
 				SDL_LockSurface(pSurface);
 
-			Uint8 * pixel = (Uint8*)pSurface->pixels;
-			pixel += (y * pSurface->pitch) + (x * sizeof(Uint32));
+			int BytesPerPixel = pSurface->format->BytesPerPixel;
 
-			color = *((Uint32*)pixel);
+			Uint8 * pixel = (Uint8*)pSurface->pixels;
+			pixel += (y * pSurface->pitch) + (x * BytesPerPixel);
+
+			//
+			//color = *((Uint32*)pixel);
+
+			color  =  (Uint32)pixel[0];
+			color |= ((Uint32)pixel[1]) << 8;
+			color |= ((Uint32)pixel[2]) << 16;
 
 			if( SDL_MUSTLOCK(pSurface) )
 				SDL_UnlockSurface(pSurface);
 		}
 	}
 
+	color |= 0xFF000000;  // We don't support Alpha
 	return color;
 }
 
