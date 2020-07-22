@@ -360,7 +360,9 @@ void ImageDocument::Render()
 	}
 
 	ImGui::SameLine();
-	if (ImGui::Button("256"))
+
+	// Display the number of target Colors, on the button
+	if (ImGui::Button(std::to_string(m_iTargetColorCount).c_str()))
 	{
 		Quant256();
 	}
@@ -472,6 +474,13 @@ void ImageDocument::Render()
 	ImGui::SameLine();
 	ImGui::SetNextItemWidth(80);
 	ImGui::InputInt("Colors", &m_iTargetColorCount);
+
+	// Keep the Color Count in some kind of reasonable range
+	if (m_iTargetColorCount < 2)
+		m_iTargetColorCount = 2;
+
+	if (m_iTargetColorCount > 256)
+		m_iTargetColorCount = 256;
 
 	//--------------------------------------------------------------------------
 
@@ -903,23 +912,26 @@ void ImageDocument::RenderEyeDropper()
 
 		Uint32 pixel = SDL_GetPixel(m_pSurfaces[m_iFrameNo], (int)px, (int)py);
 
-		if (!m_bEyeDropDrag)
+		if (!io.MouseDown[0])
 		{
 			eyeColor.x = (pixel & 0xFF) / 255.0f;
 			eyeColor.y = ((pixel>>8)&0xFF) / 255.0f;
 			eyeColor.z = ((pixel>>16)&0xFF) / 255.0f;
+		}
 
+		if (!m_bEyeDropDrag)
+		{
 
-		// Tip String
-		std::string tipString = m_filename
-								+ "    x="
-								+ std::to_string((int)px)
-								+ " y="
-								+ std::to_string((int)py);
+			// Tip String
+			std::string tipString = m_filename
+									+ "    x="
+									+ std::to_string((int)px)
+									+ " y="
+									+ std::to_string((int)py);
 
-		ImGui::ColorTooltip(tipString.c_str(),
-							(float*)&eyeColor,
-							ImGuiColorEditFlags_NoAlpha);
+			ImGui::ColorTooltip(tipString.c_str(),
+								(float*)&eyeColor,
+								ImGuiColorEditFlags_NoAlpha);
 
 		}
 
@@ -2812,20 +2824,27 @@ void ImageDocument::Quant256()
 	// Put the result colors back up in the tray, so we can see them
 	{
 		// take advantage, I know the locked colors all get grouped on the end of the result
-				// count the number of locked colors
+		// count the number of locked colors
+		int max_blocks = (int)m_bLocks.size();
+
+		if (max_blocks > m_iTargetColorCount)
+		{
+			max_blocks = m_iTargetColorCount;
+		}
+
 		int numLocked = 0;
-		for (int idx = 0; idx < m_bLocks.size(); ++idx)
+		for (int idx = 0; idx < max_blocks; ++idx)
 		{
 			if (m_bLocks[idx]) numLocked++;
 		}
 
 		// locked colors start at this index
-		int lockedBaseIndex = (int)m_bLocks.size() - numLocked;
+		int lockedBaseIndex = (int)max_blocks - numLocked;
 
 		int lockedIndex = 0;
 		int palIndex = 0;
 
-		for (int idx = 0; idx < m_targetColors.size(); ++idx)
+		for (int idx = 0; idx < /*m_targetColors.size()*/ max_blocks; ++idx)
 		{
 			liq_color color;
 
