@@ -225,7 +225,7 @@ int Old_LZB_Compress(unsigned char* pDest, unsigned char* pSource, int sourceSiz
 	if (candidate_data.size > 0)
 	{
 
-		int MatchOffset = DictionaryMatch(candidate_data, bytesInDictionary);
+		MatchOffset = DictionaryMatch(candidate_data, bytesInDictionary);
 
 		if ((MatchOffset >=0) && candidate_data.size > 2)
 		{
@@ -703,6 +703,7 @@ static int EmitReference(unsigned char *pDest, int dictionaryOffset, DataString&
 // Std C memcpy seems to be stopping the copy from happening, when I overlap
 // the buffer to get a pattern run copy (overlapped buffers)
 //
+#if 0
 static void my_memcpy(u8* pDest, u8* pSrc, int length)
 {
 	while (length-- > 0)
@@ -710,6 +711,7 @@ static void my_memcpy(u8* pDest, u8* pSrc, int length)
 		*pDest++ = *pSrc++;
 	}
 }
+#endif
 
 //------------------------------------------------------------------------------
 //
@@ -802,9 +804,6 @@ int LZBA_Compress(unsigned char* pDest, unsigned char* pSource, int sourceSize,
 //	printf("LZBA Compress %d bytes\n", sourceSize);
 
 	pGlobalDictionary = pDictionary;
-
-	// Used for bank skip opcode emission
-	int bankOffset = (int)((pDest - pDataStart) & 0xFFFF);
 
 	// So we can track how big our compressed data ends up being
 	unsigned char *pOriginalDest = pDest;
