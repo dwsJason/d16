@@ -2726,6 +2726,8 @@ void ImageDocument::Quant256()
 
 	std::vector<liq_image*> input_images;
 
+	bool bFixed = false;
+
 	for (int rawIndex = 0; rawIndex < pRawPixels.size(); ++rawIndex)
 	{
 		//$$JGA Fixed Colors can be added to the input_image
@@ -2733,19 +2735,25 @@ void ImageDocument::Quant256()
 
 		liq_image *input_image = liq_image_create_rgba(attr_handle, pRawPixels[ rawIndex ], width, height, 0);
 
-		// Add the fixed colors
-		for (int idx = 0; idx < m_bLocks.size(); ++idx)
+		if (!bFixed)
 		{
-			if (m_bLocks[idx])
+			bFixed = true;
+			// Only add Fixed Colors to the first image
+		
+			// Add the fixed colors
+			for (int idx = 0; idx < m_bLocks.size(); ++idx)
 			{
-				liq_color color;
-				color.r = (unsigned char) (m_targetColors[idx].x * 255.0f);
-				color.g = (unsigned char) (m_targetColors[idx].y * 255.0f); 
-				color.b = (unsigned char) (m_targetColors[idx].z * 255.0f); 
-				color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
+				if (m_bLocks[idx])
+				{
+					liq_color color;
+					color.r = (unsigned char) (m_targetColors[idx].x * 255.0f);
+					color.g = (unsigned char) (m_targetColors[idx].y * 255.0f); 
+					color.b = (unsigned char) (m_targetColors[idx].z * 255.0f); 
+					color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
 
-				// Add a Color
-				liq_image_add_fixed_color(input_image, color);
+					// Add a Color
+					liq_image_add_fixed_color(input_image, color);
+				}
 			}
 		}
 
