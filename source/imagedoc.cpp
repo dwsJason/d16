@@ -29,6 +29,9 @@
 
 #include "gsla_file.h"
 
+// Stuff for Journey
+#include "gsdx_file.h"
+
 // Statics
 int ImageDocument::s_uniqueId = 0;
 
@@ -606,6 +609,26 @@ void ImageDocument::Render()
 				ImGui::Separator();
 				ImGui::Separator();
 
+				if (ImGui::MenuItem("Export for Journey") )
+				{
+					std::string defaultFilename = m_filename;
+					std::string dialogKey = "SaveJourneyKey" + m_uniqId;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as Journey", ".code\0\0",
+														   ".",
+															defaultFilename);
+
+					ImGui::SetWindowFocus(dialogKey.c_str());
+				}
+
+				ImGui::Separator();
+				ImGui::Separator();
+
 				if (ImGui::MenuItem("Save as GSLA") )
 				{
 					std::string defaultFilename = m_filename;
@@ -824,6 +847,30 @@ void ImageDocument::Render()
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveC2Key" + m_uniqId);
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("SaveJourneyKey" + m_uniqId))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			//SaveGSLA( ImGuiFileDialog::Instance()->GetFilepathName() );
+			GSDXFile gsdx( m_pTargetSurfaces[0] );
+
+			std::string basename = ImGuiFileDialog::Instance()->GetFilepathName();
+
+			std::string p1 = basename+"p1";
+			std::string p2 = basename+"p2";
+			std::string m1 = basename+"m1";
+			std::string m2 = basename+"m2";
+
+			gsdx.GenerateDeltaY( 1, p1.c_str() );
+			gsdx.GenerateDeltaY( 2, p2.c_str() );
+
+			gsdx.GenerateDeltaY( -1, m1.c_str() );
+			gsdx.GenerateDeltaY( -2, m2.c_str() );
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("SaveJourneyKey" + m_uniqId);
 	}
 
 	if (ImGuiFileDialog::Instance()->FileDialog("SaveGSLAKey" + m_uniqId))
