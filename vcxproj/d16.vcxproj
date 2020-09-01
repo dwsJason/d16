@@ -255,6 +255,7 @@
     <ClCompile Include="..\source\common\limage.cpp" />
     <ClCompile Include="..\source\common\log.cpp" />
     <ClCompile Include="..\source\fan_file.cpp" />
+    <ClCompile Include="..\source\gsdx_file.cpp" />
     <ClCompile Include="..\source\gsla_file.cpp" />
     <ClCompile Include="..\source\icon.cpp" />
     <ClCompile Include="..\source\imagedoc.cpp" />
@@ -403,6 +404,7 @@
     <ClInclude Include="..\source\common\log.h" />
     <ClInclude Include="..\source\common\memstream.h" />
     <ClInclude Include="..\source\fan_file.h" />
+    <ClInclude Include="..\source\gsdx_file.h" />
     <ClInclude Include="..\source\gsla_file.h" />
     <ClInclude Include="..\source\imagedoc.h" />
     <ClInclude Include="..\source\lzb.h" />

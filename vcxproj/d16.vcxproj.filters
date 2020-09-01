@@ -119,6 +119,9 @@
     <ClCompile Include="..\source\lzb.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\gsdx_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -554,6 +557,9 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="..\source\lzb.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\gsdx_file.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
