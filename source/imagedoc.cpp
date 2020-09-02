@@ -619,7 +619,7 @@ void ImageDocument::Render()
 						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
 					}
 
-					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as Journey", ".code\0\0",
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as Journey", "\0\0",
 														   ".",
 															defaultFilename);
 

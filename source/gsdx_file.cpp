@@ -45,6 +45,8 @@ static unsigned char blank_line[320] = {0};
 	std::vector<unsigned char> code;
 	std::vector<unsigned char> table;
 
+	code.push_back(0x6B);  // RTL
+
 
 	if (deltaY > 0)
 	{
@@ -133,6 +135,9 @@ static unsigned char blank_line[320] = {0};
 		}
 	}
 
+	// Add an extra entry, so we know how long it is
+	table.push_back(code.size() & 0xFF);
+	table.push_back((code.size() >> 8) & 0xFF);
 
 	std::string bin = pFilePath;
 	bin += ".bin";
@@ -306,7 +311,12 @@ void GSDXFile::CompileLine(unsigned char* pDest, unsigned char* pSource,
 
 	}
 
-	code.push_back(0x60);  // RTS opcode
+	//code.push_back(0x60);  // RTS opcode
+	code.push_back(0x7B); // TDC
+	code.push_back(0x69); // ADC #$1234
+	code.push_back(0xA0); // #160
+	code.push_back(0x00);
+	code.push_back(0x5B); // TCD
 
 }
 //------------------------------------------------------------------------------
