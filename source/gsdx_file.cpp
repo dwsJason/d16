@@ -57,9 +57,9 @@ static unsigned char blank_line[320] = {0};
 			// from last line -> to next line
 			// from last line -> to blank
 
-			CompileLine(blank_line, c1PixelData+0, code, table);
-
 			int height = m_pBaseImage->h;
+
+			CompileLine(blank_line, c1PixelData+0, code, table);
 
 			for (int idx = 0; idx < (height-1); ++idx)
 			{
@@ -71,10 +71,10 @@ static unsigned char blank_line[320] = {0};
 		}
 		else if (2 == deltaY)
 		{
+			int height = m_pBaseImage->h;
+
 			CompileLine(blank_line, c1PixelData+0, code, table);
 			CompileLine(blank_line, c1PixelData+1, code, table);
-
-			int height = m_pBaseImage->h;
 
 			for (int idx = 0; idx < (height-2); ++idx)
 			{
@@ -101,32 +101,31 @@ static unsigned char blank_line[320] = {0};
 
 			int height = m_pBaseImage->h;
 
-			CompileLine(blank_line, c1PixelData+(160*(height-1)), code, table);
+			CompileLine(c1PixelData+0, blank_line, code, table);
 
-			for (int idx = height-1; idx > 0; --idx)
+			for (int idx = 0; idx < (height-1); ++idx)
 			{
-				CompileLine(c1PixelData+(160*idx),
-							c1PixelData+(160*(idx-1)), code, table);
+				CompileLine(&c1PixelData[ (idx+1) * 160 ],&c1PixelData[ idx * 160 ],
+							code, table);
 			}
 
-			CompileLine(c1PixelData, blank_line, code, table);
-
+			CompileLine(blank_line,c1PixelData + ((height-1)*160), code, table);
 		}
 		else if (-2 == deltaY)
 		{
 			int height = m_pBaseImage->h;
 
-			CompileLine(blank_line, c1PixelData+(160*(height-1)), code, table);
-			CompileLine(blank_line, c1PixelData+(160*(height-2)), code, table);
+			CompileLine(c1PixelData+0, blank_line, code, table);
+			CompileLine(c1PixelData+1, blank_line, code, table);
 
-			for (int idx = height-1; idx > 1; --idx)
+			for (int idx = 0; idx < (height-2); ++idx)
 			{
-				CompileLine(c1PixelData+(160*idx),
-							c1PixelData+(160*(idx-2)), code, table);
+				CompileLine(&c1PixelData[ (idx+2) * 160 ], &c1PixelData[ idx * 160 ],
+							code, table);
 			}
 
-			CompileLine(c1PixelData+160, blank_line, code, table);
-			CompileLine(c1PixelData, blank_line, code, table);
+			CompileLine(blank_line, c1PixelData + ((height-2)*160), code, table);
+			CompileLine(blank_line, c1PixelData + ((height-1)*160), code, table);
 		}
 		else
 		{
