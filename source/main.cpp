@@ -93,28 +93,8 @@ static void AddFileFilters()
 
 //------------------------------------------------------------------------------
 
-// Main code
-int main(int, char**)
+int gui_main()
 {
-    // Setup SDL
-    // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
-    // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-    {
-        SYSERROR("Error: %s\n", SDL_GetError());
-        return -1;
-    }
-
-	// load support for the JPG and PNG image formats
-	int flags=IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF|IMG_INIT_WEBP;
-	int initted=IMG_Init(flags);
-	if((initted&flags) != flags)
-	{
-		SYSERROR("IMG_Init: Failed to init required jpg and png support!\n"
-		         "IMG_Init: %s\n", IMG_GetError());
-		// handle error
-	}
-
     // Decide GL+GLSL versions
 #if __APPLE__
     // GL 3.2 Core + GLSL 150
@@ -371,10 +351,89 @@ int main(int, char**)
 
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
+
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+static void _usage()
+{
+	printf("Dream16 CLI\n");
+	printf("-----------\n");
+	printf("by @dwsJason\n");
+	printf("\n\n");
+	printf("d16.exe command [options] [input_image] [output_name]\n");
+	printf("\n");
+	printf("command <options>\n");
+	printf("-----------------\n");
+	printf("gsdx <dx>  (dx is a number -2,-1,1, or 2\n");
+}
+
+//------------------------------------------------------------------------------
+
+int cli_main(int argc, char** argv)
+{
+	if (argc < 4)
+	{
+		_usage();
+		return 1;
+	}
+
+	// d16 command [options] [input_image] [output_name]
+	std::string command = argv[1];
+
+	if (command == "gsdx")
+	{
+		if (5 != argc)
+		{
+			_usage(); return 1;
+		}
+	}
+
+	return 0;
+}
+
+//------------------------------------------------------------------------------
+
+// Main code
+int main(int argc, char**argv)
+{
+	int error_code = 0;
+
+    // Setup SDL
+    // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
+    // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
+    {
+        SYSERROR("Error: %s\n", SDL_GetError());
+        return -1;
+    }
+
+	// load support for the JPG and PNG image formats
+	int flags=IMG_INIT_JPG|IMG_INIT_PNG|IMG_INIT_TIF|IMG_INIT_WEBP;
+	int initted=IMG_Init(flags);
+	if((initted&flags) != flags)
+	{
+		SYSERROR("IMG_Init: Failed to init required jpg and png support!\n"
+		         "IMG_Init: %s\n", IMG_GetError());
+		// handle error
+	}
+
+	if (1 == argc)
+	{
+		error_code = gui_main();
+	}
+	else
+	{
+		error_code = cli_main(argc, argv);
+	}
+
 	IMG_Quit();
     SDL_Quit();
 
-    return 0;
+    return error_code;
 }
 
 //------------------------------------------------------------------------------
