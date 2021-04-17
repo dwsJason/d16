@@ -123,7 +123,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -193,7 +193,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -249,6 +249,25 @@
     <ClCompile Include="..\libs\lz4-dev\lib\lz4frame.c" />
     <ClCompile Include="..\libs\lz4-dev\lib\lz4hc.c" />
     <ClCompile Include="..\libs\lz4-dev\lib\xxhash.c" />
+    <ClCompile Include="..\libs\lzsa\src\dictionary.c" />
+    <ClCompile Include="..\libs\lzsa\src\expand_block_v1.c" />
+    <ClCompile Include="..\libs\lzsa\src\expand_block_v2.c" />
+    <ClCompile Include="..\libs\lzsa\src\expand_context.c" />
+    <ClCompile Include="..\libs\lzsa\src\expand_inmem.c" />
+    <ClCompile Include="..\libs\lzsa\src\expand_streaming.c" />
+    <ClCompile Include="..\libs\lzsa\src\frame.c" />
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\divsufsort.c" />
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\divsufsort_utils.c" />
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\sssort.c" />
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\trsort.c" />
+    <ClCompile Include="..\libs\lzsa\src\matchfinder.c" />
+    <ClCompile Include="..\libs\lzsa\src\shrink_block_v1.c" />
+    <ClCompile Include="..\libs\lzsa\src\shrink_block_v2.c" />
+    <ClCompile Include="..\libs\lzsa\src\shrink_context.c" />
+    <ClCompile Include="..\libs\lzsa\src\shrink_inmem.c" />
+    <ClCompile Include="..\libs\lzsa\src\shrink_streaming.c" />
+    <ClCompile Include="..\libs\lzsa\src\stream.c" />
+    <ClCompile Include="..\source\256_file.cpp" />
     <ClCompile Include="..\source\anm_file.cpp" />
     <ClCompile Include="..\source\c2_file.cpp" />
     <ClCompile Include="..\source\common\cursor.cpp" />
@@ -296,6 +315,25 @@
     <ClInclude Include="..\libs\lz4-dev\lib\lz4frame_static.h" />
     <ClInclude Include="..\libs\lz4-dev\lib\lz4hc.h" />
     <ClInclude Include="..\libs\lz4-dev\lib\xxhash.h" />
+    <ClInclude Include="..\libs\lzsa\src\dictionary.h" />
+    <ClInclude Include="..\libs\lzsa\src\expand_block_v1.h" />
+    <ClInclude Include="..\libs\lzsa\src\expand_block_v2.h" />
+    <ClInclude Include="..\libs\lzsa\src\expand_context.h" />
+    <ClInclude Include="..\libs\lzsa\src\expand_inmem.h" />
+    <ClInclude Include="..\libs\lzsa\src\expand_streaming.h" />
+    <ClInclude Include="..\libs\lzsa\src\format.h" />
+    <ClInclude Include="..\libs\lzsa\src\frame.h" />
+    <ClInclude Include="..\libs\lzsa\src\lib.h" />
+    <ClInclude Include="..\libs\lzsa\src\libdivsufsort\include\divsufsort.h" />
+    <ClInclude Include="..\libs\lzsa\src\libdivsufsort\include\divsufsort_config.h" />
+    <ClInclude Include="..\libs\lzsa\src\libdivsufsort\include\divsufsort_private.h" />
+    <ClInclude Include="..\libs\lzsa\src\matchfinder.h" />
+    <ClInclude Include="..\libs\lzsa\src\shrink_block_v1.h" />
+    <ClInclude Include="..\libs\lzsa\src\shrink_block_v2.h" />
+    <ClInclude Include="..\libs\lzsa\src\shrink_context.h" />
+    <ClInclude Include="..\libs\lzsa\src\shrink_inmem.h" />
+    <ClInclude Include="..\libs\lzsa\src\shrink_streaming.h" />
+    <ClInclude Include="..\libs\lzsa\src\stream.h" />
     <ClInclude Include="..\libs\SDL2-2.0.10\include\begin_code.h" />
     <ClInclude Include="..\libs\SDL2-2.0.10\include\close_code.h" />
     <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL.h" />
@@ -395,6 +433,7 @@
     <ClInclude Include="..\libs\vectormath\sse\vectormath.hpp" />
     <ClInclude Include="..\libs\vectormath\vec2d.hpp" />
     <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
+    <ClInclude Include="..\source\256_file.h" />
     <ClInclude Include="..\source\anm_file.h" />
     <ClInclude Include="..\source\c2_file.h" />
     <ClInclude Include="..\source\common\bctypes.h" />

@@ -6,6 +6,7 @@
 
 #include "sdl_helpers.h"
 
+#include "256_file.h"  // Support C256 Image File
 #include "anm_file.h"  // Support Deluxe Animation File
 #include "c2_file.h"   // Support Paintworks Animation File
 #include "fan_file.h"  // Support for Foenix Animation File
@@ -306,6 +307,48 @@ SDL_Surface* SDL_FanGetSurface(FanFile& fanFile, int frameNo)
 	return pTargetSurface;
 }
 
+//------------------------------------------------------------------------------
+
+SDL_Surface* SDL_256GetSurface(C256File& c256File, int frameNo)
+{
+	SDL_Surface* pTargetSurface = nullptr;
+
+	const C256_Palette& clut = c256File.GetPalette();
+	const std::vector<unsigned char*>& pPixelMaps = c256File.GetPixelMaps();
+
+	int width  = c256File.GetWidth();
+	int height = c256File.GetHeight();
+
+	unsigned char* pRawPixels = new unsigned char[ width * height ];
+	memcpy(pRawPixels, pPixelMaps[ frameNo ], width * height);
+
+	pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pRawPixels, width, height,
+		8, width, SDL_PIXELFORMAT_INDEX8);
+
+	SDL_Palette *pPalette = SDL_AllocPalette(clut.iNumColors);
+
+	// C256 Colors to SDL Colors
+	for (int idx = 0; idx < clut.iNumColors; ++idx)
+	{
+		C256_Color inColor = clut.pColors[ idx ];
+		SDL_Color  outColor;
+		outColor.r = inColor.r;
+		outColor.g = inColor.g;
+		outColor.b = inColor.b;
+		outColor.a = inColor.a;
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+	}
+
+	SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+	// Stuff in the Delay Time
+	int delayTime = 4; 	// hard coded for now
+	pTargetSurface->userdata = (void *)((long long)(delayTime & 0xFFFF));
+
+	return pTargetSurface;
+}
 
 //------------------------------------------------------------------------------
 
@@ -329,6 +372,28 @@ std::vector<SDL_Surface*> SDL_FAN_Load(const char* pFilePath)
 	return results;
 }
 
+
+//------------------------------------------------------------------------------
+
+//
+//  Helpers
+//
+std::vector<SDL_Surface*> SDL_256_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+	C256File c256File(pFilePath);
+
+	int numFrames = c256File.GetFrameCount();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+		SDL_Surface* pSurface = SDL_256GetSurface(c256File, idx);
+		results.push_back(pSurface);
+	}
+
+	return results;
+}
 
 //------------------------------------------------------------------------------
 
@@ -400,6 +465,91 @@ int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface, std::map<Uint32,Uint32>
     SDL_FreeSurface(pImage);     /* No longer needed */
 
 	return (int)local_histogram.size();
+}
+
+//------------------------------------------------------------------------------
+
+void SDL_IMG_Save256(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath)
+{
+	if (pSurfaces.size())
+	{
+		// 1. Convert Surfaces into a format that the C256File can accept
+		SDL_Surface* pSurface = pSurfaces[0];
+
+		int width  = pSurface->w;
+		int height = pSurface->h;
+
+		// Check for palette right now
+		SDL_Palette *pPal = pSurface->format->palette;
+
+		if (!pPal)
+		{
+			LOG("FAILED: Save C256 Bitmap: %s\n", pFilePath);
+			LOG("SDL_Surface does not contain a palette!\n");
+			return;
+		}
+
+		// Ok, to keep the types as simple as possible, the C256File class
+		// requires a list of pointer to a char array, that contains the data it's going to process
+		// the char array contains the 8 bit index data used to represent the pixels
+
+		// As it happens, each our surfaces, contains such an array, already
+
+		std::vector<unsigned char*> pixelMaps;
+
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			pSurface = pSurfaces[ idx ];
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_LockSurface(pSurface);
+
+			pixelMaps.push_back( (unsigned char*)pSurface->pixels );
+		}
+
+		// 2. Convert Color Table into a format that the C256File can accept;
+		//
+		// Convert the surface palette, into a Foenix palette B G R FF, format
+
+		C256_Palette palette;
+		palette.iNumColors = pPal->ncolors;
+		palette.pColors = new C256_Color[ pPal->ncolors ];
+
+		for (int idx = 0; idx < pPal->ncolors; ++idx)
+		{
+			palette.pColors[ idx ].r = pPal->colors[ idx ].r;
+			palette.pColors[ idx ].g = pPal->colors[ idx ].g;
+			palette.pColors[ idx ].b = pPal->colors[ idx ].b;
+			palette.pColors[ idx ].a = pPal->colors[ idx ].a;
+		}
+
+
+		// Create the C256File Object
+
+		C256File c256File(width, height, palette.iNumColors);
+
+		// Add the colors
+		c256File.SetPalette( palette );
+		// free the palette
+		delete[] palette.pColors;
+		palette.pColors = nullptr;
+
+		// Add the pixels
+		c256File.AddImages( pixelMaps );
+
+		// Save the File
+		c256File.SaveToFile( pFilePath );
+
+		// Unlock Surfaces
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			pSurface = pSurfaces[ idx ];
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_UnlockSurface(pSurface);
+		}
+
+	}
 }
 
 //------------------------------------------------------------------------------

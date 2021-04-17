@@ -122,6 +122,63 @@
     <ClCompile Include="..\source\gsdx_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\dictionary.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\expand_block_v1.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\expand_block_v2.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\expand_context.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\expand_inmem.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\expand_streaming.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\frame.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\matchfinder.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\shrink_block_v1.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\shrink_block_v2.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\shrink_context.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\shrink_inmem.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\shrink_streaming.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\stream.c">
+      <Filter>libs\lzsa</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\divsufsort.c">
+      <Filter>libs\lzsa\libdivsufsort\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\divsufsort_utils.c">
+      <Filter>libs\lzsa\libdivsufsort\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\sssort.c">
+      <Filter>libs\lzsa\libdivsufsort\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\lzsa\src\libdivsufsort\lib\trsort.c">
+      <Filter>libs\lzsa\libdivsufsort\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\256_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -562,6 +619,66 @@
     <ClInclude Include="..\source\gsdx_file.h">
       <Filter>source</Filter>
     </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\dictionary.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\expand_block_v1.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\expand_block_v2.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\expand_context.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\expand_inmem.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\expand_streaming.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\format.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\frame.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\lib.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\matchfinder.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\shrink_block_v1.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\shrink_block_v2.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\shrink_context.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\shrink_inmem.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\shrink_streaming.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\stream.h">
+      <Filter>libs\lzsa</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\libdivsufsort\include\divsufsort.h">
+      <Filter>libs\lzsa\libdivsufsort\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\libdivsufsort\include\divsufsort_config.h">
+      <Filter>libs\lzsa\libdivsufsort\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\lzsa\src\libdivsufsort\include\divsufsort_private.h">
+      <Filter>libs\lzsa\libdivsufsort\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\256_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">
@@ -605,6 +722,18 @@
     </Filter>
     <Filter Include="libs\SDL2">
       <UniqueIdentifier>{06d191a2-7e04-4ed2-a834-1b9fa2fdb0a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\lzsa">
+      <UniqueIdentifier>{aed2f540-b724-495b-9b51-000304d078f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\lzsa\libdivsufsort">
+      <UniqueIdentifier>{b5b5bb11-a758-4baa-9e83-7d1b704ad405}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\lzsa\libdivsufsort\lib">
+      <UniqueIdentifier>{0bd1fc41-1dc0-470e-acf1-a94a425d7cdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\lzsa\libdivsufsort\include">
+      <UniqueIdentifier>{81a7a8e0-a4df-402e-b2d1-2edff4dfd066}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

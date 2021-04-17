@@ -90,6 +90,7 @@ private:
 	void SaveC1(std::string filenamepath);
 	void SaveC2(std::string filenamepath);
 	void SavePNG(std::string filenamepath);
+	void Save256(std::string filenamepath);
 	void SaveFAN(std::string filenamepath, bool bTiled = false);
 	void SaveGSLA(std::string filenamepath);
 

@@ -706,6 +706,24 @@ void ImageDocument::Render()
 					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 
+				if (ImGui::MenuItem("Save as 256 (Foenix Bitmap)"))
+				{
+					std::string defaultFilename = m_filename;
+					std::string dialogKey = "Save256Key" + m_uniqId;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as 256", ".256\0\0",
+														   ".",
+															defaultFilename);
+
+					ImGui::SetWindowFocus(dialogKey.c_str());
+				}
+
+
 				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
 				{
 					std::string defaultFilename = m_filename;
@@ -891,6 +909,16 @@ void ImageDocument::Render()
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SavePNGKey" + m_uniqId);
+	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("Save256Key" + m_uniqId))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			Save256( ImGuiFileDialog::Instance()->GetFilepathName());
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("Save256Key" + m_uniqId);
 	}
 
 	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANKey" + m_uniqId))
@@ -2985,6 +3013,17 @@ void ImageDocument::SaveFAN(std::string filenamepath, bool bTiled)
 	SDL_IMG_SaveFAN(m_pTargetSurfaces, filenamepath.c_str(), bTiled);
 }
 //------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Save as Foenix Bitmap
+//
+void ImageDocument::Save256(std::string filenamepath)
+{
+// Choose a surface to save
+	SDL_IMG_Save256(m_pTargetSurfaces, filenamepath.c_str());
+}
+//------------------------------------------------------------------------------
+
 
 void ImageDocument::RotateRight()
 {

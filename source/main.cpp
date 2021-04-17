@@ -77,7 +77,7 @@ static void AddFileFilters()
 	char* extensions[] =
 	{
 		".PNG",".TIF",".TGA",".GIF",".FAN",".JPG",".JFIF",".LBM",
-		".BMP",".WEBP",".ANM",".PAL",".C1",".C2",
+		".BMP",".WEBP",".ANM",".PAL",".C1",".C2",".256",
 		"#C10000","#C20000",".GSLA"
 	};
 
@@ -606,7 +606,19 @@ void MainMenuBarUI()
 					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
 				  }
 			  }
-			  else if (endsWith(pathName, ".gif"))
+			  else if (endsWith(pathName, ".256"))
+			  {
+				  // Foenix Bitmap Image
+				  std::vector<SDL_Surface*> frames = SDL_256_Load(pathName.c_str());
+				  LOG("256_Load %d Frames\n", frames.size());
+				  if (frames.size())
+				  {
+					  LOG("Loaded %s\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
+				  }
+
+
+			  } else if (endsWith(pathName, ".gif"))
 			  {
 				  // Use GIF Library
 				  std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());
