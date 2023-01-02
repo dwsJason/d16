@@ -2914,12 +2914,12 @@ void ImageDocument::Quant256()
 		}
 
 		// locked colors start at this index
-		int lockedBaseIndex = (int)max_blocks - numLocked;
+		int lockedBaseIndex = (int)m_targetColors.size() - numLocked;
 
 		int lockedIndex = 0;
 		int palIndex = 0;
 
-		for (int idx = 0; idx < /*m_targetColors.size()*/ max_blocks; ++idx)
+		for (int idx = 0; idx < max_blocks; ++idx)
 		{
 			liq_color color;
 
