@@ -2857,9 +2857,6 @@ void ImageDocument::Quant256()
 		liq_histogram_add_image(pHist, attr_handle, input_image);
 	}
 
-
-
-
 	// You could set more options here, like liq_set_quality
     liq_result *quantization_result;
     if (liq_histogram_quantize(pHist, attr_handle, &quantization_result) != LIQ_OK) {
@@ -2869,6 +2866,51 @@ void ImageDocument::Quant256()
 
     // Use libimagequant to make new image pixels from the palette
 	const liq_palette *palette = liq_get_palette(quantization_result);
+
+	#if 1
+	std::vector<unsigned char> pixel_swaps;
+
+	{
+		// Probably shouldn't do this, but I'd like the libimage quant to just
+		// remap stuff in the correct order to start, to monkey with order
+		int max_blocks = (int)m_bLocks.size();
+		if (max_blocks > (int)palette->count)
+		{
+			max_blocks = (int)palette->count;
+		}
+
+		int LockCount = 0;
+
+		for (int idx = 0; idx < max_blocks; ++idx)
+		{
+			if (m_bLocks[ idx ])
+			{
+				LockCount++;
+			}
+		}
+
+		int palette_offset = palette->count - LockCount;
+
+		for (int LockIndex = 0; LockIndex < LockCount; ++LockIndex)
+		{
+			if (m_bLocks[ LockIndex ])
+			{
+				liq_color temp  = palette->entries[palette_offset];
+				liq_color temp2 = palette->entries[LockIndex];
+
+				memcpy((void*)&palette->entries[LockIndex],&temp, sizeof(liq_color));
+				memcpy((void*)&palette->entries[palette_offset],&temp2, sizeof(liq_color));
+
+				pixel_swaps.push_back((unsigned char) palette_offset);
+				pixel_swaps.push_back((unsigned char) LockIndex);
+
+				palette_offset++;
+			}
+		}
+
+	}
+	#endif
+
 
     size_t pixels_size = width * height;
 	liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
@@ -2881,6 +2923,24 @@ void ImageDocument::Quant256()
 		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
 
 		liq_write_remapped_image(quantization_result, input_images[ idx ], raw_8bit_pixels, pixels_size);
+
+		// Fix up pixels
+		for (int pixel_index = 0; pixel_index < pixels_size; ++pixel_index)
+		{
+			unsigned char pixel = raw_8bit_pixels[ pixel_index ];
+
+			for (int swap_index = 0; swap_index < pixel_swaps.size(); swap_index+=2)
+			{
+				if (pixel == pixel_swaps[ swap_index ])
+				{
+					raw_8bit_pixels[ pixel_index ] = pixel_swaps[ swap_index + 1 ];
+				}
+				else if (pixel == pixel_swaps[ swap_index+1])
+				{
+					raw_8bit_pixels[ pixel_index ] = pixel_swaps[ swap_index ];
+				}
+			}
+		}
 
 		// Convert Results into a Surface ------------------------------------------
 
@@ -2907,29 +2967,11 @@ void ImageDocument::Quant256()
 			max_blocks = m_iTargetColorCount;
 		}
 
-		int numLocked = 0;
-		for (int idx = 0; idx < max_blocks; ++idx)
-		{
-			if (m_bLocks[idx]) numLocked++;
-		}
-
-		// locked colors start at this index
-		int lockedBaseIndex = (int)m_targetColors.size() - numLocked;
-
-		int lockedIndex = 0;
-		int palIndex = 0;
-
 		for (int idx = 0; idx < max_blocks; ++idx)
 		{
 			liq_color color;
 
-			if (m_bLocks[idx])
-			{
-				color = palette->entries[lockedBaseIndex + lockedIndex];
-				lockedIndex++;
-			}
-			else
-				color = palette->entries[ palIndex++ ];
+			color = palette->entries[idx];
 
 			m_targetColors[ idx ].x = color.r / 255.0f;
 			m_targetColors[ idx ].y = color.g / 255.0f;
