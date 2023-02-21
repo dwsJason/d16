@@ -86,6 +86,7 @@ private:
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
 	void RenderTimeLine();
+	void RenderOBJShapes();
 
 	void SaveC1(std::string filenamepath);
 	void SaveC2(std::string filenamepath);

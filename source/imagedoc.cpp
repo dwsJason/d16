@@ -837,6 +837,11 @@ void ImageDocument::Render()
 
 	ImGui::EndChild();
 
+	if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
+	{
+		RenderOBJShapes();
+	}
+
 
 	if (m_pSurfaces.size() > 1)
 	{
@@ -1126,6 +1131,51 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 	else
 	{
 		m_bPanActive = false;
+	}
+
+}
+//------------------------------------------------------------------------------
+void ImageDocument::RenderOBJShapes()
+{
+	float x_padding = 8.0f;
+	float step = 10.0f;
+
+	// Ruler on the Dope Sheet
+	ImVec2 winPos = ImGui::GetWindowPos();
+	winPos.y += 30.0f;
+	winPos.x -= ImGui::GetScrollX();
+	winPos.x += (x_padding);
+
+	ImVec2 points[ 2 ];
+
+	for (int x = 0; x < 100; ++x)
+	{
+		ImVec2 pos = ImVec2(winPos.x + (x * step), winPos.y);
+		points[ 0 ] = pos;
+		if (x % 10)
+		{
+			if (x % 5)
+			{
+				pos.y += 15.0f;
+			}
+			else
+			{
+				pos.y += 22.0f;
+			}
+		}
+		else
+		{
+			pos.y += 30.0f;
+		}
+		points[ 1 ] = pos;
+
+		ImGui::GetWindowDrawList()->AddLine(
+			points[ 0 ],
+			points[ 1 ],
+			0x80008000,
+			0.5f
+			);
+
 	}
 
 }
