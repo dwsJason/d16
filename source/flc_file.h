@@ -34,7 +34,7 @@ public:
 	int GetWidth()  { return m_widthPixels; }
 	int GetHeight() { return m_heightPixels; }
 
-//	const ANM_Palette& GetPalette() { return m_pal; }
+	const flic::Colormap& GetPalette() { return frame.colormap; }
 	const std::vector<unsigned char*> GetPixelMaps() { return m_pPixelMaps; }
 
 private:
