@@ -22,6 +22,12 @@ public:
 
 	~FlcFile();
 
+	// Creation
+//	FlcFile(int iWidthPixels, int iHeightPixels, int iFrameSizeBytes);
+//	void AddImages( const std::vector<unsigned char*>& pFrameBytes );
+	void SaveToFile(const char* pFilenamePath);
+
+
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
 	int GetFrameCount() { return (int)m_pPixelMaps.size(); }
