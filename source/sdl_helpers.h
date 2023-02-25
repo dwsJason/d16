@@ -37,6 +37,7 @@ std::vector<SDL_Surface*> SDL_ANM_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_256_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_FAN_Load(const char* pFilePath);
+std::vector<SDL_Surface*> SDL_FLC_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_GIF_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_GSLA_Load(const char* pFilePath);
 SDL_Surface* SDL_C1_Load(const char* pFilePath);

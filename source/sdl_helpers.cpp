@@ -10,6 +10,7 @@
 #include "anm_file.h"  // Support Deluxe Animation File
 #include "c2_file.h"   // Support Paintworks Animation File
 #include "fan_file.h"  // Support for Foenix Animation File
+#include "flc_file.h"  // Support for FLC/FLI Animation File
 #include "gsla_file.h" // Support for GSLA Animation File
 
 // include the oldest, crustiest gif library out there, it forces you to
@@ -389,6 +390,68 @@ std::vector<SDL_Surface*> SDL_256_Load(const char* pFilePath)
 	for (int idx = 0; idx < numFrames; ++idx)
 	{
 		SDL_Surface* pSurface = SDL_256GetSurface(c256File, idx);
+		results.push_back(pSurface);
+	}
+
+	return results;
+}
+
+SDL_Surface* SDL_FLC_GetSurface(FlcFile& animFile, int frameNo)
+{
+	SDL_Surface* pTargetSurface = nullptr;
+
+	const flic::Colormap& clut = animFile.GetPalette();
+
+	const std::vector<unsigned char*>& pPixelMaps = animFile.GetPixelMaps();
+
+	int width  = animFile.GetWidth();
+	int height = animFile.GetHeight();
+
+	unsigned char* pRawPixels = new unsigned char[ width * height ];
+	memcpy(pRawPixels, pPixelMaps[ frameNo ], width * height);
+
+	pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pRawPixels, width, height,
+		8, width, SDL_PIXELFORMAT_INDEX8);
+
+	SDL_Palette *pPalette = SDL_AllocPalette(clut.size());
+
+	// FLC Colors to SDL Colors
+	for (int idx = 0; idx < clut.size(); ++idx)
+	{
+		flic::Color inColor = clut[ idx ];
+		SDL_Color outColor;
+		outColor.r = inColor.r;
+		outColor.g = inColor.g;
+		outColor.b = inColor.b;
+		outColor.a = 255;
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+	}
+
+	SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+	// Stuff in the Delay Time
+	int delayTime = 4; 	// hard coded for now
+	pTargetSurface->userdata = (void *)((long long)(delayTime & 0xFFFF));
+
+	return pTargetSurface;
+}
+
+
+//------------------------------------------------------------------------------
+
+std::vector<SDL_Surface*> SDL_FLC_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+	FlcFile flcFile(pFilePath);
+
+	int numFrames = flcFile.GetFrameCount();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+		SDL_Surface* pSurface = SDL_FLC_GetSurface(flcFile, idx);
 		results.push_back(pSurface);
 	}
 
