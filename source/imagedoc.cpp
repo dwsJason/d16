@@ -842,7 +842,6 @@ void ImageDocument::Render()
 		RenderOBJShapes();
 	}
 
-
 	if (m_pSurfaces.size() > 1)
 	{
 		RenderTimeLine();
@@ -1137,14 +1136,37 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 //------------------------------------------------------------------------------
 void ImageDocument::RenderOBJShapes()
 {
-	float x_padding = 8.0f;
-	float step = 10.0f;
+	// By placing what we draw into a "window", it will appear on top
+	// of our image
+
+	ImVec2 parentPosition = ImGui::GetWindowPos();
+	ImVec2 parentSize     = ImGui::GetWindowSize();
+
+	ImVec2 windowPosition = parentPosition;
+	ImVec2 windowSize = parentSize;
+
+	// Position
+	windowPosition.y += 82.0f;
+	windowPosition.x += 8.0f; 
+
+	ImGui::SetNextWindowPos(windowPosition);
+
+	ImGui::BeginChild("OBJ Shapes", windowSize,
+						  false,
+						  ImGuiWindowFlags_NoMove |
+						  ImGuiWindowFlags_NoScrollbar |
+						  ImGuiWindowFlags_NoScrollWithMouse   |
+						  ImGuiWindowFlags_AlwaysAutoResize );
+
 
 	// Ruler on the Dope Sheet
+	float x_padding = 0.0f;
+	float step = 10.0f;
 	ImVec2 winPos = ImGui::GetWindowPos();
-	winPos.y += 30.0f;
+	winPos.y += 0.0f;
 	winPos.x -= ImGui::GetScrollX();
 	winPos.x += (x_padding);
+
 
 	ImVec2 points[ 2 ];
 
@@ -1172,11 +1194,15 @@ void ImageDocument::RenderOBJShapes()
 		ImGui::GetWindowDrawList()->AddLine(
 			points[ 0 ],
 			points[ 1 ],
-			0x80008000,
-			0.5f
+			0xC0008000,
+			m_zoom
 			);
 
 	}
+
+
+
+	ImGui::EndChild();
 
 }
 //------------------------------------------------------------------------------
@@ -1480,7 +1506,6 @@ void ImageDocument::RenderTimeLine()
 	// view
 	ImGui::SameLine(x_padding + (frameCountByTime * step));
 	ImGui::Text("");
-
 
 	// Ruler on the Dope Sheet
 	ImVec2 winPos = ImGui::GetWindowPos();
