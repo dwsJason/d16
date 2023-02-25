@@ -76,7 +76,7 @@ static void AddFileFilters()
 	// upper case list
 	char* extensions[] =
 	{
-		".PNG",".TIF",".TGA",".GIF",".FAN",".JPG",".JFIF",".LBM",
+		".PNG",".TIF",".TGA",".GIF",".FAN",".FLC",".FLI",".JPG",".JFIF",".LBM",
 		".BMP",".WEBP",".ANM",".PAL",".C1",".C2",".256",
 		"#C10000","#C20000",".GSLA"
 	};
@@ -631,6 +631,17 @@ void MainMenuBarUI()
 				  }
 				  else
 					  image=IMG_Load(pathName.c_str());
+			  } else if (endsWith(pathName, ".fli") || (endsWidth(pathName, ".flc")))
+			  {
+				  // Use FLC/FLI Library
+				  std::vector<SDL_Surface*> frames = SDL_FLC_Load(pathName.c_str());
+
+				  LOG("FLC_Load %d Frames\n", frames.size());
+				  if (frames.size())
+				  {
+					  LOG("Loaded %d\n", it->second.c_str());
+					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
+				  }
 			  }
 			  else
 			  {
