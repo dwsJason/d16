@@ -43,7 +43,7 @@ private:
 	int m_heightPixels;		// Height of image in pixels
 	int m_numColors;		// number of colors in the initial CLUT
 
-//	ANM_Palette m_pal;
+	flic::Frame frame;      // holds palette of the last imported frame
 
 	std::vector<unsigned char*> m_pPixelMaps;
 

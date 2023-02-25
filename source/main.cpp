@@ -631,7 +631,7 @@ void MainMenuBarUI()
 				  }
 				  else
 					  image=IMG_Load(pathName.c_str());
-			  } else if (endsWith(pathName, ".fli") || (endsWidth(pathName, ".flc")))
+			  } else if (endsWith(pathName, ".fli") || (endsWith(pathName, ".flc")))
 			  {
 				  // Use FLC/FLI Library
 				  std::vector<SDL_Surface*> frames = SDL_FLC_Load(pathName.c_str());

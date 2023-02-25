@@ -10,6 +10,7 @@
 #include "anm_file.h"  // Support Deluxe Animation File
 #include "c2_file.h"   // Support Paintworks Animation File
 #include "fan_file.h"  // Support for Foenix Animation File
+#include "flc_file.h"  // Support for FLC/FLI Animation File
 #include "gsla_file.h" // Support for GSLA Animation File
 
 // include the oldest, crustiest gif library out there, it forces you to
@@ -390,6 +391,25 @@ std::vector<SDL_Surface*> SDL_256_Load(const char* pFilePath)
 	{
 		SDL_Surface* pSurface = SDL_256GetSurface(c256File, idx);
 		results.push_back(pSurface);
+	}
+
+	return results;
+}
+
+//------------------------------------------------------------------------------
+
+std::vector<SDL_Surface*> SDL_FLC_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+	FlcFile flcFile(pFilePath);
+
+	int numFrames = flcFile.GetFrameCount();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+//		SDL_Surface* pSurface = SDL_FLCGetSurface(flcFile, idx);
+//		results.push_back(pSurface);
 	}
 
 	return results;
