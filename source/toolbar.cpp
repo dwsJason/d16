@@ -101,7 +101,7 @@ static const int buttonXY[][2] =
 	{4,8},  // rotate left
 	{4,3},  // h-flip
 	{6,11}, // v-flip
-	{0,17}, // obj analyzer
+	{0,18}, // obj analyzer
 
 };
 
