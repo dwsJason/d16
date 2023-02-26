@@ -1147,7 +1147,7 @@ void ImageDocument::RenderOBJShapes()
 
 	// Position
 	windowPosition.y += 82.0f;
-	windowPosition.x += 8.0f; 
+	windowPosition.x += 8.0f;
 
 	ImGui::SetNextWindowPos(windowPosition);
 
@@ -1159,15 +1159,54 @@ void ImageDocument::RenderOBJShapes()
 						  ImGuiWindowFlags_AlwaysAutoResize );
 
 
-	// Ruler on the Dope Sheet
-	float x_padding = 0.0f;
-	float step = 10.0f;
+	// Where we're plotting these boxes
 	ImVec2 winPos = ImGui::GetWindowPos();
-	winPos.y += 0.0f;
 	winPos.x -= ImGui::GetScrollX();
-	winPos.x += (x_padding);
+	winPos.y -= ImGui::GetScrollY();
 
+	// Get the Frame Surface
+	SDL_Surface* pSurface = m_pSurfaces[m_iFrameNo];
 
+	Uint32 bg_pixel = SDL_GetPixel(pSurface, (int)0, (int)0);
+
+	// Draw a Square around the "sprite"
+	Uint32 minx = pSurface->w;
+	Uint32 maxx = 0;
+	Uint32 miny = pSurface->h;
+	Uint32 maxy = 0;
+
+	for (int y = 0; y < pSurface->h; ++y)
+	{
+		for (int x = 0; x < pSurface->w; ++x)
+		{
+			Uint32 pixel = SDL_GetPixel(pSurface, x, y);
+
+			if (pixel != bg_pixel)
+			{
+				if (x < minx) minx = x;
+				if (x > maxx) maxx = x;
+				if (y < miny) miny = y;
+				if (y > maxy) maxy = y;
+			}
+
+		}
+	}
+
+	minx*=m_zoom;
+	maxx*=m_zoom;
+	miny*=m_zoom;
+	maxy*=m_zoom;
+
+	ImGui::GetWindowDrawList()->AddRect(
+		ImVec2(minx+winPos.x,miny+winPos.y),
+		ImVec2(maxx+winPos.x,maxy+winPos.y),
+		0x8000FF00,  // Green
+		0.0f,
+		ImDrawCornerFlags_None,
+		m_zoom);
+		 
+
+	#if 0
 	ImGui::GetWindowDrawList()->AddLine(
 		ImVec2(winPos.x,winPos.y),
 		ImVec2(winPos.x+m_zoom*m_pSurfaces[m_iFrameNo]->w, winPos.y),
@@ -1181,6 +1220,7 @@ void ImageDocument::RenderOBJShapes()
 		0xC0008000,
 		m_zoom
 		);
+	#endif
 
 
 
