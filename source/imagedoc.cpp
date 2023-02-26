@@ -1168,6 +1168,23 @@ void ImageDocument::RenderOBJShapes()
 	winPos.x += (x_padding);
 
 
+	ImGui::GetWindowDrawList()->AddLine(
+		ImVec2(winPos.x,winPos.y),
+		ImVec2(winPos.x+m_zoom*m_pSurfaces[m_iFrameNo]->w, winPos.y),
+		0xC0008000,
+		m_zoom
+		);
+
+	ImGui::GetWindowDrawList()->AddLine(
+		ImVec2(winPos.x,winPos.y),
+		ImVec2(winPos.x,winPos.y+m_zoom*m_pSurfaces[m_iFrameNo]->h),
+		0xC0008000,
+		m_zoom
+		);
+
+
+
+	#if 0
 	ImVec2 points[ 2 ];
 
 	for (int x = 0; x < 100; ++x)
@@ -1199,6 +1216,7 @@ void ImageDocument::RenderOBJShapes()
 			);
 
 	}
+	#endif
 
 
 
