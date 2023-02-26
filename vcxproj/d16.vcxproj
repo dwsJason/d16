@@ -28,27 +28,27 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -123,7 +123,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -193,7 +193,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.1;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -223,6 +223,9 @@
     </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\libs\flic\decoder.cpp" />
+    <ClCompile Include="..\libs\flic\encoder.cpp" />
+    <ClCompile Include="..\libs\flic\stdio.cpp" />
     <ClCompile Include="..\libs\giflib-5.2.1\dgif_lib.c" />
     <ClCompile Include="..\libs\giflib-5.2.1\egif_lib.c" />
     <ClCompile Include="..\libs\giflib-5.2.1\getarg.c" />
@@ -274,6 +277,7 @@
     <ClCompile Include="..\source\common\limage.cpp" />
     <ClCompile Include="..\source\common\log.cpp" />
     <ClCompile Include="..\source\fan_file.cpp" />
+    <ClCompile Include="..\source\flc_file.cpp" />
     <ClCompile Include="..\source\gsdx_file.cpp" />
     <ClCompile Include="..\source\gsla_file.cpp" />
     <ClCompile Include="..\source\icon.cpp" />
@@ -290,6 +294,8 @@
     <ClInclude Include="..\libs\avir\avir_float4_sse.h" />
     <ClInclude Include="..\libs\avir\avir_float8_avx.h" />
     <ClInclude Include="..\libs\avir\lancir.h" />
+    <ClInclude Include="..\libs\flic\flic.h" />
+    <ClInclude Include="..\libs\flic\flic_details.h" />
     <ClInclude Include="..\libs\giflib-5.2.1\getarg.h" />
     <ClInclude Include="..\libs\giflib-5.2.1\gif_hash.h" />
     <ClInclude Include="..\libs\giflib-5.2.1\gif_lib.h" />
@@ -443,6 +449,7 @@
     <ClInclude Include="..\source\common\log.h" />
     <ClInclude Include="..\source\common\memstream.h" />
     <ClInclude Include="..\source\fan_file.h" />
+    <ClInclude Include="..\source\flc_file.h" />
     <ClInclude Include="..\source\gsdx_file.h" />
     <ClInclude Include="..\source\gsla_file.h" />
     <ClInclude Include="..\source\imagedoc.h" />

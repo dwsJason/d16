@@ -179,6 +179,18 @@
     <ClCompile Include="..\source\256_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\flic\stdio.cpp">
+      <Filter>libs\flic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\flic\encoder.cpp">
+      <Filter>libs\flic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\flic\decoder.cpp">
+      <Filter>libs\flic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\flc_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -679,6 +691,15 @@
     <ClInclude Include="..\source\256_file.h">
       <Filter>source</Filter>
     </ClInclude>
+    <ClInclude Include="..\libs\flic\flic_details.h">
+      <Filter>libs\flic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\flic\flic.h">
+      <Filter>libs\flic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\flc_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">
@@ -734,6 +755,9 @@
     </Filter>
     <Filter Include="libs\lzsa\libdivsufsort\include">
       <UniqueIdentifier>{81a7a8e0-a4df-402e-b2d1-2edff4dfd066}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\flic">
+      <UniqueIdentifier>{c6b871e7-a4b2-44cb-ab9e-d2256f925cd7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
