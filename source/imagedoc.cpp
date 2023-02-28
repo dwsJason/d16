@@ -1169,6 +1169,11 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	winPos.x -= ScrollX;
 	winPos.y -= ScrollY;
 
+	winPos.x += (m_zoom * 0.5f);
+	winPos.y += (m_zoom * 0.5f);
+	winPos.x += 1.0f;
+	winPos.y += 2.0f;
+
 	// Get the Frame Surface
 	SDL_Surface* pSurface = m_pSurfaces[m_iFrameNo];
 
@@ -1203,12 +1208,12 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	maxy*=m_zoom;
 
 	ImGui::GetWindowDrawList()->AddRect(
-		ImVec2(minx+winPos.x,miny+winPos.y),
-		ImVec2(maxx+winPos.x,maxy+winPos.y),
+		ImVec2(((float)minx)+winPos.x,((float)miny)+winPos.y),
+		ImVec2(((float)maxx)+winPos.x,((float)maxy)+winPos.y),
 		0x8000FF00,  // Green
 		0.0f,
 		ImDrawCornerFlags_None,
-		m_zoom);
+		((float)m_zoom));
 		 
 
 	#if 0
