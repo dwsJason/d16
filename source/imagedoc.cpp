@@ -834,12 +834,14 @@ void ImageDocument::Render()
 		}
 //------------------------------------------------------------------------------
 
+		const float ScrollX = ImGui::GetScrollX();
+		const float ScrollY = ImGui::GetScrollY();
 
 	ImGui::EndChild();
 
-	if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
+	//if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
 	{
-		RenderOBJShapes();
+		RenderOBJShapes(ScrollX,ScrollY);
 	}
 
 	if (m_pSurfaces.size() > 1)
@@ -1134,7 +1136,7 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 
 }
 //------------------------------------------------------------------------------
-void ImageDocument::RenderOBJShapes()
+void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 {
 	// By placing what we draw into a "window", it will appear on top
 	// of our image
@@ -1153,6 +1155,9 @@ void ImageDocument::RenderOBJShapes()
 
 	ImGui::BeginChild("OBJ Shapes", windowSize,
 						  false,
+					      ImGuiWindowFlags_NoNav |
+					      ImGuiWindowFlags_NoDecoration |
+					      ImGuiWindowFlags_NoInputs |
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_NoScrollbar |
 						  ImGuiWindowFlags_NoScrollWithMouse   |
@@ -1161,8 +1166,8 @@ void ImageDocument::RenderOBJShapes()
 
 	// Where we're plotting these boxes
 	ImVec2 winPos = ImGui::GetWindowPos();
-	winPos.x -= ImGui::GetScrollX();
-	winPos.y -= ImGui::GetScrollY();
+	winPos.x -= ScrollX;
+	winPos.y -= ScrollY;
 
 	// Get the Frame Surface
 	SDL_Surface* pSurface = m_pSurfaces[m_iFrameNo];

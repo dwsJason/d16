@@ -86,7 +86,7 @@ private:
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
 	void RenderTimeLine();
-	void RenderOBJShapes();
+	void RenderOBJShapes(const float ScrollX, const float ScrollY);
 
 	void SaveC1(std::string filenamepath);
 	void SaveC2(std::string filenamepath);
