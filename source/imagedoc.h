@@ -88,6 +88,8 @@ private:
 	void RenderTimeLine();
 	void RenderOBJShapes(const float ScrollX, const float ScrollY);
 
+	bool CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y);
+
 	void SaveC1(std::string filenamepath);
 	void SaveC2(std::string filenamepath);
 	void SavePNG(std::string filenamepath);

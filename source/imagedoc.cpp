@@ -1136,6 +1136,25 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 
 }
 //------------------------------------------------------------------------------
+bool ImageDocument::CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y)
+{
+	// Check the 8x8 tile to see if it has any pixels we care about
+	for (int ly = 0; ly < 8; ++ly)
+	{
+		for (int lx = 0; lx < 8; ++lx)
+		{
+			Uint32 pixel = SDL_GetPixel(pSurface, x+lx, y+ly);
+
+			if (pixel != bg_pixel)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+//------------------------------------------------------------------------------
 void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 {
 	// By placing what we draw into a "window", it will appear on top
@@ -1171,7 +1190,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 
 	winPos.x += (m_zoom * 0.5f);
 	winPos.y += (m_zoom * 0.5f);
-	winPos.x += 1.0f;
+	winPos.x += 1.0f;   	  		/* Magic Numbers */
 	winPos.y += 2.0f;
 
 	// Get the Frame Surface
@@ -1202,19 +1221,53 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		}
 	}
 
-	minx*=m_zoom;
-	maxx*=m_zoom;
-	miny*=m_zoom;
-	maxy*=m_zoom;
+	//minx*=m_zoom;
+	//maxx*=m_zoom;
+	//miny*=m_zoom;
+	//maxy*=m_zoom;
 
 	ImGui::GetWindowDrawList()->AddRect(
-		ImVec2(((float)minx)+winPos.x,((float)miny)+winPos.y),
-		ImVec2(((float)maxx)+winPos.x,((float)maxy)+winPos.y),
-		0x8000FF00,  // Green
+		ImVec2(((float)minx*m_zoom)+winPos.x,((float)miny * m_zoom)+winPos.y),
+		ImVec2(((float)maxx*m_zoom)+winPos.x,((float)maxy * m_zoom)+winPos.y),
+		0x800000FF,  // Red
 		0.0f,
 		ImDrawCornerFlags_None,
 		((float)m_zoom));
-		 
+
+	// The Scan Area is now defined with the min/max
+	int tile_w = ((pSurface->w + 7) / 8);
+	int tile_h = ((pSurface->h + 7) / 8);
+	std::vector<bool> tile_map(tile_w * tile_h);
+
+	for (int y = miny; y <= maxy; y+=8)
+	{
+		for (int x = minx; x <= maxx; x+=8)
+		{
+			tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y);
+		}
+	}
+
+	for (int ty = 0; ty < tile_h; ++ty)
+	{
+		for (int tx = 0; tx < tile_w; ++tx)
+		{
+			if (tile_map[(ty * tile_w) + tx])
+			{
+				int x = tx * 8;
+				int y = ty * 8;
+
+				ImGui::GetWindowDrawList()->AddRect(
+					ImVec2(((float)(minx+x)*m_zoom)+winPos.x,((float)(miny+y) * m_zoom)+winPos.y),
+					ImVec2(((float)(maxx+x)*m_zoom)+winPos.x,((float)(maxy+y) * m_zoom)+winPos.y),
+					0x8000FF00,  // Green
+					0.0f,
+					ImDrawCornerFlags_None,
+					((float)m_zoom));
+
+			}
+		}
+	}
+
 
 	#if 0
 	ImGui::GetWindowDrawList()->AddLine(
@@ -1267,8 +1320,6 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 
 	}
 	#endif
-
-
 
 	ImGui::EndChild();
 
