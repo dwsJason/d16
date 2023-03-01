@@ -1257,8 +1257,8 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 				int y = ty * 8;
 
 				ImGui::GetWindowDrawList()->AddRect(
-					ImVec2(((float)(minx+x)*m_zoom)+winPos.x,((float)(miny+y) * m_zoom)+winPos.y),
-					ImVec2(((float)(maxx+x)*m_zoom)+winPos.x,((float)(maxy+y) * m_zoom)+winPos.y),
+					ImVec2((((float)x)*m_zoom)+winPos.x,(((float)y) * m_zoom)+winPos.y),
+					ImVec2((((float)x+7)*m_zoom)+winPos.x,(((float)y+7) * m_zoom)+winPos.y),
 					0x8000FF00,  // Green
 					0.0f,
 					ImDrawCornerFlags_None,
