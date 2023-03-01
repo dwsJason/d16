@@ -1247,14 +1247,17 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		}
 	}
 
+	int offset_x = minx & 0x7;
+	int offset_y = miny & 0x7;
+
 	for (int ty = 0; ty < tile_h; ++ty)
 	{
 		for (int tx = 0; tx < tile_w; ++tx)
 		{
 			if (tile_map[(ty * tile_w) + tx])
 			{
-				int x = tx * 8;
-				int y = ty * 8;
+				int x = (tx * 8) + offset_x;
+				int y = (ty * 8) + offset_y;
 
 				ImGui::GetWindowDrawList()->AddRect(
 					ImVec2((((float)x)*m_zoom)+winPos.x,(((float)y) * m_zoom)+winPos.y),
