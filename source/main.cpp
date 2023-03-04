@@ -639,7 +639,7 @@ void MainMenuBarUI()
 				  LOG("FLC_Load %d Frames\n", frames.size());
 				  if (frames.size())
 				  {
-					  LOG("Loaded %d\n", it->second.c_str());
+					  LOG("Loaded %s\n", it->second.c_str());
 					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
 				  }
 			  }
