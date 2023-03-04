@@ -1333,7 +1333,8 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	//maxx*=m_zoom;
 	//miny*=m_zoom;
 	//maxy*=m_zoom;
-
+#if 0
+	// Bounding Rect just gets in the way
 	ImGui::GetWindowDrawList()->AddRect(
 		ImVec2(((float)minx*m_zoom)+winPos.x,((float)miny * m_zoom)+winPos.y),
 		ImVec2(((float)maxx*m_zoom)+winPos.x,((float)maxy * m_zoom)+winPos.y),
@@ -1341,22 +1342,80 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		0.0f,
 		ImDrawCornerFlags_None,
 		((float)m_zoom));
+#endif
 
 	// The Scan Area is now defined with the min/max
 	int tile_w = ((pSurface->w + 7) / 8);
 	int tile_h = ((pSurface->h + 7) / 8);
+
+	int best_obj_count = tile_w * tile_h + 1;
+	int best_offset_x = 0;
+	int best_offset_y = 0;
+
 	std::vector<int> tile_map(tile_w * tile_h);
 
-	for (int y = miny; y <= maxy; y+=8)
+	// Nested 64 iteration loop, to slide the tiles around
+	// to find the set with the least number of OBJS/Sprites
+	for (int scan_offset_y = 0; scan_offset_y < 8; ++scan_offset_y)
 	{
-		for (int x = minx; x <= maxx; x+=8)
+		for (int scan_offset_x =0; scan_offset_x < 8; ++scan_offset_x)
+		{
+			memset(&tile_map[0], 0, sizeof(int) * tile_w * tile_h);
+			for (int y = miny - scan_offset_y; y <= maxy; y+=8)
+			{
+				for (int x = minx - scan_offset_x; x <= maxx; x+=8)
+				{
+					tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y) ? TILE_8x8 : TILE_EMPTY;
+				}
+			}
+
+			int offset_x = (minx-scan_offset_x) & 0x7;
+			int offset_y = (miny-scan_offset_y) & 0x7;
+			int obj_count = 0;
+
+			for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
+			{
+				for (int y = 0; y < tile_h; ++y)
+				{
+					for (int x = 0; x < tile_w; ++x)
+					{
+						if (CheckGrid(x, y, tile_map, tile_w, tile_h, obj_size))
+						{
+							SetGrid(x, y, tile_map, tile_w, tile_h, obj_size);
+							obj_count++;
+						}
+					}
+				}
+			}
+
+			if (obj_count < best_obj_count)
+			{
+				best_obj_count = obj_count;
+				best_offset_x = scan_offset_x;
+				best_offset_y = scan_offset_y;
+			}
+		}
+	}
+
+
+
+//-----------------------------------------------------------------------------
+
+	int scan_offset_x = best_offset_x;
+	int scan_offset_y = best_offset_y;
+	memset(&tile_map[0], 0, sizeof(int) * tile_w * tile_h);
+	// Do the process again, on the best setting
+	for (int y = miny - scan_offset_y; y <= maxy; y+=8)
+	{
+		for (int x = minx - scan_offset_x; x <= maxx; x+=8)
 		{
 			tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y) ? TILE_8x8 : TILE_EMPTY;
 		}
 	}
 
-	int offset_x = minx & 0x7;
-	int offset_y = miny & 0x7;
+	int offset_x = (minx-scan_offset_x) & 0x7;
+	int offset_y = (miny-scan_offset_y) & 0x7;
+	int obj_count = 0;
 
 	for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
 	{
@@ -1367,6 +1426,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 				if (CheckGrid(x, y, tile_map, tile_w, tile_h, obj_size))
 				{
 					SetGrid(x, y, tile_map, tile_w, tile_h, obj_size);
+					obj_count++;
 				}
 			}
 		}
@@ -1397,7 +1457,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 					ImGui::GetWindowDrawList()->AddRect(
 						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
 						ImVec2((((float)x + 15) * m_zoom) + winPos.x, (((float)y + 15) * m_zoom) + winPos.y),
-						0x8000FF00,  // Green
+						0x800000FF,  // Red
 						0.0f,
 						ImDrawCornerFlags_None,
 						((float)m_zoom));
@@ -1408,7 +1468,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 					ImGui::GetWindowDrawList()->AddRect(
 						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
 						ImVec2((((float)x + 23) * m_zoom) + winPos.x, (((float)y + 23) * m_zoom) + winPos.y),
-						0x8000FF00,  // Green
+						0x80FF0000,  // Blue
 						0.0f,
 						ImDrawCornerFlags_None,
 						((float)m_zoom));
@@ -1419,7 +1479,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 					ImGui::GetWindowDrawList()->AddRect(
 						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
 						ImVec2((((float)x + 31) * m_zoom) + winPos.x, (((float)y + 31) * m_zoom) + winPos.y),
-						0x8000FF00,  // Green
+						0x8000FFFF,  // Yello
 						0.0f,
 						ImDrawCornerFlags_None,
 						((float)m_zoom));
