@@ -1135,6 +1135,114 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 	}
 
 }
+
+//------------------------------------------------------------------------------
+bool ImageDocument::CheckGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size)
+{
+	int num_tiles = 0;
+	switch (obj_size)
+	{
+	case TILE_8x8:
+		num_tiles = 1;
+		break;
+	case TILE_16x16:
+		num_tiles = 2;
+		break;
+	case TILE_24x24:
+		num_tiles = 3;
+		break;
+	case TILE_32x32:
+		num_tiles = 4;
+		break;
+	default:
+		num_tiles = 0;
+		break;
+	}
+
+	if (!num_tiles)
+	{
+		return false;
+	}
+
+	for (int new_y = gy; new_y < (gy + num_tiles); ++new_y)
+	{
+		if (new_y > grid_h)
+		{
+			return false;
+		}
+
+		for (int new_x = gx; new_x < (gx + num_tiles); ++new_x)
+		{
+			if (new_x > grid_w)
+			{
+				return false;
+			}
+
+			if (TILE_8x8 != grid[(new_y * grid_w) + new_x])
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+//------------------------------------------------------------------------------
+void ImageDocument::SetGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size)
+{
+	int num_tiles = 0;
+	switch (obj_size)
+	{
+	case TILE_8x8:
+		num_tiles = 1;
+		break;
+	case TILE_16x16:
+		num_tiles = 2;
+		break;
+	case TILE_24x24:
+		num_tiles = 3;
+		break;
+	case TILE_32x32:
+		num_tiles = 4;
+		break;
+	default:
+		num_tiles = 0;
+		break;
+	}
+
+	if (!num_tiles)
+	{
+		return;
+	}
+
+	for (int new_y = gy; new_y < (gy + num_tiles); ++new_y)
+	{
+		if (new_y > grid_h)
+		{
+			continue;
+		}
+
+		for (int new_x = gx; new_x < (gx + num_tiles); ++new_x)
+		{
+			if (new_x > grid_w)
+			{
+				continue;
+			}
+
+			if ((gx == new_x) && (gy == new_y))
+			{
+				grid[(new_y * grid_w) + new_x] = obj_size;
+			}
+			else
+			{
+				grid[(new_y * grid_w) + new_x] = TILE_USED;
+			}
+		}
+	}
+
+}
+
 //------------------------------------------------------------------------------
 bool ImageDocument::CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y)
 {
@@ -1237,36 +1345,88 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	// The Scan Area is now defined with the min/max
 	int tile_w = ((pSurface->w + 7) / 8);
 	int tile_h = ((pSurface->h + 7) / 8);
-	std::vector<bool> tile_map(tile_w * tile_h);
+	std::vector<int> tile_map(tile_w * tile_h);
 
 	for (int y = miny; y <= maxy; y+=8)
 	{
 		for (int x = minx; x <= maxx; x+=8)
 		{
-			tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y);
+			tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y) ? TILE_8x8 : TILE_EMPTY;
 		}
 	}
 
 	int offset_x = minx & 0x7;
 	int offset_y = miny & 0x7;
 
+	for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
+	{
+		for (int y = 0; y < tile_h; ++y)
+		{
+			for (int x = 0; x < tile_w; ++x)
+			{
+				if (CheckGrid(x, y, tile_map, tile_w, tile_h, obj_size))
+				{
+					SetGrid(x, y, tile_map, tile_w, tile_h, obj_size);
+				}
+			}
+		}
+	}
+
 	for (int ty = 0; ty < tile_h; ++ty)
 	{
 		for (int tx = 0; tx < tile_w; ++tx)
 		{
-			if (tile_map[(ty * tile_w) + tx])
+			int x = (tx * 8) + offset_x;
+			int y = (ty * 8) + offset_y;
+
+			switch (tile_map[(ty * tile_w) + tx])
 			{
-				int x = (tx * 8) + offset_x;
-				int y = (ty * 8) + offset_y;
-
-				ImGui::GetWindowDrawList()->AddRect(
-					ImVec2((((float)x)*m_zoom)+winPos.x,(((float)y) * m_zoom)+winPos.y),
-					ImVec2((((float)x+7)*m_zoom)+winPos.x,(((float)y+7) * m_zoom)+winPos.y),
-					0x8000FF00,  // Green
-					0.0f,
-					ImDrawCornerFlags_None,
-					((float)m_zoom));
-
+			case TILE_8x8:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 7) * m_zoom) + winPos.x, (((float)y + 7) * m_zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			case TILE_16x16:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 15) * m_zoom) + winPos.x, (((float)y + 15) * m_zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			case TILE_24x24:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 23) * m_zoom) + winPos.x, (((float)y + 23) * m_zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			case TILE_32x32:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 31) * m_zoom) + winPos.x, (((float)y + 31) * m_zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			default:
+				break;
 			}
 		}
 	}

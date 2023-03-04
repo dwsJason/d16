@@ -90,6 +90,9 @@ private:
 
 	bool CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y);
 
+	bool CheckGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size);
+	void SetGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size);
+
 	void SaveC1(std::string filenamepath);
 	void SaveC2(std::string filenamepath);
 	void SavePNG(std::string filenamepath);
@@ -163,6 +166,19 @@ private:
 
 static int s_uniqueId;
 
+};
+
+enum 
+{
+	TILE_EMPTY,
+	TILE_USED,
+
+	TILE_8x8,
+	TILE_16x16,
+	TILE_24x24,
+	TILE_32x32,
+
+	TILE_SIZES_COUNT
 };
 
 #endif // _IMAGE_DOCUMENT_
