@@ -1417,6 +1417,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	int offset_y = (miny-scan_offset_y) & 0x7;
 	int obj_count = 0;
 
+	// Mark the OBJS
 	for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
 	{
 		for (int y = 0; y < tile_h; ++y)
@@ -1432,6 +1433,18 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		}
 	}
 
+	// Run a pass, called left/right slippery analysis, we look for islands of
+	// OBJs, that can potentially be moved around (left <-> right)
+	//
+	// sliding the objs a little left, or a little right in an island, can
+	// allow for the pruning of more OBJs, which means less RAM, quicker draw
+	// etc.
+
+
+
+
+
+	// Render the Marked OBJS
 	for (int ty = 0; ty < tile_h; ++ty)
 	{
 		for (int tx = 0; tx < tile_w; ++tx)
