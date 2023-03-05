@@ -1441,9 +1441,6 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	// etc.
 
 
-
-
-
 	// Render the Marked OBJS
 	for (int ty = 0; ty < tile_h; ++ty)
 	{
