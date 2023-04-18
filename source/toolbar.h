@@ -19,6 +19,8 @@ enum ToolBarMode
 	eMirrorHorizontal,
 	eMirrorVertical,
 
+	ePlasmaFilter,
+
 	eJrOBJAnalyze,
 
 	eToolBarMode_COUNT

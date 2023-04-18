@@ -793,6 +793,10 @@ void ImageDocument::Render()
 				MirrorVertical();
 				Toolbar::GToolbar->SetPreviousMode();
 				break;
+			case ePlasmaFilter:
+				PlasmaFilter();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
 
 			default:
 				// nothing, probably pan or something
@@ -3616,6 +3620,72 @@ void ImageDocument::MirrorHorizontal()
 				int SourceIndex = (SourceY * SourceWidth) + SourceX;
 
 				pDestPixels[ DestIndex ] = pSourcePixels[ SourceIndex ];
+			}
+		}
+
+		delete[] pSourcePixels;
+		pSourcePixels = nullptr;
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, DestWidth, DestHeight);
+
+		pImages.push_back(pSurface);
+
+		delete[] pDestPixels;
+		pDestPixels = nullptr;
+	}
+
+	SetDocumentSurface( pImages );
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::PlasmaFilter()
+{
+	// Results
+	std::vector<SDL_Surface*> pImages;
+
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		Uint32* pSourcePixels = SDL_SurfaceToUint32Array(m_pSurfaces[idx]);
+		Uint32 *pDestPixels = new Uint32[m_width * m_height * 3 * 3];
+
+		int SourceWidth = m_width;
+		int SourceHeight = m_height;
+		int DestWidth  = m_width * 3;
+		int DestHeight = m_height * 3;
+
+		// Each Source pixel, becomes 9 dest pixels
+		for (int SourceY = 0; SourceY < SourceHeight; ++SourceY)
+		{
+			for (int SourceX = 0; SourceX < SourceWidth; ++SourceX)
+			{
+				int DestX = SourceX*3;
+				int DestY = SourceY*3;
+				int DestIndex   = (DestY * DestWidth) + DestX;
+				int SourceIndex = (SourceY * SourceWidth) + SourceX;
+
+				Uint32 color = pSourcePixels[ SourceIndex ];
+				//Uint32 halfColor = color >>= 1;
+				//halfColor &= 0x7F7F7F7F;
+				//halfColor |= 0xFF000000;
+				//Uint32 midColor = halfColor >>= 1;
+				//midColor &= 0x003F3F3F;
+				//midColor += halfColor;
+				//Uint32 lowColor = 0;
+				//midColor = 0;
+				Uint32 midColor = color;
+				Uint32 lowColor = color >> 1;
+				lowColor &=0x7F7F7F7F;
+
+				pDestPixels[ DestIndex+0 ] = lowColor;
+				pDestPixels[ DestIndex+1 ] = lowColor;
+				pDestPixels[ DestIndex+2 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth+0 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth+1 ] = color;
+				pDestPixels[ DestIndex+DestWidth+2 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth*2+0 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth*2+1 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth*2+2 ] = lowColor;
 			}
 		}
 

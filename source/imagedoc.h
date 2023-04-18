@@ -81,6 +81,7 @@ private:
 	void RotateLeft();
 	void MirrorHorizontal();
 	void MirrorVertical();
+	void PlasmaFilter();
 
 	void RenderEyeDropper();
 	void RenderPanAndZoom(int iButtonIndex=0);
