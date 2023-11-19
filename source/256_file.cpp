@@ -98,10 +98,57 @@ void C256File::AddImages( const std::vector<unsigned char*>& pPixelMaps )
 
 //------------------------------------------------------------------------------
 //
+// If we're trying to save out a series of images, instead make a giant
+// vertical film-strip
+//
+void C256File::CombinePixelMaps()
+{
+	int numFrames = (int)m_pPixelMaps.size();
+
+	if (numFrames > 1)
+	{
+		int numPixelsPerFrame = m_widthPixels * m_heightPixels;
+		int numPixelsCombined = numPixelsPerFrame * numFrames;
+
+		unsigned char* pPixels = new unsigned char[ numPixelsCombined ];
+
+		// Concatenate the frames
+
+		for (int frameIndex = 0; frameIndex < numFrames; ++frameIndex)
+		{
+			unsigned char *pDest = pPixels + (numPixelsPerFrame * frameIndex);
+			memcpy(pDest, m_pPixelMaps[ frameIndex ], numPixelsPerFrame);
+		}
+
+		// Free Up the original memory
+
+		for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
+		{
+			delete[] m_pPixelMaps[idx];
+			m_pPixelMaps[ idx ] = nullptr;
+		}
+
+		// empty the vector
+		m_pPixelMaps.clear();
+
+		// insert the new frame
+		m_pPixelMaps.push_back( pPixels );
+
+		// adjust the size of the image
+		m_heightPixels *= numFrames;
+
+	}
+}
+
+//------------------------------------------------------------------------------
+//
 // Save to File
 //
 void C256File::SaveToFile(const char* pFilenamePath)
 {
+	// Handle Animation, by saving out a vertical film-strip
+	CombinePixelMaps();
+
 	// Actually, going to serialize to memory, then will save that to file
 	std::vector<unsigned char> bytes;
 

@@ -156,6 +156,9 @@ private:
 	void UnpackClut(C256File_CLUT* pCLUT);
 	void UnpackPixel(C256File_PIXL* pPIXL);
 
+	void CombinePixelMaps();
+
+
 //	int EncodeFrame(unsigned char* pCanvas, unsigned char* pFrame, unsigned char* pWorkBuffer, size_t bufferSize );
 
 	int m_widthPixels;		// Width of image in pixels
