@@ -8,12 +8,13 @@
 
 
 //------------------------------------------------------------------------------
-// Load in a FanFile constructor
+// Load in a FlcFile constructor
 //
 FlcFile::FlcFile(const char *pFilePath)
 	: m_widthPixels(0)
 	, m_heightPixels(0)
 	, m_numColors( 0 )
+	, m_speed(50)   // 50ms or 20FPS
 {
 
 //	m_pal.iNumColors = 0;
@@ -99,6 +100,31 @@ void FlcFile::LoadFromFile(const char* pFilePath)
 
 void FlcFile::SaveToFile(const char* pFilenamePath)
 {
+	FILE* f = std::fopen(pFilenamePath, "wb");
+
+	if (f)
+	{
+		flic::StdioFileInterface file(f);
+		flic::Encoder encoder(&file);
+		flic::Header header;
+		header.frames = GetFrameCount();
+		header.width = GetWidth();
+		header.height = GetHeight();
+		header.speed = m_speed;
+		encoder.writeHeader(header);
+
+		for (int frame_no = 0; frame_no < GetFrameCount(); ++frame_no)
+		{
+			frame.pixels = (uint8_t *)m_pPixelMaps[ frame_no ];
+			frame.rowstride = m_widthPixels;
+			encoder.writeFrame(frame);
+		}
+
+		// Render first frame and call writeRingFrame()
+		frame.pixels = (uint8_t*)m_pPixelMaps[ 0 ];
+		encoder.writeRingFrame(frame);
+	}
+
 #if 0
 	void render_frame(const flic::Header& header, flic::Frame& frame,
                   const int frameNumber)
