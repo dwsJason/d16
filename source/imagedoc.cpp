@@ -723,7 +723,42 @@ void ImageDocument::Render()
 					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 
+#if 0
+				if (ImGui::MenuItem("Save as 256 (Foenix Tilemap)(8x8)"))
+				{
+					std::string defaultFilename = m_filename;
+					std::string dialogKey = "Save256Key" + m_uniqId;
 
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as 256", ".256\0\0",
+														   ".",
+															defaultFilename);
+
+					ImGui::SetWindowFocus(dialogKey.c_str());
+				}
+#endif
+#if 0
+				if (ImGui::MenuItem("Save as 256 (Foenix Tilemap)(16x16)"))
+				{
+					std::string defaultFilename = m_filename;
+					std::string dialogKey = "Save256TileMap16x16Key" + m_uniqId;
+
+					if (defaultFilename.size() > 4)
+					{
+						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+					}
+
+					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as 256 TileMap", ".256\0\0",
+														   ".",
+															defaultFilename);
+
+					ImGui::SetWindowFocus(dialogKey.c_str());
+				}
+#endif
 				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
 				{
 					std::string defaultFilename = m_filename;
@@ -920,6 +955,17 @@ void ImageDocument::Render()
 
 		ImGuiFileDialog::Instance()->CloseDialog("Save256Key" + m_uniqId);
 	}
+
+	if (ImGuiFileDialog::Instance()->FileDialog("Save256TileMap16x16Key" + m_uniqId))
+	{
+		if (ImGuiFileDialog::Instance()->IsOk == true)
+		{
+			Save256( ImGuiFileDialog::Instance()->GetFilepathName());
+		}
+
+		ImGuiFileDialog::Instance()->CloseDialog("Save256TileMap16x16Key" + m_uniqId);
+	}
+
 
 	if (ImGuiFileDialog::Instance()->FileDialog("SaveFANKey" + m_uniqId))
 	{
