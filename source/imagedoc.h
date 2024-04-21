@@ -49,6 +49,24 @@ enum ScaleFilter
 };
 //-------------------------------
 
+class SpriteObjectDef
+{
+public:
+	int m_size;
+	int m_x;
+	int m_y;
+};
+
+
+class SpriteObjectDocument
+{
+public:
+	std::vector<SpriteObjectDef> m_objs;
+};
+
+//-------------------------------
+
+
 class ImageDocument
 {
 public:
@@ -122,6 +140,7 @@ private:
 	// Turns out we now support Animation, weird
 	std::vector<GLuint> m_images; // GL Images
 	std::vector<SDL_Surface*> m_pSurfaces;
+	std::vector<SpriteObjectDocument*> m_spriteDocuments;
 
 	//
 	// For editing, and playing having a present time, that is a real time
@@ -181,6 +200,7 @@ enum
 
 	TILE_SIZES_COUNT
 };
+
 
 #endif // _IMAGE_DOCUMENT_
 

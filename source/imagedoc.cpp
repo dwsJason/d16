@@ -43,6 +43,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, std::ve
 	: ImageDocument(filename, pathname, Images[0])
 {
 	m_iDelayTimes.push_back(((long long)m_pSurfaces[0]->userdata)&0xFFFF);
+	m_spriteDocuments.push_back(nullptr);
 
 	// Copy the the remainng Images / and surfaces into the ImageDocument
 	for (int idx = 1; idx < Images.size(); ++idx)
@@ -50,6 +51,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, std::ve
 		m_pSurfaces.push_back(Images[idx]);
 		m_images.push_back(SDL_GL_LoadTexture(m_pSurfaces[idx], m_image_uv));
 		m_iDelayTimes.push_back(((long long)m_pSurfaces[idx]->userdata)&0xFFFF);
+		m_spriteDocuments.push_back(nullptr);	// it's easier for me, if the arrays are long enough to access
 	}
 
 	m_numSourceColors = CountUniqueColors();
@@ -87,6 +89,8 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 
 	m_images.push_back(SDL_GL_LoadTexture(pImage, m_image_uv));
 	m_pSurfaces.push_back(pImage);
+	m_spriteDocuments.push_back(nullptr);
+
 
 	m_width  = m_pSurfaces[0]->w;
 	m_height = m_pSurfaces[0]->h;
@@ -1444,7 +1448,7 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	// allow for the pruning of more OBJs, which means less RAM, quicker draw
 	// etc.
 
-
+#if 0 // old shit
 	// Render the Marked OBJS
 	for (int ty = 0; ty < tile_h; ++ty)
 	{
@@ -1504,6 +1508,68 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 			}
 		}
 	}
+#endif
+
+	// Add the marked OBJS into a list
+	for (int ty = 0; ty < tile_h; ++ty)
+	{
+		for (int tx = 0; tx < tile_w; ++tx)
+		{
+			int x = (tx * 8) + offset_x;
+			int y = (ty * 8) + offset_y;
+
+			switch (tile_map[(ty * tile_w) + tx])
+			{
+			case TILE_8x8:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 7) * m_zoom) + winPos.x, (((float)y + 7) * m_zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			case TILE_16x16:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 15) * m_zoom) + winPos.x, (((float)y + 15) * m_zoom) + winPos.y),
+						0x800000FF,  // Red
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			case TILE_24x24:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 23) * m_zoom) + winPos.x, (((float)y + 23) * m_zoom) + winPos.y),
+						0x80FF0000,  // Blue
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			case TILE_32x32:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
+						ImVec2((((float)x + 31) * m_zoom) + winPos.x, (((float)y + 31) * m_zoom) + winPos.y),
+						0x8000FFFF,  // Yello
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)m_zoom));
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
 
 
 	#if 0
