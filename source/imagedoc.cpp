@@ -323,6 +323,9 @@ void ImageDocument::Render()
 		}
 	}
 
+	// OBJ Information Stuff
+	ImGui::SameLine(); ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "4/32 3/24 0/16 2/8");
+
 
 	// Second Line of Toolbar
 	//--------------------------------------------------------------------------
@@ -1541,75 +1544,6 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		}
 	}
 
-	// Run a pass, called left/right slippery analysis, we look for islands of
-	// OBJs, that can potentially be moved around (left <-> right)
-	//
-	// sliding the objs a little left, or a little right in an island, can
-	// allow for the pruning of more OBJs, which means less RAM, quicker draw
-	// etc.
-
-#if 0 // old shit
-	// Render the Marked OBJS
-	for (int ty = 0; ty < tile_h; ++ty)
-	{
-		for (int tx = 0; tx < tile_w; ++tx)
-		{
-			int x = (tx * 8) + offset_x;
-			int y = (ty * 8) + offset_y;
-
-			switch (tile_map[(ty * tile_w) + tx])
-			{
-			case TILE_8x8:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 7) * m_zoom) + winPos.x, (((float)y + 7) * m_zoom) + winPos.y),
-						0x8000FF00,  // Green
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
-			case TILE_16x16:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 15) * m_zoom) + winPos.x, (((float)y + 15) * m_zoom) + winPos.y),
-						0x800000FF,  // Red
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
-			case TILE_24x24:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 23) * m_zoom) + winPos.x, (((float)y + 23) * m_zoom) + winPos.y),
-						0x80FF0000,  // Blue
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
-			case TILE_32x32:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 31) * m_zoom) + winPos.x, (((float)y + 31) * m_zoom) + winPos.y),
-						0x8000FFFF,  // Yello
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
-			default:
-				break;
-			}
-		}
-	}
-#endif
-
 	// Add the marked OBJS into a list
 	for (int ty = 0; ty < tile_h; ++ty)
 	{
@@ -1645,59 +1579,12 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		}
 	}
 
-
-	#if 0
-	ImGui::GetWindowDrawList()->AddLine(
-		ImVec2(winPos.x,winPos.y),
-		ImVec2(winPos.x+m_zoom*m_pSurfaces[m_iFrameNo]->w, winPos.y),
-		0xC0008000,
-		m_zoom
-		);
-
-	ImGui::GetWindowDrawList()->AddLine(
-		ImVec2(winPos.x,winPos.y),
-		ImVec2(winPos.x,winPos.y+m_zoom*m_pSurfaces[m_iFrameNo]->h),
-		0xC0008000,
-		m_zoom
-		);
-	#endif
-
-
-
-	#if 0
-	ImVec2 points[ 2 ];
-
-	for (int x = 0; x < 100; ++x)
-	{
-		ImVec2 pos = ImVec2(winPos.x + (x * step), winPos.y);
-		points[ 0 ] = pos;
-		if (x % 10)
-		{
-			if (x % 5)
-			{
-				pos.y += 15.0f;
-			}
-			else
-			{
-				pos.y += 22.0f;
-			}
-		}
-		else
-		{
-			pos.y += 30.0f;
-		}
-		points[ 1 ] = pos;
-
-		ImGui::GetWindowDrawList()->AddLine(
-			points[ 0 ],
-			points[ 1 ],
-			0xC0008000,
-			m_zoom
-			);
-
-	}
-	#endif
-
+	// Run a pass, called left/right slippery analysis, we look for islands of
+	// OBJs, that can potentially be moved around (left <-> right)
+	//
+	// sliding the objs a little left, or a little right in an island, can
+	// allow for the pruning of more OBJs, which means less RAM, quicker draw
+	// etc.
 
 }
 //------------------------------------------------------------------------------
