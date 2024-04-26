@@ -815,6 +815,9 @@ void ImageDocument::Render()
 		}
 
 //-------------------------------- Resize Image --------------------------------
+		// For the Sprite OBJ Render
+		const float ScrollX = ImGui::GetScrollX();
+		const float ScrollY = ImGui::GetScrollY();
 
 		if (m_bShowResizeUI)
 		{
@@ -842,10 +845,9 @@ void ImageDocument::Render()
 		}
 //------------------------------------------------------------------------------
 
-		const float ScrollX = ImGui::GetScrollX();
-		const float ScrollY = ImGui::GetScrollY();
 
 	ImGui::EndChild();
+
 
 	//if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
 	{
@@ -1270,12 +1272,19 @@ bool ImageDocument::CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int 
 
 	return false;
 }
+
 //------------------------------------------------------------------------------
-void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
+void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 {
+	SpriteObjectDocument* pSpriteDoc = m_spriteDocuments[ m_iFrameNo ];
+
+	if (nullptr == pSpriteDoc)
+	{
+		return;
+	}
+
 	// By placing what we draw into a "window", it will appear on top
 	// of our image
-
 	ImVec2 parentPosition = ImGui::GetWindowPos();
 	ImVec2 parentSize     = ImGui::GetWindowSize();
 
@@ -1304,21 +1313,60 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	winPos.x -= ScrollX;
 	winPos.y -= ScrollY;
 
-	winPos.x += (m_zoom * 0.5f);
-	winPos.y += (m_zoom * 0.5f);
+	int zoom = m_previousZoom;
+
+	winPos.x += (zoom * 0.5f);
+	winPos.y += (zoom * 0.5f);
 	winPos.x += 1.0f;   	  		/* Magic Numbers */
 	winPos.y += 2.0f;
+
+#if 1
+	// For the Bounding Rectangle
+	int minx = pSpriteDoc->m_minX;
+	int maxx = pSpriteDoc->m_maxX;
+	int miny = pSpriteDoc->m_minY;
+	int maxy = pSpriteDoc->m_maxY;
+
+	// Draw the Bounding Rectangle
+	// Bounding Rect just gets in the way
+	ImGui::GetWindowDrawList()->AddRect(
+		ImVec2(((float)minx*zoom)+winPos.x,((float)miny * zoom)+winPos.y),
+		ImVec2(((float)maxx*zoom)+winPos.x,((float)maxy * zoom)+winPos.y),
+		0x800000FF,  // Red
+		0.0f,
+		ImDrawCornerFlags_None,
+		((float)zoom));
+#endif
+
+
+	ImGui::EndChild();
+}
+
+//------------------------------------------------------------------------------
+void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
+{
+	SpriteObjectDocument* pSpriteDoc = m_spriteDocuments[ m_iFrameNo ];
+
+	if (nullptr != pSpriteDoc)
+	{
+		// Render the sprite doc
+		RenderSpriteDoc(ScrollX, ScrollY);
+
+	}
+
+	// Create the sprite doc
+	pSpriteDoc = m_spriteDocuments[ m_iFrameNo ] = new SpriteObjectDocument();
 
 	// Get the Frame Surface
 	SDL_Surface* pSurface = m_pSurfaces[m_iFrameNo];
 
 	Uint32 bg_pixel = SDL_GetPixel(pSurface, (int)0, (int)0);
 
-	// Draw a Square around the "sprite"
-	Uint32 minx = pSurface->w;
-	Uint32 maxx = 0;
-	Uint32 miny = pSurface->h;
-	Uint32 maxy = 0;
+	// Calculate the Bounds of the sprite
+	int minx = pSurface->w;
+	int maxx = 0;
+	int miny = pSurface->h;
+	int maxy = 0;
 
 	for (int y = 0; y < pSurface->h; ++y)
 	{
@@ -1337,20 +1385,12 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 		}
 	}
 
-	//minx*=m_zoom;
-	//maxx*=m_zoom;
-	//miny*=m_zoom;
-	//maxy*=m_zoom;
-#if 0
-	// Bounding Rect just gets in the way
-	ImGui::GetWindowDrawList()->AddRect(
-		ImVec2(((float)minx*m_zoom)+winPos.x,((float)miny * m_zoom)+winPos.y),
-		ImVec2(((float)maxx*m_zoom)+winPos.x,((float)maxy * m_zoom)+winPos.y),
-		0x800000FF,  // Red
-		0.0f,
-		ImDrawCornerFlags_None,
-		((float)m_zoom));
-#endif
+	// Save out the Bounding Rectangle
+	pSpriteDoc->m_minX = minx;
+	pSpriteDoc->m_maxX = maxx;
+	pSpriteDoc->m_minY = miny;
+	pSpriteDoc->m_maxY = maxy;
+
 
 	// The Scan Area is now defined with the min/max
 	int tile_w = ((pSurface->w + 7) / 8);
@@ -1404,8 +1444,6 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 			}
 		}
 	}
-
-
 
 //-----------------------------------------------------------------------------
 
@@ -1518,50 +1556,25 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 			int x = (tx * 8) + offset_x;
 			int y = (ty * 8) + offset_y;
 
-			switch (tile_map[(ty * tile_w) + tx])
+			int tile_size = tile_map[(ty * tile_w) + tx];
+
+			switch (tile_size)
 			{
 			case TILE_8x8:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 7) * m_zoom) + winPos.x, (((float)y + 7) * m_zoom) + winPos.y),
-						0x8000FF00,  // Green
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
 			case TILE_16x16:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 15) * m_zoom) + winPos.x, (((float)y + 15) * m_zoom) + winPos.y),
-						0x800000FF,  // Red
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
 			case TILE_24x24:
-				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 23) * m_zoom) + winPos.x, (((float)y + 23) * m_zoom) + winPos.y),
-						0x80FF0000,  // Blue
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
-				}
-				break;
 			case TILE_32x32:
 				{
-					ImGui::GetWindowDrawList()->AddRect(
-						ImVec2((((float)x) * m_zoom) + winPos.x, (((float)y) * m_zoom) + winPos.y),
-						ImVec2((((float)x + 31) * m_zoom) + winPos.x, (((float)y + 31) * m_zoom) + winPos.y),
-						0x8000FFFF,  // Yello
-						0.0f,
-						ImDrawCornerFlags_None,
-						((float)m_zoom));
+					// Create the sprite obj, for the list
+					SpriteObjectDef sprite_obj;
+
+					sprite_obj.m_size = tile_size;
+					sprite_obj.m_x = x;
+					sprite_obj.m_y = y;
+
+					// Add the sprite obj to the list, so we can render it later
+					pSpriteDoc->m_objs.push_back(sprite_obj);
+
 				}
 				break;
 			default:
@@ -1569,7 +1582,6 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 			}
 		}
 	}
-
 
 
 	#if 0
@@ -1624,7 +1636,6 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 	}
 	#endif
 
-	ImGui::EndChild();
 
 }
 //------------------------------------------------------------------------------

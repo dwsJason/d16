@@ -61,6 +61,10 @@ public:
 class SpriteObjectDocument
 {
 public:
+	int m_minX;
+	int m_maxX;
+	int m_minY;
+	int m_maxY;
 	std::vector<SpriteObjectDef> m_objs;
 };
 
@@ -105,6 +109,8 @@ private:
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
 	void RenderTimeLine();
+
+	void RenderSpriteDoc(const float ScrollX, const float ScrollY);
 	void RenderOBJShapes(const float ScrollX, const float ScrollY);
 
 	bool CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y);
