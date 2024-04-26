@@ -1320,7 +1320,7 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 	winPos.x += 1.0f;   	  		/* Magic Numbers */
 	winPos.y += 2.0f;
 
-#if 1
+#if 0
 	// For the Bounding Rectangle
 	int minx = pSpriteDoc->m_minX;
 	int maxx = pSpriteDoc->m_maxX;
@@ -1338,6 +1338,68 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 		((float)zoom));
 #endif
 
+#if 1
+	// Render the Marked OBJS
+
+	for (int obj_index = 0; obj_index < pSpriteDoc->m_objs.size(); ++obj_index)
+	{
+		const SpriteObjectDef& spr_obj = pSpriteDoc->m_objs[ obj_index ];
+
+		int x = spr_obj.m_x;
+		int y = spr_obj.m_y;
+
+		switch (spr_obj.m_size)
+		{
+			case TILE_8x8:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 7) * zoom) + winPos.x, (((float)y + 7) * zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)zoom));
+				}
+				break;
+			case TILE_16x16:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 15) * zoom) + winPos.x, (((float)y + 15) * zoom) + winPos.y),
+						0x800000FF,  // Red
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)zoom));
+				}
+				break;
+			case TILE_24x24:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 23) * zoom) + winPos.x, (((float)y + 23) * zoom) + winPos.y),
+						0x80FF0000,  // Blue
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)zoom));
+				}
+				break;
+			case TILE_32x32:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 31) * zoom) + winPos.x, (((float)y + 31) * zoom) + winPos.y),
+						0x8000FFFF,  // Yello
+						0.0f,
+						ImDrawCornerFlags_None,
+						((float)zoom));
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+#endif
 
 	ImGui::EndChild();
 }
