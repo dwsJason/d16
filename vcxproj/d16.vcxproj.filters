@@ -68,25 +68,25 @@
     <ClCompile Include="..\source\toolbar.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\dgif_lib.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\dgif_lib.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\egif_lib.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\egif_lib.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\getarg.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\getarg.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\gif_err.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\gif_err.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\gif_hash.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\gif_hash.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\gifalloc.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\gifalloc.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\giflib-5.2.1\openbsd-reallocarray.c">
+    <ClCompile Include="..\libs\giflib-5.2.2\openbsd-reallocarray.c">
       <Filter>libs\giflib</Filter>
     </ClCompile>
     <ClCompile Include="..\libs\lz4-dev\lib\lz4.c">
@@ -325,16 +325,16 @@
     <ClInclude Include="resource.h">
       <Filter>resources</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\giflib-5.2.1\getarg.h">
+    <ClInclude Include="..\libs\giflib-5.2.2\getarg.h">
       <Filter>libs\giflib</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\giflib-5.2.1\gif_hash.h">
+    <ClInclude Include="..\libs\giflib-5.2.2\gif_hash.h">
       <Filter>libs\giflib</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\giflib-5.2.1\gif_lib.h">
+    <ClInclude Include="..\libs\giflib-5.2.2\gif_lib.h">
       <Filter>libs\giflib</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\giflib-5.2.1\gif_lib_private.h">
+    <ClInclude Include="..\libs\giflib-5.2.2\gif_lib_private.h">
       <Filter>libs\giflib</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\lz4-dev\lib\lz4.h">
