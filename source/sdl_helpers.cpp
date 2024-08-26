@@ -92,6 +92,59 @@ SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord)
 }
 
 //------------------------------------------------------------------------------
+
+static float DeltaValueFromRGB(GifColorType color, GifByteType r, GifByteType g, GifByteType b)
+{
+	float fR = r/256.0f;
+	float fG = g/256.0f;
+	float fB = b/256.0f;
+
+	float tR = color.Red/256.0f;
+	float tG = color.Green/256.0f;
+	float tB = color.Blue/256.0f;
+
+	float deltaR = tR-fR;
+	float deltaG = tG-fG;
+	float deltaB = tB-fB;
+
+	deltaR *= deltaR;
+	deltaG *= deltaG;
+	deltaB *= deltaB;
+
+	// SMPTE C
+	deltaR *= 0.63f;
+	deltaG *= 0.31f;
+	deltaB *= 0.155f;
+
+	return deltaR+deltaG+deltaB;
+}
+
+static GifByteType ClosestMatch(SDL_Palette* pPalette, GifColorType color)
+{
+	// Match the closest color
+	float delta = DeltaValueFromRGB(color, pPalette->colors[0].r
+										 , pPalette->colors[0].g
+									     , pPalette->colors[0].b );
+
+	int pixel = 0;
+
+	for (int index = 1; index < pPalette->ncolors; ++index)
+	{
+		float testDelta = DeltaValueFromRGB(color, pPalette->colors[index].r
+											 , pPalette->colors[index].g
+											 , pPalette->colors[index].b );
+
+		if (testDelta < delta)
+		{
+			pixel = index;
+			delta = testDelta;
+		}
+	}
+
+	return (GifByteType)pixel;
+}
+
+//------------------------------------------------------------------------------
 //
 // !!$$ Not Thread SAFE
 // !!$$ Must be called starting with frameNo 0, then sequentially
@@ -100,6 +153,7 @@ SDL_Surface* SDL_GifGetSurface(GifFileType* pGif, int frameNo)
 {
 // I know this is a bad, bad, bad idea
 static unsigned char* pPreviousCanvas = nullptr;
+static SDL_Palette* pPreviousPalette = nullptr;
 
 	SavedImage *pGifImage = &pGif->SavedImages[ frameNo ];
 
@@ -136,10 +190,20 @@ static unsigned char* pPreviousCanvas = nullptr;
 		// First Frame, don't start with Garbage
 		memset(pRawPixels, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
 		memset(pPreviousCanvas, pGif->SBackGroundColor, pGif->SWidth * pGif->SHeight);
+		pPreviousPalette = nullptr; // in this case, someone else owns this memory
 	}
 	else
 	{
 		memcpy(pRawPixels, pPreviousCanvas, pGif->SWidth * pGif->SHeight);
+	}
+
+	// Assign Local Color Map
+	ColorMapObject* pColorMap = pGifImage->ImageDesc.ColorMap;
+
+	if (!pColorMap)
+	{
+		// No Local Color Map, Assign Global Color Map
+		pColorMap = pGif->SColorMap;
 	}
 
 	// Copy the Rect from here, onto the canvas
@@ -155,6 +219,15 @@ static unsigned char* pPreviousCanvas = nullptr;
 				int dstIndex = ((srcY + pGifImage->ImageDesc.Top) * pGif->SWidth) +
 								 srcX + pGifImage->ImageDesc.Left;
 
+				if (pColorMap && pPreviousPalette)
+				{
+					// The true color
+					GifColorType rgb = pColorMap->Colors[ pixel ];
+
+					pixel = ClosestMatch(pPreviousPalette, rgb);
+
+				}
+
 				pRawPixels[dstIndex] = pixel;
 			}
 		}
@@ -165,34 +238,35 @@ static unsigned char* pPreviousCanvas = nullptr;
 		8, pGif->SWidth, SDL_PIXELFORMAT_INDEX8);
 
 
-	// Assign Local Color Map
-	ColorMapObject* pColorMap = pGifImage->ImageDesc.ColorMap;
-
-	if (!pColorMap)
-	{
-		// No Local Color Map, Assign Global Color Map
-		pColorMap = pGif->SColorMap;
-	}
 
 	if (pColorMap)
 	{
-		// We need to set some colors, if we have colors
-		SDL_Palette *pPalette = SDL_AllocPalette(pColorMap->ColorCount);
-
-		// Gif Colors to SDL Colors
-		for (int idx = 0; idx < pColorMap->ColorCount; ++idx)
+		if (pPreviousPalette)
 		{
-			GifColorType inColor = pColorMap->Colors[ idx ];
-			SDL_Color outColor;
-			outColor.r = inColor.Red;
-			outColor.g = inColor.Green;
-			outColor.b = inColor.Blue;
-			outColor.a = 255;
-
-			SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+			// clone this instead
+			SDL_SetSurfacePalette(pTargetSurface, pPreviousPalette);
 		}
+		else
+		{
+			// We need to set some colors, if we have colors
+			SDL_Palette *pPalette = SDL_AllocPalette(pColorMap->ColorCount);
 
-		SDL_SetSurfacePalette(pTargetSurface, pPalette);
+			// Gif Colors to SDL Colors
+			for (int idx = 0; idx < pColorMap->ColorCount; ++idx)
+			{
+				GifColorType inColor = pColorMap->Colors[ idx ];
+				SDL_Color outColor;
+				outColor.r = inColor.Red;
+				outColor.g = inColor.Green;
+				outColor.b = inColor.Blue;
+				outColor.a = 255;
+
+				SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+			}
+
+			pPreviousPalette = pPalette;
+			SDL_SetSurfacePalette(pTargetSurface, pPalette);
+		}
 	}
 
 	// It turns out there's a userdata field in the surface
@@ -223,6 +297,8 @@ static unsigned char* pPreviousCanvas = nullptr;
 				memset(pPreviousCanvas + canvasIndex, pGif->SBackGroundColor, width);
 				canvasIndex += pGif->SWidth;
 			}
+
+			pPreviousPalette = nullptr;
 
 		}
 		break;
