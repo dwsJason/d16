@@ -42,6 +42,7 @@ private:
 	int m_widthPixels;		// Width of image in pixels
 	int m_heightPixels;		// Height of image in pixels
 	int m_numColors;		// number of colors in the initial CLUT
+	int m_speed;            // speed in ms
 
 	flic::Frame frame;      // holds palette of the last imported frame
 
