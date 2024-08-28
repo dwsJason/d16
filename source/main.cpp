@@ -469,7 +469,6 @@ void MainMenuBarUI()
 						NFD::PathSet::GetPath(outPaths, index, loadPath);
 
 						std::string pathName = loadPath.get();
-
 						size_t offset = pathName.find_last_of("\\/");
 						std::string fileName = &pathName.c_str()[offset+1];
 
@@ -588,7 +587,59 @@ void MainMenuBarUI()
 
 			if (ImGui::MenuItem("Open Palette"))
 			{
-				//ImGuiFileDialog::Instance()->OpenDialog("OpenPaletteDlgKey", "Open Palette", "\0", ".", "", 0);
+				// Open File
+				NFD::UniquePathSet outPaths;
+
+				nfdu8filteritem_t filterItem[1] = { {"Palettes", "pal"} };
+
+
+				nfdresult_t result = NFD::OpenDialogMultiple(outPaths,
+															 filterItem,  // filterList
+															 1,           // filterCount
+															 nullptr );   // defaultPath $$JGA FIXME
+
+				if (result == NFD_OKAY)
+				{
+					nfdpathsetsize_t NumPaths;
+					NFD::PathSet::Count(outPaths, NumPaths);
+					for (unsigned int index = 0; index < NumPaths; ++index)
+					{
+						NFD::UniquePathSetPathU8 loadPath;
+						NFD::PathSet::GetPath(outPaths, index, loadPath);
+
+						std::string pathName = loadPath.get();
+						size_t offset = pathName.find_last_of("\\/");
+						std::string filename = &pathName.c_str()[offset+1];
+
+						LOG("Open PAL: %s, %s\n", filename.c_str(), pathName.c_str());
+
+						// Eventually, support opening any type of image, and extracting
+						// the palette, for now, lets just open the file, if it has a
+						// .pal extension
+						std::string& fullpath = pathName;
+
+						std::string extension = ".pal";
+
+						if (fullpath.length() > extension.length())
+						{
+							size_t fullpath_offset = fullpath.length() - extension.length();
+
+							for (int idx = 0; idx < extension.length(); ++idx)
+							{
+								if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
+								{
+									LOG("FAILED %s\n", filename.c_str());
+								}
+							}
+
+							PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, fullpath));
+						}
+						else
+						{
+							LOG("FAILED %s\n", filename.c_str());
+						}
+					}
+				}
 			}
 
 			ImGui::Separator();
@@ -641,57 +692,4 @@ void MainMenuBarUI()
 
 		ImGui::EndMainMenuBar();
 	}
-
-	#if 0
-	// display open file dialog
-	if (ImGuiFileDialog::Instance()->FileDialog("OpenPaletteDlgKey")) 
-	{
-	  // action if OK
-	  if (ImGuiFileDialog::Instance()->IsOk == true)
-	  {
-		  //std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
-		  //std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-		  //std::string filter = ImGuiFileDialog::Instance()->GetCurrentFilter();
-		  // here convert from string because a string was passed as a userDatas, but it can be what you want
-		  //auto userDatas = std::string((const char*)ImGuiFileDialog::Instance()->GetUserDatas()); 
-		  std::map<std::string, std::string> selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
-
-		  // action
-		  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
-		  {
-			  LOG("Open PAL: %s, %s\n", it->first.c_str(), it->second.c_str());
-
-			  // Eventually, support opening any type of image, and extracting
-			  // the palette, for now, lets just open the file, if it has a
-			  // .pal extension
-			  std::string filename = it->first;
-			  std::string& fullpath = it->second;
-
-			  std::string extension = ".pal";
-
-			  if (fullpath.length() > extension.length())
-			  {
-				  size_t fullpath_offset = fullpath.length() - extension.length();
-
-				  for (int idx = 0; idx < extension.length(); ++idx)
-				  {
-					  if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
-					  {
-						  LOG("FAILED %s\n", filename.c_str());
-					  }
-				  }
-
-				  PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, fullpath));
-			  }
-			  else
-			  {
-				  LOG("FAILED %s\n", filename.c_str());
-			  }
-
-		  }
-	  }
-	  // close
-	  ImGuiFileDialog::Instance()->CloseDialog("OpenPaletteDlgKey");
-	}
-	#endif
 }
