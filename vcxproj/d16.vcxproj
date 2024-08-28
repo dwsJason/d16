@@ -123,7 +123,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\nativefiledialog-extended\src\include;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -193,7 +193,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\nativefiledialog-extended\src\include;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -233,7 +233,6 @@
     <ClCompile Include="..\libs\giflib-5.2.2\gif_err.c" />
     <ClCompile Include="..\libs\giflib-5.2.2\gif_hash.c" />
     <ClCompile Include="..\libs\giflib-5.2.2\openbsd-reallocarray.c" />
-    <ClCompile Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.cpp" />
     <ClCompile Include="..\libs\imgui\imgui.cpp" />
     <ClCompile Include="..\libs\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\libs\imgui\imgui_draw.cpp" />
@@ -270,6 +269,7 @@
     <ClCompile Include="..\libs\lzsa\src\shrink_inmem.c" />
     <ClCompile Include="..\libs\lzsa\src\shrink_streaming.c" />
     <ClCompile Include="..\libs\lzsa\src\stream.c" />
+    <ClCompile Include="..\libs\nativefiledialog-extended\src\nfd_win.cpp" />
     <ClCompile Include="..\source\256_file.cpp" />
     <ClCompile Include="..\source\anm_file.cpp" />
     <ClCompile Include="..\source\c2_file.cpp" />
@@ -300,8 +300,6 @@
     <ClInclude Include="..\libs\giflib-5.2.2\gif_hash.h" />
     <ClInclude Include="..\libs\giflib-5.2.2\gif_lib.h" />
     <ClInclude Include="..\libs\giflib-5.2.2\gif_lib_private.h" />
-    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.h" />
-    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialogConfig.h" />
     <ClInclude Include="..\libs\imgui\imconfig.h" />
     <ClInclude Include="..\libs\imgui\imgui.h" />
     <ClInclude Include="..\libs\imgui\imgui_internal.h" />
@@ -340,6 +338,8 @@
     <ClInclude Include="..\libs\lzsa\src\shrink_inmem.h" />
     <ClInclude Include="..\libs\lzsa\src\shrink_streaming.h" />
     <ClInclude Include="..\libs\lzsa\src\stream.h" />
+    <ClInclude Include="..\libs\nativefiledialog-extended\src\include\nfd.h" />
+    <ClInclude Include="..\libs\nativefiledialog-extended\src\include\nfd.hpp" />
     <ClInclude Include="..\libs\SDL2-2.0.10\include\begin_code.h" />
     <ClInclude Include="..\libs\SDL2-2.0.10\include\close_code.h" />
     <ClInclude Include="..\libs\SDL2-2.0.10\include\SDL.h" />

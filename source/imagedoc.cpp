@@ -8,7 +8,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 
-#include "ImGuiFileDialog.h"
+#include <nfd.hpp>  // needed for the native file dialog
 
 #include <stdio.h>
 #include <SDL.h>
@@ -611,19 +611,44 @@ void ImageDocument::Render()
 
 				if (ImGui::MenuItem("Export for Journey") )
 				{
-					std::string defaultFilename = m_filename;
-					std::string dialogKey = "SaveJourneyKey" + m_uniqId;
+					NFD::UniquePathU8 savePath;
 
-					if (defaultFilename.size() > 4)
+					const nfdu8char_t* defaultFileName = m_filename.c_str();
+
+					// prepare filters for the dialog
+					nfdu8filteritem_t filterItem[1] = { {"Executable", "pgx,pgz,kup"} };
+
+					nfdresult_t result = NFD::SaveDialog(savePath,
+														 filterItem, // filter
+														 1,          // filterCount
+														 nullptr,    // default path !!! FIXME
+														 defaultFileName);  // default filename
+
+					if (result == NFD_OKAY)
 					{
-						defaultFilename  = defaultFilename.substr(0, defaultFilename.size()-4);
+						GSDXFile gsdx( m_pTargetSurfaces[0] );
+
+						std::string basename = savePath.get();
+
+						std::string p1 = basename+"p1";
+						std::string p2 = basename+"p2";
+						std::string m1 = basename+"m1";
+						std::string m2 = basename+"m2";
+
+						gsdx.GenerateDeltaY( 1, p1.c_str() );
+						gsdx.GenerateDeltaY( 2, p2.c_str() );
+
+						gsdx.GenerateDeltaY( -1, m1.c_str() );
+						gsdx.GenerateDeltaY( -2, m2.c_str() );
 					}
-
-					ImGuiFileDialog::Instance()->OpenModal(dialogKey, "Save as Journey", "\0\0",
-														   ".",
-															defaultFilename);
-
-					ImGui::SetWindowFocus(dialogKey.c_str());
+					else if (result == NFD_CANCEL)
+					{
+						LOG("User pressed cancel.");
+					}
+					else
+					{
+						LOG("Error: %s", NFD::GetError());
+					}
 				}
 
 				ImGui::Separator();
@@ -631,6 +656,7 @@ void ImageDocument::Render()
 
 				if (ImGui::MenuItem("Save as GSLA") )
 				{
+					#if 0
 					std::string defaultFilename = m_filename;
 					std::string dialogKey = "SaveGSLAKey" + m_uniqId;
 
@@ -644,11 +670,13 @@ void ImageDocument::Render()
 															defaultFilename);
 
 					ImGui::SetWindowFocus(dialogKey.c_str());
+					#endif
 				}
 
 
 				if (ImGui::MenuItem("Save as $C1"))
 				{
+					#if 0
 					std::string defaultFilename = m_filename;
 					std::string dialogKey = "SaveC1Key" + m_uniqId;
 
@@ -663,12 +691,12 @@ void ImageDocument::Render()
 															defaultFilename);
 
 					ImGui::SetWindowFocus(dialogKey.c_str());
-
-
+					#endif
 				}
 
 				if (ImGui::MenuItem("Save as $C2"))
 				{
+					#if 0
 					std::string defaultFilename = m_filename;
 
 					std::string dialogKey = "SaveC2Key" + m_uniqId;
@@ -683,6 +711,7 @@ void ImageDocument::Render()
 															defaultFilename);
 
 					ImGui::SetWindowFocus(dialogKey.c_str());
+					#endif
 				}
 
 
@@ -691,6 +720,7 @@ void ImageDocument::Render()
 				//}
 				if (ImGui::MenuItem("Save as PNG"))
 				{
+					#if 0
 					std::string defaultFilename = m_filename;
 					std::string dialogKey = "SavePNGKey" + m_uniqId;
 
@@ -704,10 +734,12 @@ void ImageDocument::Render()
 															defaultFilename);
 
 					ImGui::SetWindowFocus(dialogKey.c_str());
+					#endif
 				}
 
 				if (ImGui::MenuItem("Save as 256 (Foenix Bitmap)"))
 				{
+					#if 0
 					std::string defaultFilename = m_filename;
 					std::string dialogKey = "Save256Key" + m_uniqId;
 
@@ -721,6 +753,7 @@ void ImageDocument::Render()
 															defaultFilename);
 
 					ImGui::SetWindowFocus(dialogKey.c_str());
+					#endif
 				}
 
 #if 0
@@ -759,6 +792,7 @@ void ImageDocument::Render()
 					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
 #endif
+#if 0
 				if (ImGui::MenuItem("Save as FAN(Foenix Anim - Bitmap)"))
 				{
 					std::string defaultFilename = m_filename;
@@ -794,7 +828,7 @@ void ImageDocument::Render()
 
 					ImGui::SetWindowFocus(dialogKey.c_str());
 				}
-
+#endif
 
 				ImGui::EndPopup();
 			}
@@ -881,7 +915,7 @@ void ImageDocument::Render()
 	ImGui::End();
 
 // Save File Dialog Stuff
-
+#if 0
 	if (ImGuiFileDialog::Instance()->FileDialog("SaveC1Key" + m_uniqId))
 	{
 		if (ImGuiFileDialog::Instance()->IsOk == true)
@@ -900,30 +934,6 @@ void ImageDocument::Render()
 		}
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveC2Key" + m_uniqId);
-	}
-
-	if (ImGuiFileDialog::Instance()->FileDialog("SaveJourneyKey" + m_uniqId))
-	{
-		if (ImGuiFileDialog::Instance()->IsOk == true)
-		{
-			//SaveGSLA( ImGuiFileDialog::Instance()->GetFilepathName() );
-			GSDXFile gsdx( m_pTargetSurfaces[0] );
-
-			std::string basename = ImGuiFileDialog::Instance()->GetFilepathName();
-
-			std::string p1 = basename+"p1";
-			std::string p2 = basename+"p2";
-			std::string m1 = basename+"m1";
-			std::string m2 = basename+"m2";
-
-			gsdx.GenerateDeltaY( 1, p1.c_str() );
-			gsdx.GenerateDeltaY( 2, p2.c_str() );
-
-			gsdx.GenerateDeltaY( -1, m1.c_str() );
-			gsdx.GenerateDeltaY( -2, m2.c_str() );
-		}
-
-		ImGuiFileDialog::Instance()->CloseDialog("SaveJourneyKey" + m_uniqId);
 	}
 
 	if (ImGuiFileDialog::Instance()->FileDialog("SaveGSLAKey" + m_uniqId))
@@ -986,6 +996,7 @@ void ImageDocument::Render()
 
 		ImGuiFileDialog::Instance()->CloseDialog("SaveFANTileKey" + m_uniqId);
 	}
+#endif
 
 }
 
@@ -1022,8 +1033,8 @@ void ImageDocument::RenderEyeDropper()
 		float px = cursorX/m_zoom + scrollX/m_zoom;
 		float py = cursorY/m_zoom + scrollY/m_zoom;
 
-		px = floor(px);
-		py = floor(py);
+		px = (float)floor(px);
+		py = (float)floor(py);
 
 		if ((px >= m_pSurfaces[m_iFrameNo]->w) || (py >= m_pSurfaces[m_iFrameNo]->h))
 		{

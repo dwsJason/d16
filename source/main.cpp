@@ -10,7 +10,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include "log.h"
-#include "ImGuiFileDialog.h"
+#include <nfd.hpp>  // needed for the native file dialog
 #include "imagedoc.h"
 #include "paldoc.h"
 #include "dirent.h"
@@ -71,31 +71,12 @@ bool bAppDone = false; // Set true to quit App
 
 //------------------------------------------------------------------------------
 
-static void AddFileFilters()
-{
-	// upper case list
-	char* extensions[] =
-	{
-		".PNG",".TIF",".TGA",".GIF",".FAN",".FLC",".FLI",".JPG",".JFIF",".LBM",
-		".BMP",".WEBP",".ANM",".PAL",".C1",".C2",".256",
-		"#C10000","#C20000",".GSLA"
-	};
-
-	for (int idx = 0; idx < (sizeof(extensions)/sizeof(char*)); ++idx )
-	{
-		ImGuiFileDialog::Instance()->SetFilterColor(extensions[ idx ], ImVec4(0,1,0,1));
-
-		// Add them all, as lowercase too
-		std::string lowercase = toLower( extensions[ idx ] );
-		ImGuiFileDialog::Instance()->SetFilterColor(lowercase.c_str(), ImVec4(0,1,0,1));
-	}
-}
-
-//------------------------------------------------------------------------------
-
 // Main code
 int main(int, char**)
 {
+    // initialize NFD
+    NFD::Guard nfdGuard;
+
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
     // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
@@ -210,9 +191,6 @@ int main(int, char**)
 	//--------------------------------------------------------------------------
 
 	LOG("Dream16 Compiled %s %s\n", __DATE__, __TIME__);
-
-	// Set File Type Filter Colors, because that won't look weird
-	AddFileFilters();
 
 	{
 		// Scan preset palette directory
@@ -469,12 +447,146 @@ void MainMenuBarUI()
 			if (ImGui::MenuItem("Open Image"))
 			{
 				// Open File
-				ImGuiFileDialog::Instance()->OpenDialog("OpenImageDlgKey", "Open Image", "\0", ".", "", 0);
+				NFD::UniquePathSet outPaths;
+
+				nfdu8filteritem_t filterItem[1] = { {"Images", "png,tif,tga,gif,flc,fli,jpg,jpeg,jfif,lbm,bmp,webp,anm,pal,c1,c2,256,#C10000,#C20000,gsla"} };
+
+
+				nfdresult_t result = NFD::OpenDialogMultiple(outPaths,
+															 filterItem,  // filterList
+															 1,           // filterCount
+															 nullptr );   // defaultPath $$JGA FIXME
+
+				if (result == NFD_OKAY)
+				{
+					// action
+					nfdpathsetsize_t NumPaths;
+					NFD::PathSet::Count(outPaths, NumPaths);
+					for (unsigned int index = 0; index < NumPaths; ++index)
+					{
+						NFD::UniquePathSetPathU8 loadPath;
+
+						NFD::PathSet::GetPath(outPaths, index, loadPath);
+
+						std::string pathName = loadPath.get();
+						std::string fileName = pathName;
+
+						SDL_Surface *image = nullptr;
+						if (endsWith(pathName, ".anm"))
+						{
+							// Deluxe Paint Animation File
+							// I'm only implementing the importing of these files, so that
+							// I can view clay-fighter pencil sketches, without dosbox
+							// Paintworks Animation
+							std::vector<SDL_Surface*> frames = SDL_ANM_Load(pathName.c_str());
+
+							LOG("ANM_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+
+						}
+						else if (endsWith(pathName, ".c1") || endsWith(pathName, "#c10000"))
+						{
+							image = SDL_C1_Load(pathName.c_str());
+						}
+						else if (endsWith(pathName, ".c2") || endsWith(pathName, "#c20000"))
+						{
+							// Paintworks Animation
+							std::vector<SDL_Surface*> frames = SDL_C2_Load(pathName.c_str());
+
+							LOG("C2_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+						}
+						else if (endsWith(pathName, ".gsla"))
+						{
+							//GS Lzb Animation File (DG Animation File)
+							std::vector<SDL_Surface*> frames = SDL_GSLA_Load(pathName.c_str());
+
+							LOG("GSLA_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+						}
+						else if (endsWith(pathName, ".fan"))
+						{
+							// Foenix Animation
+							std::vector<SDL_Surface*> frames = SDL_FAN_Load(pathName.c_str());
+
+							LOG("FAN_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+						}
+						else if (endsWith(pathName, ".256"))
+						{
+							// Foenix Bitmap Image
+							std::vector<SDL_Surface*> frames = SDL_256_Load(pathName.c_str());
+							LOG("256_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+
+
+						} else if (endsWith(pathName, ".gif"))
+						{
+							// Use GIF Library
+							std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());
+
+							LOG("GIF_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+							else
+								image=IMG_Load(pathName.c_str());
+						} else if (endsWith(pathName, ".fli") || (endsWith(pathName, ".flc")))
+						{
+							// Use FLC/FLI Library
+							std::vector<SDL_Surface*> frames = SDL_FLC_Load(pathName.c_str());
+
+							LOG("FLC_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+						}
+						else
+						{
+							image=IMG_Load(pathName.c_str());
+						}
+
+						if (image)
+						{
+							LOG("Loaded %s\n", pathName.c_str());
+
+							imageDocuments.push_back(new ImageDocument(fileName, pathName, image));
+						}
+						else
+						{
+							LOG("Failed %s\n", pathName.c_str());
+						}
+					}
+				}
 			}
 
 			if (ImGui::MenuItem("Open Palette"))
 			{
-				ImGuiFileDialog::Instance()->OpenDialog("OpenPaletteDlgKey", "Open Palette", "\0", ".", "", 0);
+				//ImGuiFileDialog::Instance()->OpenDialog("OpenPaletteDlgKey", "Open Palette", "\0", ".", "", 0);
 			}
 
 			ImGui::Separator();
@@ -528,143 +640,7 @@ void MainMenuBarUI()
 		ImGui::EndMainMenuBar();
 	}
 
-	// display open file dialog
-	if (ImGuiFileDialog::Instance()->FileDialog("OpenImageDlgKey")) 
-	{
-	  // action if OK
-	  if (ImGuiFileDialog::Instance()->IsOk == true)
-	  {
-		  //std::string filePathName = ImGuiFileDialog::Instance()->GetFilepathName();
-		  //std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-		  //std::string filter = ImGuiFileDialog::Instance()->GetCurrentFilter();
-		  // here convert from string because a string was passed as a userDatas, but it can be what you want
-		  //auto userDatas = std::string((const char*)ImGuiFileDialog::Instance()->GetUserDatas()); 
-		  //auto selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
-
-		  std::map<std::string, std::string> selection = ImGuiFileDialog::Instance()->GetSelection(); // multiselection
-
-		  // action
-		  for (std::map<std::string, std::string>::iterator it = selection.begin(); it != selection.end(); it++)
-		  {
-			  //LOG("%s - %s\n", it->first.c_str(), it->second.c_str());
-			  std::string pathName = it->second;
-
-			  SDL_Surface *image = nullptr;
-			  if (endsWith(pathName, ".anm"))
-			  {
-				  // Deluxe Paint Animation File
-				  // I'm only implementing the importing of these files, so that
-				  // I can view clay-fighter pencil sketches, without dosbox
-				  // Paintworks Animation
-				  std::vector<SDL_Surface*> frames = SDL_ANM_Load(pathName.c_str());
-
-				  LOG("ANM_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-
-			  }
-			  else if (endsWith(pathName, ".c1") || endsWith(pathName, "#c10000"))
-			  {
-				  image = SDL_C1_Load(pathName.c_str());
-			  }
-			  else if (endsWith(pathName, ".c2") || endsWith(pathName, "#c20000"))
-			  {
-				  // Paintworks Animation
-				  std::vector<SDL_Surface*> frames = SDL_C2_Load(pathName.c_str());
-
-				  LOG("C2_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-			  }
-			  else if (endsWith(pathName, ".gsla"))
-			  {
-				  //GS Lzb Animation File (DG Animation File)
-				  std::vector<SDL_Surface*> frames = SDL_GSLA_Load(pathName.c_str());
-
-				  LOG("GSLA_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-			  }
-			  else if (endsWith(pathName, ".fan"))
-			  {
-				  // Foenix Animation
-				  std::vector<SDL_Surface*> frames = SDL_FAN_Load(pathName.c_str());
-
-				  LOG("FAN_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-			  }
-			  else if (endsWith(pathName, ".256"))
-			  {
-				  // Foenix Bitmap Image
-				  std::vector<SDL_Surface*> frames = SDL_256_Load(pathName.c_str());
-				  LOG("256_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-
-
-			  } else if (endsWith(pathName, ".gif"))
-			  {
-				  // Use GIF Library
-				  std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());
-
-				  LOG("GIF_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-				  else
-					  image=IMG_Load(pathName.c_str());
-			  } else if (endsWith(pathName, ".fli") || (endsWith(pathName, ".flc")))
-			  {
-				  // Use FLC/FLI Library
-				  std::vector<SDL_Surface*> frames = SDL_FLC_Load(pathName.c_str());
-
-				  LOG("FLC_Load %d Frames\n", frames.size());
-				  if (frames.size())
-				  {
-					  LOG("Loaded %s\n", it->second.c_str());
-					  imageDocuments.push_back(new ImageDocument(it->first, it->second, frames));
-				  }
-			  }
-			  else
-			  {
-				  image=IMG_Load(pathName.c_str());
-			  }
-
-			  if (image)
-			  {
-				  LOG("Loaded %s\n", it->second.c_str());
-
-				  imageDocuments.push_back(new ImageDocument(it->first, it->second, image));
-			  }
-			  else
-			  {
-				  LOG("Failed %s\n", it->second.c_str());
-			  }
-		  }
-	  }
-	  // close
-	  ImGuiFileDialog::Instance()->CloseDialog("OpenImageDlgKey");
-	}
-
-
+	#if 0
 	// display open file dialog
 	if (ImGuiFileDialog::Instance()->FileDialog("OpenPaletteDlgKey")) 
 	{
@@ -715,4 +691,5 @@ void MainMenuBarUI()
 	  // close
 	  ImGuiFileDialog::Instance()->CloseDialog("OpenPaletteDlgKey");
 	}
+	#endif
 }
