@@ -1503,8 +1503,8 @@ void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
 				}
 			}
 
-			int offset_x = (minx-scan_offset_x) & 0x7;
-			int offset_y = (miny-scan_offset_y) & 0x7;
+			//int offset_x = (minx-scan_offset_x) & 0x7;
+			//int offset_y = (miny-scan_offset_y) & 0x7;
 			int obj_count = 0;
 
 			for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
@@ -3720,7 +3720,7 @@ void ImageDocument::PlasmaFilter()
 				//midColor += halfColor;
 				//Uint32 lowColor = 0;
 				//midColor = 0;
-				Uint32 midColor = color;
+				//Uint32 midColor = color;
 				Uint32 lowColor = color >> 1;
 				lowColor &=0x7F7F7F7F;
 

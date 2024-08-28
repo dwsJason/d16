@@ -126,7 +126,7 @@ static int lastHovered = -1;
 		SetButtonImage(buttonXY[idx][0] + (idx==GetCurrentMode() ? 1 : 0)
 					   ,buttonXY[idx][1]);
 
-		if (ImGui::ImageButton((ImTextureID)(m_GLImage),
+		if (ImGui::ImageButton((ImTextureID)((uint64_t)m_GLImage),
 							   buttonSize, m_uv0, m_uv1, 0,
 							   bg_color, tint_color))
 		{
@@ -203,7 +203,7 @@ static int lastHovered = -1;
 	SetButtonImage(col + (pressed ? 1 : 0), row);
 
 
-	bool result = ImGui::ImageButton((ImTextureID)(m_GLImage),
+	bool result = ImGui::ImageButton((ImTextureID)((uint64_t)m_GLImage),
 						   buttonSize, m_uv0, m_uv1, 0,
 						   bg_color, tint_color);
 
