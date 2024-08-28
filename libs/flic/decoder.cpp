@@ -75,7 +75,7 @@ bool Decoder::readFrame(Frame& frame)
       break;
   }
 
-  uint32_t frameStartPos = m_file->tell();
+  uint32_t frameStartPos = (uint32_t)m_file->tell();
   uint32_t frameSize = read32();
   uint16_t magic = read16();
   assert(magic == FLI_FRAME_MAGIC_NUMBER);
@@ -95,7 +95,7 @@ bool Decoder::readFrame(Frame& frame)
 
 void Decoder::readChunk(Frame& frame)
 {
-  uint32_t chunkStartPos = m_file->tell();
+  uint32_t chunkStartPos = (uint32_t)m_file->tell();
   uint32_t chunkSize = read32();
   uint16_t type = read16();
 
@@ -282,12 +282,12 @@ void Decoder::readDeltaChunk(Frame& frame)
           int color1 = m_file->read8();
           int color2 = m_file->read8();
 
-          *it = color1;
+          *it = (uint8_t)color1;
           ++it;
           ++x;
 
           if (x < m_width) {
-            *it = color2;
+            *it = (uint8_t)color2;
             ++it;
             ++x;
           }
@@ -298,12 +298,12 @@ void Decoder::readDeltaChunk(Frame& frame)
         int color2 = m_file->read8();
 
         while (count++ != 0 && x < m_width) {
-          *it = color1;
+          *it = (uint8_t)color1;
           ++it;
           ++x;
 
           if (x < m_width) {
-            *it = color2;
+            *it = (uint8_t)color2;
             ++it;
             ++x;
           }
@@ -321,7 +321,7 @@ uint16_t Decoder::read16()
   int b2 = m_file->read8();
 
   if (m_file->ok()) {
-    return ((b2 << 8) | b1); // Little endian
+    return (uint16_t)((b2 << 8) | b1); // Little endian
   }
   else
     return 0;

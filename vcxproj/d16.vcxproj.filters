@@ -29,9 +29,6 @@
     <ClCompile Include="..\source\icon.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.cpp">
-      <Filter>libs\ImGuiFileDialog</Filter>
-    </ClCompile>
     <ClCompile Include="..\libs\libimagequant-msvc\kmeans.c">
       <Filter>libs\libimagequant</Filter>
     </ClCompile>
@@ -191,6 +188,9 @@
     <ClCompile Include="..\source\flc_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\nativefiledialog-extended\src\nfd_win.cpp">
+      <Filter>libs\nativefiledialog-extended</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -264,12 +264,6 @@
     </ClInclude>
     <ClInclude Include="..\source\common\log.h">
       <Filter>source\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialog.h">
-      <Filter>libs\ImGuiFileDialog</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\ImGuiFileDialog\ImGuiFileDialog\ImGuiFileDialogConfig.h">
-      <Filter>libs\ImGuiFileDialog</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\libimagequant-msvc\blur.h">
       <Filter>libs\libimagequant</Filter>
@@ -700,6 +694,12 @@
     <ClInclude Include="..\source\flc_file.h">
       <Filter>source</Filter>
     </ClInclude>
+    <ClInclude Include="..\libs\nativefiledialog-extended\src\include\nfd.h">
+      <Filter>libs\nativefiledialog-extended</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\nativefiledialog-extended\src\include\nfd.hpp">
+      <Filter>libs\nativefiledialog-extended</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="libs">
@@ -722,9 +722,6 @@
     </Filter>
     <Filter Include="libs\vectormath\sse">
       <UniqueIdentifier>{40e43027-1c8b-4544-baf9-bb220091f312}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="libs\ImGuiFileDialog">
-      <UniqueIdentifier>{9f3a7a34-aa5b-42bf-be51-ccfb1f05e159}</UniqueIdentifier>
     </Filter>
     <Filter Include="libs\libimagequant">
       <UniqueIdentifier>{4c3672b3-705a-4b92-8f0a-9151538f6d6b}</UniqueIdentifier>
@@ -758,6 +755,9 @@
     </Filter>
     <Filter Include="libs\flic">
       <UniqueIdentifier>{c6b871e7-a4b2-44cb-ab9e-d2256f925cd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\nativefiledialog-extended">
+      <UniqueIdentifier>{b047f45e-7ab9-434a-b017-b09a70108f4a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
