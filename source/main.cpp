@@ -469,7 +469,9 @@ void MainMenuBarUI()
 						NFD::PathSet::GetPath(outPaths, index, loadPath);
 
 						std::string pathName = loadPath.get();
-						std::string fileName = pathName;
+
+						size_t offset = pathName.find_last_of("\\/");
+						std::string fileName = &pathName.c_str()[offset+1];
 
 						SDL_Surface *image = nullptr;
 						if (endsWith(pathName, ".anm"))
