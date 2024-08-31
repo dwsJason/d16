@@ -115,6 +115,8 @@ static int lastHovered = -1;
 	int wasHovered = lastHovered;
 	lastHovered = -1;
 
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2());
+
 	for (int idx = 0; idx < eToolBarMode_COUNT; ++idx)
 	{
 		ImGui::SameLine(xPos); xPos+=buttonSize.x;
@@ -126,8 +128,8 @@ static int lastHovered = -1;
 		SetButtonImage(buttonXY[idx][0] + (idx==GetCurrentMode() ? 1 : 0)
 					   ,buttonXY[idx][1]);
 
-		if (ImGui::ImageButton((ImTextureID)((uint64_t)m_GLImage),
-							   buttonSize, m_uv0, m_uv1, 0,
+		if (ImGui::ImageButton("",(ImTextureID)((uint64_t)m_GLImage),
+							   buttonSize, m_uv0, m_uv1,
 							   bg_color, tint_color))
 		{
 			SetCurrentMode( idx );
@@ -145,6 +147,8 @@ static int lastHovered = -1;
 			lastHovered = idx;
 		}
 	}
+
+	ImGui::PopStyleVar();
 }
 
 //------------------------------------------------------------------------------
@@ -203,8 +207,8 @@ static int lastHovered = -1;
 	SetButtonImage(col + (pressed ? 1 : 0), row);
 
 
-	bool result = ImGui::ImageButton((ImTextureID)((uint64_t)m_GLImage),
-						   buttonSize, m_uv0, m_uv1, 0,
+	bool result = ImGui::ImageButton("",(ImTextureID)((uint64_t)m_GLImage),
+						   buttonSize, m_uv0, m_uv1,
 						   bg_color, tint_color);
 
 	if (ImGui::IsItemHovered())

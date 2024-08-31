@@ -236,6 +236,7 @@
     <ClCompile Include="..\libs\imgui\imgui.cpp" />
     <ClCompile Include="..\libs\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\libs\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\libs\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\libs\imgui\examples\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\libs\imgui\examples\imgui_impl_sdl.cpp" />

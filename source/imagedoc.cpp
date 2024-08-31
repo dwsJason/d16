@@ -548,7 +548,7 @@ void ImageDocument::Render()
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_HorizontalScrollbar |
 						  ImGuiWindowFlags_NoScrollWithMouse   |
-						  ImGuiWindowFlags_AlwaysAutoResize );
+						  ImGuiChildFlags_AlwaysAutoResize );
 
 //-------------------------------- Resize Image --------------------------------
 
@@ -1329,7 +1329,7 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_NoScrollbar |
 						  ImGuiWindowFlags_NoScrollWithMouse   |
-						  ImGuiWindowFlags_AlwaysAutoResize );
+						  ImGuiChildFlags_AlwaysAutoResize );
 
 
 	// Where we're plotting these boxes
@@ -1381,7 +1381,7 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 						ImVec2((((float)x + 7) * zoom) + winPos.x, (((float)y + 7) * zoom) + winPos.y),
 						0x8000FF00,  // Green
 						0.0f,
-						ImDrawCornerFlags_None,
+						ImDrawFlags_None,
 						((float)zoom));
 				}
 				break;
@@ -1392,7 +1392,7 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 						ImVec2((((float)x + 15) * zoom) + winPos.x, (((float)y + 15) * zoom) + winPos.y),
 						0x800000FF,  // Red
 						0.0f,
-						ImDrawCornerFlags_None,
+						ImDrawFlags_None,
 						((float)zoom));
 				}
 				break;
@@ -1403,7 +1403,7 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 						ImVec2((((float)x + 23) * zoom) + winPos.x, (((float)y + 23) * zoom) + winPos.y),
 						0x80FF0000,  // Blue
 						0.0f,
-						ImDrawCornerFlags_None,
+						ImDrawFlags_None,
 						((float)zoom));
 				}
 				break;
@@ -1414,7 +1414,7 @@ void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
 						ImVec2((((float)x + 31) * zoom) + winPos.x, (((float)y + 31) * zoom) + winPos.y),
 						0x8000FFFF,  // Yello
 						0.0f,
-						ImDrawCornerFlags_None,
+						ImDrawFlags_None,
 						((float)zoom));
 				}
 				break;
@@ -1650,14 +1650,16 @@ void ImageDocument::RenderTimeLine()
 						  false,
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_NoScrollbar |
-						  ImGuiWindowFlags_NoScrollWithMouse   |
-						  ImGuiWindowFlags_AlwaysAutoResize );
+						  ImGuiWindowFlags_NoScrollWithMouse |
+						  ImGuiChildFlags_AlwaysAutoResize );
 
 	// Some Buttons
 	Toolbar* toolBar = Toolbar::GToolbar;
 
 	if (toolBar)
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2());
+
 		// Start of the Bar
 		float xPos = 8.0f;
 		ImGui::SameLine(xPos);
@@ -1848,7 +1850,7 @@ void ImageDocument::RenderTimeLine()
 		}
 		ImGui::SameLine(xPos+=40.0f);
 
-
+		ImGui::PopStyleVar(); // for the button padding
 
 		ImGui::NewLine();
 	}

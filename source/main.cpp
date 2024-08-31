@@ -378,9 +378,9 @@ void DockSpaceUI()
 	ImGuiWindowFlags window_flags = /*ImGuiWindowFlags_MenuBar |*/ ImGuiWindowFlags_NoDocking;
 
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImVec2 WorkPos = viewport->GetWorkPos();
+	ImVec2 WorkPos = viewport->WorkPos;
 	WorkPos.y += toolbarSize;
-	ImVec2 WorkSize = viewport->GetWorkSize();
+	ImVec2 WorkSize = viewport->WorkSize;
 	WorkSize.y -= toolbarSize;
 
 	ImGui::SetNextWindowPos(WorkPos);
@@ -408,8 +408,8 @@ void DockSpaceUI()
 void ToolBarUI()
 {
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->GetWorkPos());
-	ImVec2 WorkSize = viewport->GetWorkSize();
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImVec2 WorkSize = viewport->WorkSize;
 	WorkSize.y = toolbarSize;
 	ImGui::SetNextWindowSize(WorkSize);
 	ImGui::SetNextWindowViewport(viewport->ID);
