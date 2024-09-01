@@ -57,10 +57,22 @@ public:
 	int m_y;
 };
 
+class SpriteChopSettings
+{
+public:
+	bool m_bUse8x8;
+	bool m_bUse16x16;
+	bool m_bUse24x24;
+	bool m_bUse32x32;
+	bool m_bFavorMemory;  // if true optimize for memory, above all else
+	                      // if false, favor OBJ count over all else
+};
+
 
 class SpriteObjectDocument
 {
 public:
+	SpriteChopSettings m_settings;  // the settings used when we shopped this frame
 	int m_minX;
 	int m_maxX;
 	int m_minY;
@@ -111,6 +123,7 @@ private:
 	void RenderEyeDropper();
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
+	void RenderSpriteChopDialog();
 	void RenderTimeLine();
 
 	void RenderSpriteDoc(const float ScrollX, const float ScrollY);
@@ -188,9 +201,10 @@ private:
 	std::vector<ImVec4> m_targetColors;
 
 //-- UI State
-	bool m_bOpen;
-	bool m_bPanActive;
-	bool m_bShowResizeUI;
+	bool m_bOpen;      				// document open
+	bool m_bPanActive;  			// panning
+	bool m_bShowResizeUI;   		// resize image modal
+	bool m_bShowSpriteChopUI;   	// sprite chop modal
 	bool m_bEyeDropDrag;
 
 static int s_uniqueId;

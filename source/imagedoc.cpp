@@ -99,6 +99,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_bOpen(true)
 	, m_bPanActive(false)
 	, m_bShowResizeUI(false)
+	, m_bShowSpriteChopUI(false)
 	, m_bEyeDropDrag(false)
 {
 	// Make sure the surface is in a supported format for eyedropper
@@ -551,6 +552,18 @@ void ImageDocument::Render()
 						  ImGuiWindowFlags_NoScrollWithMouse   |
 						  ImGuiChildFlags_AlwaysAutoResize );
 
+//---------------------------- Sprite Chooper Image ----------------------------
+
+		if (m_bShowSpriteChopUI)
+		{
+			if (ImGui::BeginPopupModal("Sprite Chop##modal", &m_bShowSpriteChopUI,
+						 ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				RenderSpriteChopDialog();
+				ImGui::EndPopup();
+			}
+		}
+		else
 //-------------------------------- Resize Image --------------------------------
 
 		if (m_bShowResizeUI)
@@ -922,7 +935,14 @@ void ImageDocument::Render()
 				PlasmaFilter();
 				Toolbar::GToolbar->SetPreviousMode();
 				break;
-
+			case eJrOBJAnalyze:
+				m_bShowSpriteChopUI = true;
+				Toolbar::GToolbar->SetPreviousMode();
+				ImGui::OpenPopup("Sprite Chop##modal");
+				break;
+			case eJrOBJDisplay:
+				// default path
+				break;
 			default:
 				// nothing, probably pan or something
 				break;
@@ -970,7 +990,7 @@ void ImageDocument::Render()
 	ImGui::EndChild();
 
 
-	if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
+	if (eJrOBJDisplay == Toolbar::GToolbar->GetCurrentMode())
 	{
 		RenderOBJShapes(ScrollX,ScrollY);
 	}
@@ -2070,6 +2090,51 @@ void ImageDocument::Quant16()
 	Quant256();
 
 	m_iTargetColorCount = saveTargetColorCount;
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::RenderSpriteChopDialog()
+{
+	SpriteChopSettings settings = SpriteChopSettings();
+	bool bFavorObjCount;
+
+	ImGui::Checkbox("Allow  8x8 ", &settings.m_bUse8x8);
+	ImGui::Checkbox("Allow 16x16", &settings.m_bUse16x16);
+	ImGui::Checkbox("Allow 24x24", &settings.m_bUse24x24);
+	ImGui::Checkbox("Allow 32x32", &settings.m_bUse32x32);
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	ImGui::Checkbox("Favor Memory", &settings.m_bFavorMemory);
+	ImGui::Checkbox("Favor OBJ Count", &bFavorObjCount);
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+
+	ImVec2 okSize = ImVec2(90, 24);
+	ImGui::SameLine(96);
+
+	if (ImGui::Button("Ok", okSize))
+	{
+		// do the work
+
+		// Put some code here to dispatch the crop/resize
+		m_bShowSpriteChopUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Cancel", okSize))
+	{
+		m_bShowSpriteChopUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
 }
 
 //------------------------------------------------------------------------------
