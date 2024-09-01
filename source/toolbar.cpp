@@ -90,7 +90,8 @@ static const char* helpStrings[] =
 	"Mirror Image\nHorizontal",
 	"Mirror Image\nVertical",
 	"Plasma Filter\n(No Undo)",
-	"Jr. Sprite\nOBJ analyze"
+	"Jr. Sprite\nOBJ analyze",
+	"Jr. Sprite\nOBJ display"
 };
 
 static const int buttonXY[][2] =
@@ -102,8 +103,9 @@ static const int buttonXY[][2] =
 	{4,8},  // rotate left
 	{4,3},  // h-flip
 	{6,11}, // v-flip
-	{2,15}, // plastma filter
-	{0,18}, // obj analyzer
+	{2,16}, // plastma filter
+	{0,17}, // obj analyzer
+	{0,18}, // toggle obj display
 
 };
 

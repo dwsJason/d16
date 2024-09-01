@@ -22,6 +22,7 @@ enum ToolBarMode
 	ePlasmaFilter,
 
 	eJrOBJAnalyze,
+	eJrOBJDisplay,
 
 	eToolBarMode_COUNT
 };
