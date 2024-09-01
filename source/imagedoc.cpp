@@ -2099,9 +2099,28 @@ void ImageDocument::RenderSpriteChopDialog()
 	SpriteChopSettings settings = SpriteChopSettings();
 	bool bFavorObjCount;
 
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+	ImGui::Text("%s", m_filename.c_str());
+	ImGui::SameLine();
+	ImGui::Text(" (%d/%d)", m_iFrameNo+1, m_images.size());
+
+	ImGui::NewLine();
+	ImGui::Separator();
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
 	ImGui::Checkbox("Allow  8x8 ", &settings.m_bUse8x8);
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
 	ImGui::Checkbox("Allow 16x16", &settings.m_bUse16x16);
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
 	ImGui::Checkbox("Allow 24x24", &settings.m_bUse24x24);
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
 	ImGui::Checkbox("Allow 32x32", &settings.m_bUse32x32);
 
 	ImGui::NewLine();
@@ -2116,10 +2135,9 @@ void ImageDocument::RenderSpriteChopDialog()
 	ImGui::NewLine();
 
 
-	ImVec2 okSize = ImVec2(90, 24);
-	ImGui::SameLine(96);
+	ImVec2 okSize = ImVec2(128, 24);
 
-	if (ImGui::Button("Ok", okSize))
+	if (ImGui::Button("Ok (all frames)", okSize))
 	{
 		// do the work
 
@@ -2127,6 +2145,21 @@ void ImageDocument::RenderSpriteChopDialog()
 		m_bShowSpriteChopUI = false;
 		ImGui::CloseCurrentPopup();
 	}
+
+	ImGui::SameLine();
+
+	static char buffer[256];
+	sprintf(buffer, "Ok (frame %d)", m_iFrameNo+1);
+
+	if (ImGui::Button(buffer, okSize))
+	{
+		// do the work
+
+		// Put some code here to dispatch the crop/resize
+		m_bShowSpriteChopUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
 
 	ImGui::SameLine();
 	if (ImGui::Button("Cancel", okSize))
