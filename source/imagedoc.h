@@ -82,6 +82,9 @@ public:
 
 	void Render();
 
+	bool IsNew() { return m_bIsFirstRender; }
+	const char* WindowName() { return m_windowName.c_str(); }
+
 private:
 
 	int CountUniqueColors();
