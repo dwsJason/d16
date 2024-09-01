@@ -114,7 +114,6 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	m_pSurfaces.push_back(pImage);
 	m_spriteDocuments.push_back(nullptr);
 
-
 	m_width  = m_pSurfaces[0]->w;
 	m_height = m_pSurfaces[0]->h;
 
@@ -243,6 +242,7 @@ void ImageDocument::Render()
 	if (m_bIsFirstRender)
 	{
 		m_bIsFirstRender = false;
+
 		//
 		// I'm going crazy with some image windows, opening up, larger than the parent window
 		//
@@ -252,10 +252,11 @@ void ImageDocument::Render()
 		if (InitialSize.y > io.DisplaySize.y) InitialSize.y = io.DisplaySize.y;
 
 		ImGui::SetNextWindowSize(InitialSize, ImGuiCond_FirstUseEver);
+
 	}
 	//--------------------------------------------------------------------------
 
-	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
+	ImGui::Begin(m_windowName.c_str(), &m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
@@ -969,7 +970,7 @@ void ImageDocument::Render()
 	ImGui::EndChild();
 
 
-	//if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
+	if (eJrOBJAnalyze == Toolbar::GToolbar->GetCurrentMode())
 	{
 		RenderOBJShapes(ScrollX,ScrollY);
 	}
@@ -1760,10 +1761,13 @@ void ImageDocument::RenderTimeLine()
 		ImGui::SameLine(xPos+=40.0f);
 
 		// Other Options
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f,2.0f));
 
 		static int hz = 0;
 		ImGui::SetNextItemWidth(64);
 		ImGui::Combo("##Snap", &hz, "50HZ\0" "59.94\0" "60HZ\0" "100HZ\0\0");
+
+		ImGui::PopStyleVar();
 
 		// Mode Buttons
 		ImGui::SameLine(xPos+=64.0f);
