@@ -90,6 +90,7 @@ static const char* helpStrings[] =
 	"Mirror Image\nHorizontal",
 	"Mirror Image\nVertical",
 	"Plasma Filter\n(No Undo)",
+	"Generate Half Tones Image\nFrom the color bar",
 	"Jr. Sprite\nOBJ analyze",
 	"Jr. Sprite\nOBJ display"
 };
@@ -104,6 +105,7 @@ static const int buttonXY[][2] =
 	{4,3},  // h-flip
 	{6,11}, // v-flip
 	{2,16}, // plastma filter
+	{4,5},  // Half Tone Generator
 	{0,17}, // obj analyzer
 	{0,18}, // toggle obj display
 

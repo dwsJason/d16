@@ -119,6 +119,7 @@ private:
 	void MirrorHorizontal();
 	void MirrorVertical();
 	void PlasmaFilter();
+	void HalfToneGenerator();
 
 	void RenderEyeDropper();
 	void RenderPanAndZoom(int iButtonIndex=0);
