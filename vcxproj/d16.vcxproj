@@ -285,6 +285,7 @@
     <ClCompile Include="..\source\imagedoc.cpp" />
     <ClCompile Include="..\source\lzb.cpp" />
     <ClCompile Include="..\source\main.cpp" />
+    <ClCompile Include="..\source\obj_file.cpp" />
     <ClCompile Include="..\source\paldoc.cpp" />
     <ClCompile Include="..\source\sdl_helpers.cpp" />
     <ClCompile Include="..\source\toolbar.cpp" />
@@ -455,6 +456,7 @@
     <ClInclude Include="..\source\gsla_file.h" />
     <ClInclude Include="..\source\imagedoc.h" />
     <ClInclude Include="..\source\lzb.h" />
+    <ClInclude Include="..\source\obj_file.h" />
     <ClInclude Include="..\source\paldoc.h" />
     <ClInclude Include="..\source\sdl_helpers.h" />
     <ClInclude Include="..\source\toolbar.h" />

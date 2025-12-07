@@ -194,6 +194,9 @@
     <ClCompile Include="..\libs\imgui\imgui_tables.cpp">
       <Filter>libs\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\obj_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -702,6 +705,9 @@
     </ClInclude>
     <ClInclude Include="..\libs\nativefiledialog-extended\src\include\nfd.hpp">
       <Filter>libs\nativefiledialog-extended</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\obj_file.h">
+      <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

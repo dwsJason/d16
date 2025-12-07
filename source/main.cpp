@@ -720,6 +720,66 @@ void MainMenuBarUI()
 			}
 
 			ImGui::Separator();
+
+			if (ImGui::MenuItem("Import Vector Image"))
+			{
+				// Open File
+				NFD::UniquePathSet outPaths;
+
+				nfdu8filteritem_t filterItem[1] = { {"Wavefront OBJ", "obj"} };
+
+
+				nfdresult_t result = NFD::OpenDialogMultiple(outPaths,
+															 filterItem,  // filterList
+															 1,           // filterCount
+															 nullptr );   // defaultPath $$JGA FIXME
+
+				if (result == NFD_OKAY)
+				{
+					nfdpathsetsize_t NumPaths;
+					NFD::PathSet::Count(outPaths, NumPaths);
+					for (unsigned int index = 0; index < NumPaths; ++index)
+					{
+						NFD::UniquePathSetPathU8 loadPath;
+						NFD::PathSet::GetPath(outPaths, index, loadPath);
+
+						std::string pathName = loadPath.get();
+						size_t offset = pathName.find_last_of("\\/");
+						std::string filename = &pathName.c_str()[offset+1];
+
+						LOG("Import vector OBJ: %s, %s\n", filename.c_str(), pathName.c_str());
+
+						// Eventually, support opening any type of image, and extracting
+						// the palette, for now, lets just open the file, if it has a
+						// .pal extension
+						std::string& fullpath = pathName;
+
+						std::string extension = ".obj";
+
+						if (fullpath.length() > extension.length())
+						{
+							size_t fullpath_offset = fullpath.length() - extension.length();
+
+							for (int idx = 0; idx < extension.length(); ++idx)
+							{
+								if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
+								{
+									LOG("FAILED %s\n", filename.c_str());
+								}
+							}
+
+							//PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, fullpath));
+						}
+						else
+						{
+							LOG("FAILED %s\n", filename.c_str());
+						}
+					}
+
+				}
+
+			}
+
 			ImGui::Separator();
 			#if 0 // Show them disabled, until I implement them
 			if (ImGui::MenuItem("Save"))

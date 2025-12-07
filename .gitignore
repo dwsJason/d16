@@ -15,3 +15,4 @@ libs/udt4/win/.vs/
 *.idb
 vcxproj/d16.vcxproj.user
 vcxproj/d16.VC.db
+*.vpwhistxml
