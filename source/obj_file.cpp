@@ -14,9 +14,10 @@
 // Load in a COBJFile constructor
 //
 COBJFile::COBJFile(const char *pFilePath)
-	: m_numVerts( 0 )
-	, m_numLines( 0 )
 {
+	m_center.x = 0.0f;
+	m_center.y = 0.0f;
+
 	LoadFromFile(pFilePath);
 }
 //------------------------------------------------------------------------------
@@ -147,6 +148,11 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 				if (tokens[0] == "center")
 				{
 					// grab the center vertex
+					if (tokens.size() >= 3)
+					{
+						sscanf_s(tokens[1].c_str(), "%f", &m_center.x);
+						sscanf_s(tokens[2].c_str(), "%f", &m_center.y);
+					}
 				}
 				else if (tokens[0] == "v")
 				{
@@ -167,6 +173,17 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 				else if (tokens[0] == "l")
 				{
 					// add a line segment
+					if (tokens.size() >= 3)
+					{
+						// the line has at least 2 points (it could have more)
+						// $$TODO support more than 2 points
+						OBJFILE::int2 ivec;
+
+						sscanf_s(tokens[1].c_str(), "%d", &ivec.x );
+						sscanf_s(tokens[2].c_str(), "%d", &ivec.y );
+
+						m_lines.push_back(ivec);
+					}
 				}
 
 			}

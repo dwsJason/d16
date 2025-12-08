@@ -20,7 +20,7 @@ struct vec2
 
 struct int2
 {
-	int i0,i1;
+	int x,y;
 };
 
 };
@@ -39,11 +39,12 @@ public:
 
 private:
 
-	int m_numVerts;
-	std::vector<OBJFILE::vec2> m_points;
+	// center of rotation
+	OBJFILE::vec2 m_center; 
 
-	int m_numLines;
+	std::vector<OBJFILE::vec2> m_points;
 	std::vector<OBJFILE::int2> m_lines;
+
 };
 
 
