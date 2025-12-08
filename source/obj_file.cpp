@@ -155,7 +155,12 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 					{
 						// there's at least 2 numbers here, in theory
 						// which is all I want (at least for now)
+						OBJFILE::vec2 vec;
 
+						sscanf_s(tokens[1].c_str(), "%f", &vec.x );
+						sscanf_s(tokens[2].c_str(), "%f", &vec.y );
+
+						m_points.push_back(vec);
 					}
 
 				}
