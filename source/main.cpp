@@ -16,6 +16,7 @@
 #include "paldoc.h"
 #include "dirent.h"
 #include "toolbar.h"
+#include "obj_file.h"
 
 #include "d16.h"
 
@@ -768,7 +769,9 @@ void MainMenuBarUI()
 								}
 							}
 
-							//PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, fullpath));
+							COBJFile* pImportVector = new COBJFile(fullpath.c_str());
+
+
 						}
 						else
 						{

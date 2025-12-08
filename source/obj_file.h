@@ -10,6 +10,22 @@
 #include <vector>
 
 
+namespace OBJFILE
+{
+
+struct vec2
+{
+	float x,y;
+};
+
+struct int2
+{
+	int i0,i1;
+};
+
+};
+
+
 class COBJFile
 {
 public:
@@ -24,7 +40,10 @@ public:
 private:
 
 	int m_numVerts;
+	std::vector<OBJFILE::vec2> m_points;
+
 	int m_numLines;
+	std::vector<OBJFILE::int2> m_lines;
 };
 
 
