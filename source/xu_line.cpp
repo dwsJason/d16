@@ -76,7 +76,7 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 			x0+=tx;x1+=tx;
 			y0+=ty;y1+=ty;
 
-			//WULine(x0*scale,y0*scale,x1*scale,y1*scale);
+			//WULine(x0,y0,x1,y1);
 			BLine((int)x0,(int)y0,(int)x1,(int)y1);
 		}
 
