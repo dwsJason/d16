@@ -21,6 +21,8 @@ enum ToolBarMode
 
 	ePlasmaFilter,
 
+	eHalfToneGenerator,
+
 	eJrOBJAnalyze,
 	eJrOBJDisplay,
 

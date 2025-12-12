@@ -409,6 +409,21 @@ void ImageDocument::Render()
 		ImGui::EndTooltip();
 	}
 
+	// 135 Color Magic Machine
+	ImGui::SameLine();
+	if (ImGui::Button("135"))
+	{
+		Quant135();
+	}
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("135 Color Half Tone/nGenerates 16 seed colors, for half tone images");
+		ImGui::EndTooltip();
+	}
+
+
 	ImVec2 buttonSize = ImVec2(20,20);
 
 	for (int idx = 0; idx < m_targetColors.size(); ++idx)
@@ -933,6 +948,10 @@ void ImageDocument::Render()
 				break;
 			case ePlasmaFilter:
 				PlasmaFilter();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eHalfToneGenerator:
+				HalfToneGenerator();
 				Toolbar::GToolbar->SetPreviousMode();
 				break;
 			case eJrOBJAnalyze:
@@ -2086,6 +2105,23 @@ void ImageDocument::Quant16()
 	int saveTargetColorCount = m_iTargetColorCount;
 
 	m_iTargetColorCount = 16;
+
+	Quant256();
+
+	m_iTargetColorCount = saveTargetColorCount;
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::Quant135()
+{
+	// Do an actual color reduction on the source Image
+	// then generate an OGL Texture
+	LOG("Quant135 Color Reduce - Go!\n");
+
+	int saveTargetColorCount = m_iTargetColorCount;
+
+	m_iTargetColorCount = 135;
 
 	Quant256();
 
@@ -3784,6 +3820,140 @@ void ImageDocument::MirrorHorizontal()
 		delete[] pDestPixels;
 		pDestPixels = nullptr;
 	}
+
+	SetDocumentSurface( pImages );
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::HalfToneGenerator()
+{
+	std::vector<SDL_Surface*> pImages;
+
+	const int IMG_BOX_WIDTH = 16;
+	const int IMG_BOX_HEIGHT = 16;
+
+	const Uint32 BOX_COLOR = 0xF0F0F0F0;
+
+	const int canvas_width  = 17 * IMG_BOX_WIDTH;
+	const int canvas_height = 17 * IMG_BOX_HEIGHT;
+
+	Uint32* pDestPixels = new Uint32[canvas_width * canvas_height];
+
+	// Clear the Canvas, to black
+	memset(pDestPixels, 0, canvas_width*canvas_height*sizeof(Uint32));
+
+	Uint32 TrayColors[16 * 16] = {};
+
+	// Mix all the half tones here
+	for (int colorIndex = 0; colorIndex < 256; colorIndex++)
+	{
+		Uint32 pixel;
+		Uint8 r,g,b,a;
+
+		a = 255;
+
+		r = (unsigned char) (((m_targetColors[colorIndex & 0xF].x * 255.0f)+
+							  (m_targetColors[colorIndex >> 4].x * 255.0f))/
+							 2.0f);
+
+		g = (unsigned char) (((m_targetColors[colorIndex & 0xF].y * 255.0f)+
+							  (m_targetColors[colorIndex >> 4].y * 255.0f))/
+							 2.0f);
+
+		b = (unsigned char) (((m_targetColors[colorIndex & 0xF].z * 255.0f)+
+							  (m_targetColors[colorIndex >> 4].z * 255.0f))/
+							 2.0f);
+		
+		pixel = (((Uint32)a)<<24) |
+			    (((Uint32)b)<<16) |
+				(((Uint32)g)<<8)  |
+				(((Uint32)r));
+
+		TrayColors[colorIndex] = pixel;
+
+
+	}
+
+	// Colors
+	//color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
+
+	for (int boxpos_y = 0; boxpos_y < 17; ++boxpos_y)
+	{
+		for (int boxpos_x = 0; boxpos_x < 17; ++boxpos_x)
+		{
+			// hline
+			int x = boxpos_x * IMG_BOX_WIDTH;
+			int y = boxpos_y * IMG_BOX_HEIGHT;
+
+			// Draw Box Contents
+			for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+				for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+				{
+					int index;
+
+					if (boxpos_x && boxpos_y)
+					{
+						index = (boxpos_x-1) + ((boxpos_y-1)*16);
+					}
+					else
+					{
+						if (boxpos_x)
+						{
+							index = (boxpos_x-1)+((boxpos_x-1)*16);
+						}
+						else
+						{
+							index = (boxpos_y-1)+((boxpos_y-1)*16);
+						}
+					}
+
+					Uint32 color = TrayColors[index];
+					pDestPixels[ ((y + ly) * canvas_width) + x + lx ] = color;
+				}
+
+			// Draw Box Borders
+			for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+			{
+				pDestPixels[ (y * canvas_width) + x + lx ] = 0;
+			}
+
+			for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+			{
+				pDestPixels[ ((y + ly) * canvas_width) + x ] = 0;
+			}
+
+
+			if ( (( boxpos_x ==  boxpos_y) && (boxpos_x || boxpos_y)) ||
+				 ( boxpos_x && !boxpos_y) ||
+				 (!boxpos_x &&  boxpos_y) )
+			{
+				// Draw Box Borders
+				for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+				{
+					pDestPixels[ (y * canvas_width) + x + lx ] = BOX_COLOR;
+					pDestPixels[ ((y+15) * canvas_width) + x + lx ] = BOX_COLOR;
+				}
+
+				for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+				{
+					pDestPixels[ ((y + ly) * canvas_width) + x ] = BOX_COLOR;
+					pDestPixels[ ((y + ly) * canvas_width) + x + 15 ] = BOX_COLOR;
+				}
+
+			}
+		}
+	}
+
+
+	// Draw Stuff
+	SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, canvas_width, canvas_height);
+
+	pImages.push_back(pSurface);
+
+	// Free the raw memory
+	delete[] pDestPixels;
+	pDestPixels = nullptr;
 
 	SetDocumentSurface( pImages );
 }
