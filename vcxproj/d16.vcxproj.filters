@@ -197,6 +197,9 @@
     <ClCompile Include="..\source\obj_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\xu_line.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -707,6 +710,9 @@
       <Filter>libs\nativefiledialog-extended</Filter>
     </ClInclude>
     <ClInclude Include="..\source\obj_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\xu_line.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

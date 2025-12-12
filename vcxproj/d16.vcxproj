@@ -289,6 +289,7 @@
     <ClCompile Include="..\source\paldoc.cpp" />
     <ClCompile Include="..\source\sdl_helpers.cpp" />
     <ClCompile Include="..\source\toolbar.cpp" />
+    <ClCompile Include="..\source\xu_line.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\libs\avir\avir.h" />
@@ -460,6 +461,7 @@
     <ClInclude Include="..\source\paldoc.h" />
     <ClInclude Include="..\source\sdl_helpers.h" />
     <ClInclude Include="..\source\toolbar.h" />
+    <ClInclude Include="..\source\xu_line.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
