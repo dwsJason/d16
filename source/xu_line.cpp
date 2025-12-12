@@ -22,6 +22,9 @@ CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 
 std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 {
+	// result
+	std::vector<SDL_Surface*> frames;
+
 	// Actually Render some stuff onto our m_pSurface
 
 	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
@@ -33,36 +36,54 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 	float tx = 319.0;
 	float ty = 199.0;
 
+	const float PI_2 = (float) (M_PI * 2.0f);
 
-	for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
+	for (float angle = 0.0f; angle < 256.0f; angle+=1.0f)
 	{
-		float x0,y0,x1,y1;
+		float theta = angle * PI_2 / 256.0f;
+		memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);
 
-		x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
-		y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
+		for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
+		{
+			float x0,y0,x1,y1;
 
-		x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
-		y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
+			x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
+			y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
 
-		x0*=scale;
-		x1*=scale;
-		y0*=scale;
-		y1*=scale;
+			x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
+			y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
+			// scale
+			x0*=scale;
+			x1*=scale;
+			y0*=scale;
+			y1*=scale;
 
-		x0+=tx;x1+=tx;
-		y0+=ty;y1+=ty;
+			// rotate
+			float rx = x0 * cos(theta) - y0 * sin(theta);
+			float ry = x0 * sin(theta) + y0 * cos(theta);
 
-		//WULine(x0*scale,y0*scale,x1*scale,y1*scale);
-		BLine(x0,y0,x1,y1);
+			x0 = rx;
+			y0 = ry;
+
+			rx = x1 * cos(theta) - y1 * sin(theta);
+			ry = x1 * sin(theta) + y1 * cos(theta);
+
+			x1 = rx;
+			y1 = ry;
+
+			// translate
+
+			x0+=tx;x1+=tx;
+			y0+=ty;y1+=ty;
+
+			//WULine(x0*scale,y0*scale,x1*scale,y1*scale);
+			BLine((int)x0,(int)y0,(int)x1,(int)y1);
+		}
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
+
+		frames.push_back(pSurface);
 	}
-
-
-	// return it back out
-	std::vector<SDL_Surface*> frames;
-
-	SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
-
-	frames.push_back(pSurface);
 
 	return frames;
 }
@@ -180,7 +201,7 @@ void CRawCanvas::BLine(int x0, int y0, int x1, int y1)
   int err = (dx>dy ? dx : -dy)/2, e2;
 
   for(;;){
-    setPixel(x0,y0);
+    setPixel((i16)x0,(i16)y0);
     if (x0==x1 && y0==y1) break;
     e2 = err;
     if (e2 >-dx) { err -= dy; x0 += sx; }
