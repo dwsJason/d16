@@ -3,10 +3,67 @@
 
 #include <math.h>
 
+CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
+{
+	int width,height;
+
+	pOBJFile->GetWidthHeight(&width, &height);
+
+	m_width  = width;
+	m_height = height;
+	m_color = 0xFFFFFFFF;
+
+	m_pSurface = new u32[ width * height ];
+}
+
+std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
+{
+	std::vector<SDL_Surface*> frames;
+
+	return frames;
+}
+
+
 
 // Paint pixel white (floating point version, for reference only)
-void inline CRawCanvas::plotf(i16 x, i16 y, float alpha) {
-	m_pSurface[y*m_width + x] = 255 - ((255 - m_pSurface[y*m_width + x]) * (1.0f - alpha));
+void inline CRawCanvas::plotf(i16 x, i16 y, float alpha)
+{
+	//m_pSurface[y*m_width + x] = 255 - ((255 - m_pSurface[y*m_width + x]) * (1.0f - alpha));
+
+	int surfaceIndex = (y * m_width) + x;
+
+	u32 surfaceColor = m_pSurface[surfaceIndex];
+
+	// surface rgb
+	u8 sr, sg, sb, sa;
+	sr = (surfaceColor >> 0)  & 0xFF;
+	sg = (surfaceColor >> 8)  & 0xFF;
+	sb = (surfaceColor >> 16) & 0xFF;
+	sa = (surfaceColor >> 24) & 0xFF;
+
+	// paint rgb
+	u8 pr, pg, pb, pa;
+	pr = (m_color >> 0)  & 0xFF;
+	pg = (m_color >> 8)  & 0xFF;
+	pb = (m_color >> 16) & 0xFF;
+	pa = (m_color >> 24) & 0xFF;
+
+	// result pixel
+	u8 r,g,b,a;
+	r = static_cast<u8>(255 - (255-sr) * (1.0f - alpha));
+	g = static_cast<u8>(255 - (255-sg) * (1.0f - alpha));
+	b = static_cast<u8>(255 - (255-sb) * (1.0f - alpha));
+	a = static_cast<u8>(255 - (255-sa) * (1.0f - alpha));
+
+	u32 pixel = a; pixel<<=8;
+	    pixel|= b; pixel<<=8;
+	    pixel|= g; pixel<<=8;
+		pixel|= r;
+
+	m_pSurface[ surfaceIndex ] = pixel;
+
+
+
 }
 
 void CRawCanvas::WULine(float x0, float y0, float x1, float y1)
@@ -26,39 +83,39 @@ void CRawCanvas::WULine(float x0, float y0, float x1, float y1)
 	int16_t xpxl1 = xend; // this will be used in the main loop
 	int16_t ypxl1 = (int16_t)floor(yend);
 	if(steep) {
-		plotf(ypxl1,       xpxl1, (1.0f - (yend - floor(yend))) * xgap);
-		plotf(ypxl1 + 1.0f, xpxl1,        (yend - floor(yend))  * xgap);
+		plotf(ypxl1,    xpxl1, (1.0f - (yend - (float)floor(yend))) * xgap);
+		plotf(ypxl1 + 1, xpxl1,        (yend - (float)floor(yend))  * xgap);
 	} else {
-		plotf(xpxl1, ypxl1,       (1.0f - (yend - floor(yend))) * xgap);
-		plotf(xpxl1, ypxl1 + 1.0f,        (yend - floor(yend))  * xgap);
+		plotf(xpxl1, ypxl1,    (1.0f - (yend - (float)floor(yend))) * xgap);
+		plotf(xpxl1, ypxl1 + 1,        (yend - (float)floor(yend))  * xgap);
 	}
 	float intery = yend + gradient; // first y-intersection for the main loop
 
 	// handle second endpoint
-	xend = round(x1);
+	xend = (uint16_t)round(x1);
 	yend = y1 + gradient * ((float)xend - x1);
-	xgap = x1 + 0.5f - floor(x1 + 0.5f);
+	xgap = x1 + 0.5f - (float)floor(x1 + 0.5f);
 	int16_t xpxl2 = xend; //this will be used in the main loop
-	int16_t ypxl2 = floor(yend);
+	int16_t ypxl2 = (int16_t)floor(yend);
 	if(steep) {
-		plotf(ypxl2,       xpxl2, (1.0f - (yend - floor(yend))) * xgap);
-		plotf(ypxl2 + 1.0f, xpxl2,        (yend - floor(yend))  * xgap);
+		plotf(ypxl2,     xpxl2, (1.0f - (yend - (float)floor(yend))) * xgap);
+		plotf(ypxl2 + 1, xpxl2,         (yend - (float)floor(yend))  * xgap);
 	} else {
-		plotf(xpxl2, ypxl2,       (1.0f - (yend - floor(yend))) * xgap);
-		plotf(xpxl2, ypxl2 + 1.0f,        (yend - floor(yend))  * xgap);
+		plotf(xpxl2, ypxl2,    (1.0f - (yend - (float)floor(yend))) * xgap);
+		plotf(xpxl2, ypxl2 + 1,        (yend - (float)floor(yend))  * xgap);
 	}
 
 	// main loop
 	if(steep) {
 		for(uint16_t x = xpxl1 + 1; x < xpxl2; x++) {
-			plotf(floor(intery),     x, (1.0f - (intery - floor(intery))));
-			plotf(floor(intery) + 1, x,        (intery - floor(intery) ));
+			plotf((i16)floor(intery),     x, (1.0f - (intery - (float)floor(intery))));
+			plotf((i16)floor(intery) + 1, x,         (intery - (float)floor(intery) ));
 			intery += gradient;
 		}
 	} else {
 		for(uint16_t x = xpxl1 + 1; x < xpxl2; x++) {
-			plotf(x, floor(intery),     (1.0f - (intery - floor(intery))));
-			plotf(x, floor(intery) + 1,        (intery - floor(intery) ));
+			plotf(x, (i16)floor(intery),     (1.0f - (intery - (float)floor(intery))));
+			plotf(x, (i16)floor(intery) + 1,         (intery - (float)floor(intery) ));
 			intery += gradient;
 		}
 	}

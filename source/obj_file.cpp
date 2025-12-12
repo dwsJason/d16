@@ -93,6 +93,7 @@ static std::vector<std::string> split(const std::string& s, const char* separato
 }
 
 // make this string lowercase
+#if 0
 static void tolower(std::string& s)
 {
 	for (int index = 0; index < s.length(); ++index)
@@ -100,6 +101,7 @@ static void tolower(std::string& s)
 		s[index] = tolower( s[index] );
 	}
 }
+#endif
 
 //------------------------------------------------------------------------------
 

@@ -7,10 +7,41 @@
 
 #include <SDL.h>
 #include "bctypes.h"
+#include "obj_file.h"
 
 class CRawCanvas
 {
 public:
+
+	CRawCanvas(COBJFile* pOBJFile);
+
+	CRawCanvas(int width, int height)
+		: m_width(width)
+		, m_height(height)
+	{
+		m_color = 0xFFFFFFFF; // rgba
+		m_pSurface = new u32[ m_width * m_height ];
+		m_pOBJFile = nullptr;
+	}
+
+	~CRawCanvas()
+	{
+		if (m_pSurface)
+		{
+			delete m_pSurface;
+			m_pSurface = nullptr;
+		}
+
+		if (m_pOBJFile)
+		{
+			delete m_pOBJFile;
+			m_pOBJFile = nullptr;
+		}
+	}
+
+
+	std::vector<SDL_Surface*> RenderFrames();
+
 	u32* m_pSurface;
 	u32  m_color;
 
@@ -21,8 +52,9 @@ public:
 
 private:
 
-	void inline plotf(i16 x, i16 y, float alpha);
+	COBJFile* m_pOBJFile;
 
+	void inline plotf(i16 x, i16 y, float alpha);
 
 };
 

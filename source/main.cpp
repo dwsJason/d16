@@ -770,6 +770,9 @@ void MainMenuBarUI()
 							}
 
 							COBJFile* pImportVector = new COBJFile(fullpath.c_str());
+							CRawCanvas* pRawCanvas = new CRawCanvas(pImportVector);
+
+							std::vector<SDL_Surface*> frames = pRawCanvas->RenderFrames();
 
 
 						}

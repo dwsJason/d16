@@ -34,6 +34,9 @@ public:
 
 	~COBJFile();
 
+	// Information
+	void GetWidthHeight(int* pWidth, int* pHeight);
+
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
 
