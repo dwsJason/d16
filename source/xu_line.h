@@ -50,12 +50,14 @@ public:
 	int m_height;
 
 	void WULine(float x0, float y0, float x1, float y1);
+	void BLine(int x0, int y0, int x1, int y1);
 
 private:
 
 	COBJFile* m_pOBJFile;
 
 	void inline plotf(i16 x, i16 y, float alpha);
+	void inline setPixel(i16 x, i16 y);
 
 	SDL_Surface* SDL_SurfaceFromRawRGBA(Uint32 *pPixels, int iWidth, int iHeight);
 

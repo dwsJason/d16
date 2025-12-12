@@ -198,8 +198,8 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 
 void COBJFile::GetWidthHeight(int* pWidth, int* pHeight)
 {
-	pWidth[0] = 1024;
-	pHeight[0] = 1024;
+	pWidth[0] = 640;
+	pHeight[0] = 400;
 }
 
 //------------------------------------------------------------------------------

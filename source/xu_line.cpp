@@ -16,6 +16,7 @@ CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 	m_color = 0xFFFFFFFF;
 
 	m_pRawPixels = new u32[ width * height ];
+	memset(m_pRawPixels, 0, width * height * sizeof(u32));
 
 }
 
@@ -25,19 +26,34 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 
 	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
 	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
+	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
+
+	float scale = 0.25f;
+
+	float tx = 319.0;
+	float ty = 199.0;
 
 
 	for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
 	{
 		float x0,y0,x1,y1;
 
-		x0 = points[ lines[ line_idx ].x - 1 ].x;
-		y0 = points[ lines[ line_idx ].x - 1 ].y;
+		x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
+		y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
 
-		x1 = points[ lines[ line_idx ].y - 1 ].x;
-		y1 = points[ lines[ line_idx ].y - 1 ].y;
+		x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
+		y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
 
-		WULine(x0,y0,x1,y1);
+		x0*=scale;
+		x1*=scale;
+		y0*=scale;
+		y1*=scale;
+
+		x0+=tx;x1+=tx;
+		y0+=ty;y1+=ty;
+
+		//WULine(x0*scale,y0*scale,x1*scale,y1*scale);
+		BLine(x0,y0,x1,y1);
 	}
 
 
@@ -148,6 +164,28 @@ void CRawCanvas::WULine(float x0, float y0, float x1, float y1)
 		}
 	}
 
+}
+
+void CRawCanvas::setPixel(i16 x, i16 y)
+{
+	int surfaceIndex = (y*m_width) + x;
+	m_pRawPixels[surfaceIndex] = m_color;
+}
+
+void CRawCanvas::BLine(int x0, int y0, int x1, int y1)
+{
+
+  int dx = abs(x1-x0), sx = x0<x1 ? 1 : -1;
+  int dy = abs(y1-y0), sy = y0<y1 ? 1 : -1; 
+  int err = (dx>dy ? dx : -dy)/2, e2;
+
+  for(;;){
+    setPixel(x0,y0);
+    if (x0==x1 && y0==y1) break;
+    e2 = err;
+    if (e2 >-dx) { err -= dy; x0 += sx; }
+    if (e2 < dy) { err += dx; y0 += sy; }
+  }
 }
 
 

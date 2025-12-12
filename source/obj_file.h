@@ -42,6 +42,7 @@ public:
 
 	const std::vector<OBJFILE::vec2>& GetPoints() { return m_points; }
 	const std::vector<OBJFILE::int2>& GetLines()  { return m_lines; }
+	const OBJFILE::vec2& GetCenter() { return m_center; }
 
 private:
 
