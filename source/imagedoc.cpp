@@ -66,6 +66,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, std::ve
 	: ImageDocument(filename, pathname, Images[0])
 {
 	m_iDelayTimes.push_back(((long long)m_pSurfaces[0]->userdata)&0xFFFF);
+	m_spriteDocuments.push_back(nullptr);
 
 	// Copy the the remainng Images / and surfaces into the ImageDocument
 	for (int idx = 1; idx < Images.size(); ++idx)
@@ -73,6 +74,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, std::ve
 		m_pSurfaces.push_back(Images[idx]);
 		m_images.push_back(SDL_GL_LoadTexture(m_pSurfaces[idx], m_image_uv));
 		m_iDelayTimes.push_back(((long long)m_pSurfaces[idx]->userdata)&0xFFFF);
+		m_spriteDocuments.push_back(nullptr);	// it's easier for me, if the arrays are long enough to access
 	}
 
 	m_numSourceColors = CountUniqueColors();
@@ -97,6 +99,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 	, m_bOpen(true)
 	, m_bPanActive(false)
 	, m_bShowResizeUI(false)
+	, m_bShowSpriteChopUI(false)
 	, m_bEyeDropDrag(false)
 {
 	// Make sure the surface is in a supported format for eyedropper
@@ -110,6 +113,7 @@ ImageDocument::ImageDocument(std::string filename, std::string pathname, SDL_Sur
 
 	m_images.push_back(SDL_GL_LoadTexture(pImage, m_image_uv));
 	m_pSurfaces.push_back(pImage);
+	m_spriteDocuments.push_back(nullptr);
 
 	m_width  = m_pSurfaces[0]->w;
 	m_height = m_pSurfaces[0]->h;
@@ -239,6 +243,7 @@ void ImageDocument::Render()
 	if (m_bIsFirstRender)
 	{
 		m_bIsFirstRender = false;
+
 		//
 		// I'm going crazy with some image windows, opening up, larger than the parent window
 		//
@@ -248,10 +253,11 @@ void ImageDocument::Render()
 		if (InitialSize.y > io.DisplaySize.y) InitialSize.y = io.DisplaySize.y;
 
 		ImGui::SetNextWindowSize(InitialSize, ImGuiCond_FirstUseEver);
+
 	}
 	//--------------------------------------------------------------------------
 
-	ImGui::Begin(m_windowName.c_str(),&m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
+	ImGui::Begin(m_windowName.c_str(), &m_bOpen, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollWithMouse);
 
 	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
 	{
@@ -342,6 +348,9 @@ void ImageDocument::Render()
 		}
 	}
 
+	// OBJ Information Stuff
+	ImGui::SameLine(); ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "4/32 3/24 0/16 2/8");
+
 
 	// Second Line of Toolbar
 	//--------------------------------------------------------------------------
@@ -399,6 +408,21 @@ void ImageDocument::Render()
 		ImGui::Text("Reduce / Remap Colors");
 		ImGui::EndTooltip();
 	}
+
+	// 135 Color Magic Machine
+	ImGui::SameLine();
+	if (ImGui::Button("135"))
+	{
+		Quant135();
+	}
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("135 Color Half Tone/nGenerates 16 seed colors, for half tone images");
+		ImGui::EndTooltip();
+	}
+
 
 	ImVec2 buttonSize = ImVec2(20,20);
 
@@ -541,8 +565,20 @@ void ImageDocument::Render()
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_HorizontalScrollbar |
 						  ImGuiWindowFlags_NoScrollWithMouse   |
-						  ImGuiWindowFlags_AlwaysAutoResize );
+						  ImGuiChildFlags_AlwaysAutoResize );
 
+//---------------------------- Sprite Chooper Image ----------------------------
+
+		if (m_bShowSpriteChopUI)
+		{
+			if (ImGui::BeginPopupModal("Sprite Chop##modal", &m_bShowSpriteChopUI,
+						 ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				RenderSpriteChopDialog();
+				ImGui::EndPopup();
+			}
+		}
+		else
 //-------------------------------- Resize Image --------------------------------
 
 		if (m_bShowResizeUI)
@@ -910,7 +946,22 @@ void ImageDocument::Render()
 				MirrorVertical();
 				Toolbar::GToolbar->SetPreviousMode();
 				break;
-
+			case ePlasmaFilter:
+				PlasmaFilter();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eHalfToneGenerator:
+				HalfToneGenerator();
+				Toolbar::GToolbar->SetPreviousMode();
+				break;
+			case eJrOBJAnalyze:
+				m_bShowSpriteChopUI = true;
+				Toolbar::GToolbar->SetPreviousMode();
+				ImGui::OpenPopup("Sprite Chop##modal");
+				break;
+			case eJrOBJDisplay:
+				// default path
+				break;
 			default:
 				// nothing, probably pan or something
 				break;
@@ -924,6 +975,9 @@ void ImageDocument::Render()
 		}
 
 //-------------------------------- Resize Image --------------------------------
+		// For the Sprite OBJ Render
+		const float ScrollX = ImGui::GetScrollX();
+		const float ScrollY = ImGui::GetScrollY();
 
 		if (m_bShowResizeUI)
 		{
@@ -954,6 +1008,11 @@ void ImageDocument::Render()
 
 	ImGui::EndChild();
 
+
+	if (eJrOBJDisplay == Toolbar::GToolbar->GetCurrentMode())
+	{
+		RenderOBJShapes(ScrollX,ScrollY);
+	}
 
 	if (m_pSurfaces.size() > 1)
 	{
@@ -1150,6 +1209,445 @@ void ImageDocument::RenderPanAndZoom(int iButtonIndex)
 	}
 
 }
+
+//------------------------------------------------------------------------------
+bool ImageDocument::CheckGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size)
+{
+	int num_tiles = 0;
+	switch (obj_size)
+	{
+	case TILE_8x8:
+		num_tiles = 1;
+		break;
+	case TILE_16x16:
+		num_tiles = 2;
+		break;
+	case TILE_24x24:
+		num_tiles = 3;
+		break;
+	case TILE_32x32:
+		num_tiles = 4;
+		break;
+	default:
+		num_tiles = 0;
+		break;
+	}
+
+	if (!num_tiles)
+	{
+		return false;
+	}
+
+	for (int new_y = gy; new_y < (gy + num_tiles); ++new_y)
+	{
+		if (new_y > grid_h)
+		{
+			return false;
+		}
+
+		for (int new_x = gx; new_x < (gx + num_tiles); ++new_x)
+		{
+			if (new_x > grid_w)
+			{
+				return false;
+			}
+
+			if (TILE_8x8 != grid[(new_y * grid_w) + new_x])
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+//------------------------------------------------------------------------------
+void ImageDocument::SetGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size)
+{
+	int num_tiles = 0;
+	switch (obj_size)
+	{
+	case TILE_8x8:
+		num_tiles = 1;
+		break;
+	case TILE_16x16:
+		num_tiles = 2;
+		break;
+	case TILE_24x24:
+		num_tiles = 3;
+		break;
+	case TILE_32x32:
+		num_tiles = 4;
+		break;
+	default:
+		num_tiles = 0;
+		break;
+	}
+
+	if (!num_tiles)
+	{
+		return;
+	}
+
+	for (int new_y = gy; new_y < (gy + num_tiles); ++new_y)
+	{
+		if (new_y > grid_h)
+		{
+			continue;
+		}
+
+		for (int new_x = gx; new_x < (gx + num_tiles); ++new_x)
+		{
+			if (new_x > grid_w)
+			{
+				continue;
+			}
+
+			if ((gx == new_x) && (gy == new_y))
+			{
+				grid[(new_y * grid_w) + new_x] = obj_size;
+			}
+			else
+			{
+				grid[(new_y * grid_w) + new_x] = TILE_USED;
+			}
+		}
+	}
+
+}
+
+//------------------------------------------------------------------------------
+bool ImageDocument::CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y)
+{
+	// Check the 8x8 tile to see if it has any pixels we care about
+	for (int ly = 0; ly < 8; ++ly)
+	{
+		for (int lx = 0; lx < 8; ++lx)
+		{
+			Uint32 pixel = SDL_GetPixel(pSurface, x+lx, y+ly);
+
+			if (pixel != bg_pixel)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+//------------------------------------------------------------------------------
+void ImageDocument::RenderSpriteDoc(const float ScrollX, const float ScrollY)
+{
+	SpriteObjectDocument* pSpriteDoc = m_spriteDocuments[ m_iFrameNo ];
+
+	if (nullptr == pSpriteDoc)
+	{
+		return;
+	}
+
+	// By placing what we draw into a "window", it will appear on top
+	// of our image
+	ImVec2 parentPosition = ImGui::GetWindowPos();
+	ImVec2 parentSize     = ImGui::GetWindowSize();
+
+	ImVec2 windowPosition = parentPosition;
+	ImVec2 windowSize = parentSize;
+
+	// Position
+	windowPosition.y += 82.0f;
+	windowPosition.x += 8.0f;
+
+	ImGui::SetNextWindowPos(windowPosition);
+
+	ImGui::BeginChild("OBJ Shapes", windowSize,
+						  false,
+					      ImGuiWindowFlags_NoNav |
+					      ImGuiWindowFlags_NoDecoration |
+					      ImGuiWindowFlags_NoInputs |
+						  ImGuiWindowFlags_NoMove |
+						  ImGuiWindowFlags_NoScrollbar |
+						  ImGuiWindowFlags_NoScrollWithMouse   |
+						  ImGuiChildFlags_AlwaysAutoResize );
+
+
+	// Where we're plotting these boxes
+	ImVec2 winPos = ImGui::GetWindowPos();
+	winPos.x -= ScrollX;
+	winPos.y -= ScrollY;
+
+	int zoom = m_previousZoom;
+
+	winPos.x += (zoom * 0.5f);
+	winPos.y += (zoom * 0.5f);
+	winPos.x += 1.0f;   	  		/* Magic Numbers */
+	winPos.y += 2.0f;
+
+#if 0
+	// For the Bounding Rectangle
+	int minx = pSpriteDoc->m_minX;
+	int maxx = pSpriteDoc->m_maxX;
+	int miny = pSpriteDoc->m_minY;
+	int maxy = pSpriteDoc->m_maxY;
+
+	// Draw the Bounding Rectangle
+	// Bounding Rect just gets in the way
+	ImGui::GetWindowDrawList()->AddRect(
+		ImVec2(((float)minx*zoom)+winPos.x,((float)miny * zoom)+winPos.y),
+		ImVec2(((float)maxx*zoom)+winPos.x,((float)maxy * zoom)+winPos.y),
+		0x800000FF,  // Red
+		0.0f,
+		ImDrawCornerFlags_None,
+		((float)zoom));
+#endif
+
+#if 1
+	// Render the Marked OBJS
+
+	for (int obj_index = 0; obj_index < pSpriteDoc->m_objs.size(); ++obj_index)
+	{
+		const SpriteObjectDef& spr_obj = pSpriteDoc->m_objs[ obj_index ];
+
+		int x = spr_obj.m_x;
+		int y = spr_obj.m_y;
+
+		switch (spr_obj.m_size)
+		{
+			case TILE_8x8:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 7) * zoom) + winPos.x, (((float)y + 7) * zoom) + winPos.y),
+						0x8000FF00,  // Green
+						0.0f,
+						ImDrawFlags_None,
+						((float)zoom));
+				}
+				break;
+			case TILE_16x16:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 15) * zoom) + winPos.x, (((float)y + 15) * zoom) + winPos.y),
+						0x800000FF,  // Red
+						0.0f,
+						ImDrawFlags_None,
+						((float)zoom));
+				}
+				break;
+			case TILE_24x24:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 23) * zoom) + winPos.x, (((float)y + 23) * zoom) + winPos.y),
+						0x80FF0000,  // Blue
+						0.0f,
+						ImDrawFlags_None,
+						((float)zoom));
+				}
+				break;
+			case TILE_32x32:
+				{
+					ImGui::GetWindowDrawList()->AddRect(
+						ImVec2((((float)x) * zoom) + winPos.x, (((float)y) * zoom) + winPos.y),
+						ImVec2((((float)x + 31) * zoom) + winPos.x, (((float)y + 31) * zoom) + winPos.y),
+						0x8000FFFF,  // Yello
+						0.0f,
+						ImDrawFlags_None,
+						((float)zoom));
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+#endif
+
+	ImGui::EndChild();
+}
+
+//------------------------------------------------------------------------------
+void ImageDocument::RenderOBJShapes(const float ScrollX, const float ScrollY)
+{
+	SpriteObjectDocument* pSpriteDoc = m_spriteDocuments[ m_iFrameNo ];
+
+	if (nullptr != pSpriteDoc)
+	{
+		// Render the sprite doc
+		RenderSpriteDoc(ScrollX, ScrollY);
+
+	}
+
+	// Create the sprite doc
+	pSpriteDoc = m_spriteDocuments[ m_iFrameNo ] = new SpriteObjectDocument();
+
+	// Get the Frame Surface
+	SDL_Surface* pSurface = m_pSurfaces[m_iFrameNo];
+
+	Uint32 bg_pixel = SDL_GetPixel(pSurface, (int)0, (int)0);
+
+	// Calculate the Bounds of the sprite
+	int minx = pSurface->w;
+	int maxx = 0;
+	int miny = pSurface->h;
+	int maxy = 0;
+
+	for (int y = 0; y < pSurface->h; ++y)
+	{
+		for (int x = 0; x < pSurface->w; ++x)
+		{
+			Uint32 pixel = SDL_GetPixel(pSurface, x, y);
+
+			if (pixel != bg_pixel)
+			{
+				if (x < minx) minx = x;
+				if (x > maxx) maxx = x;
+				if (y < miny) miny = y;
+				if (y > maxy) maxy = y;
+			}
+
+		}
+	}
+
+	// Save out the Bounding Rectangle
+	pSpriteDoc->m_minX = minx;
+	pSpriteDoc->m_maxX = maxx;
+	pSpriteDoc->m_minY = miny;
+	pSpriteDoc->m_maxY = maxy;
+
+
+	// The Scan Area is now defined with the min/max
+	int tile_w = ((pSurface->w + 7) / 8);
+	int tile_h = ((pSurface->h + 7) / 8);
+
+	int best_obj_count = tile_w * tile_h + 1;
+	int best_offset_x = 0;
+	int best_offset_y = 0;
+
+	std::vector<int> tile_map(tile_w * tile_h);
+
+	// Nested 64 iteration loop, to slide the tiles around
+	// to find the set with the least number of OBJS/Sprites
+	for (int scan_offset_y = 0; scan_offset_y < 8; ++scan_offset_y)
+	{
+		for (int scan_offset_x =0; scan_offset_x < 8; ++scan_offset_x)
+		{
+			memset(&tile_map[0], 0, sizeof(int) * tile_w * tile_h);
+			for (int y = miny - scan_offset_y; y <= maxy; y+=8)
+			{
+				for (int x = minx - scan_offset_x; x <= maxx; x+=8)
+				{
+					tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y) ? TILE_8x8 : TILE_EMPTY;
+				}
+			}
+
+			//int offset_x = (minx-scan_offset_x) & 0x7;
+			//int offset_y = (miny-scan_offset_y) & 0x7;
+			int obj_count = 0;
+
+			for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
+			{
+				for (int y = 0; y < tile_h; ++y)
+				{
+					for (int x = 0; x < tile_w; ++x)
+					{
+						if (CheckGrid(x, y, tile_map, tile_w, tile_h, obj_size))
+						{
+							SetGrid(x, y, tile_map, tile_w, tile_h, obj_size);
+							obj_count++;
+						}
+					}
+				}
+			}
+
+			if (obj_count < best_obj_count)
+			{
+				best_obj_count = obj_count;
+				best_offset_x = scan_offset_x;
+				best_offset_y = scan_offset_y;
+			}
+		}
+	}
+
+//-----------------------------------------------------------------------------
+
+	int scan_offset_x = best_offset_x;
+	int scan_offset_y = best_offset_y;
+	memset(&tile_map[0], 0, sizeof(int) * tile_w * tile_h);
+	// Do the process again, on the best setting
+	for (int y = miny - scan_offset_y; y <= maxy; y+=8)
+	{
+		for (int x = minx - scan_offset_x; x <= maxx; x+=8)
+		{
+			tile_map[((y/8)*tile_w)+(x/8)] = CheckSurface8x8(pSurface, bg_pixel, x, y) ? TILE_8x8 : TILE_EMPTY;
+		}
+	}
+
+	int offset_x = (minx-scan_offset_x) & 0x7;
+	int offset_y = (miny-scan_offset_y) & 0x7;
+	int obj_count = 0;
+
+	// Mark the OBJS
+	for (int obj_size = TILE_32x32; obj_size >= TILE_8x8; --obj_size)
+	{
+		for (int y = 0; y < tile_h; ++y)
+		{
+			for (int x = 0; x < tile_w; ++x)
+			{
+				if (CheckGrid(x, y, tile_map, tile_w, tile_h, obj_size))
+				{
+					SetGrid(x, y, tile_map, tile_w, tile_h, obj_size);
+					obj_count++;
+				}
+			}
+		}
+	}
+
+	// Add the marked OBJS into a list
+	for (int ty = 0; ty < tile_h; ++ty)
+	{
+		for (int tx = 0; tx < tile_w; ++tx)
+		{
+			int x = (tx * 8) + offset_x;
+			int y = (ty * 8) + offset_y;
+
+			int tile_size = tile_map[(ty * tile_w) + tx];
+
+			switch (tile_size)
+			{
+			case TILE_8x8:
+			case TILE_16x16:
+			case TILE_24x24:
+			case TILE_32x32:
+				{
+					// Create the sprite obj, for the list
+					SpriteObjectDef sprite_obj;
+
+					sprite_obj.m_size = tile_size;
+					sprite_obj.m_x = x;
+					sprite_obj.m_y = y;
+
+					// Add the sprite obj to the list, so we can render it later
+					pSpriteDoc->m_objs.push_back(sprite_obj);
+
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	// Run a pass, called left/right slippery analysis, we look for islands of
+	// OBJs, that can potentially be moved around (left <-> right)
+	//
+	// sliding the objs a little left, or a little right in an island, can
+	// allow for the pruning of more OBJs, which means less RAM, quicker draw
+	// etc.
+
+}
 //------------------------------------------------------------------------------
 void ImageDocument::RenderTimeLine()
 {
@@ -1192,14 +1690,16 @@ void ImageDocument::RenderTimeLine()
 						  false,
 						  ImGuiWindowFlags_NoMove |
 						  ImGuiWindowFlags_NoScrollbar |
-						  ImGuiWindowFlags_NoScrollWithMouse   |
-						  ImGuiWindowFlags_AlwaysAutoResize );
+						  ImGuiWindowFlags_NoScrollWithMouse |
+						  ImGuiChildFlags_AlwaysAutoResize );
 
 	// Some Buttons
 	Toolbar* toolBar = Toolbar::GToolbar;
 
 	if (toolBar)
 	{
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2());
+
 		// Start of the Bar
 		float xPos = 8.0f;
 		ImGui::SameLine(xPos);
@@ -1300,10 +1800,13 @@ void ImageDocument::RenderTimeLine()
 		ImGui::SameLine(xPos+=40.0f);
 
 		// Other Options
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f,2.0f));
 
 		static int hz = 0;
 		ImGui::SetNextItemWidth(64);
 		ImGui::Combo("##Snap", &hz, "50HZ\0" "59.94\0" "60HZ\0" "100HZ\0\0");
+
+		ImGui::PopStyleVar();
 
 		// Mode Buttons
 		ImGui::SameLine(xPos+=64.0f);
@@ -1390,7 +1893,7 @@ void ImageDocument::RenderTimeLine()
 		}
 		ImGui::SameLine(xPos+=40.0f);
 
-
+		ImGui::PopStyleVar(); // for the button padding
 
 		ImGui::NewLine();
 	}
@@ -1451,7 +1954,6 @@ void ImageDocument::RenderTimeLine()
 	// view
 	ImGui::SameLine(x_padding + (frameCountByTime * step));
 	ImGui::Text("");
-
 
 	// Ruler on the Dope Sheet
 	ImVec2 winPos = ImGui::GetWindowPos();
@@ -1607,6 +2109,101 @@ void ImageDocument::Quant16()
 	Quant256();
 
 	m_iTargetColorCount = saveTargetColorCount;
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::Quant135()
+{
+	// Do an actual color reduction on the source Image
+	// then generate an OGL Texture
+	LOG("Quant135 Color Reduce - Go!\n");
+
+	int saveTargetColorCount = m_iTargetColorCount;
+
+	m_iTargetColorCount = 135;
+
+	Quant256();
+
+	m_iTargetColorCount = saveTargetColorCount;
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::RenderSpriteChopDialog()
+{
+	SpriteChopSettings settings = SpriteChopSettings();
+	bool bFavorObjCount;
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+	ImGui::Text("%s", m_filename.c_str());
+	ImGui::SameLine();
+	ImGui::Text(" (%d/%d)", m_iFrameNo+1, m_images.size());
+
+	ImGui::NewLine();
+	ImGui::Separator();
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+	ImGui::Checkbox("Allow  8x8 ", &settings.m_bUse8x8);
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+	ImGui::Checkbox("Allow 16x16", &settings.m_bUse16x16);
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+	ImGui::Checkbox("Allow 24x24", &settings.m_bUse24x24);
+	ImGui::NewLine();
+	ImGui::SameLine(ImGui::GetWindowWidth()/4);
+	ImGui::Checkbox("Allow 32x32", &settings.m_bUse32x32);
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+	ImGui::Checkbox("Favor Memory", &settings.m_bFavorMemory);
+	ImGui::Checkbox("Favor OBJ Count", &bFavorObjCount);
+
+	ImGui::NewLine();
+	ImGui::Separator();
+	ImGui::NewLine();
+
+
+	ImVec2 okSize = ImVec2(128, 24);
+
+	if (ImGui::Button("Ok (all frames)", okSize))
+	{
+		// do the work
+
+		// Put some code here to dispatch the crop/resize
+		m_bShowSpriteChopUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+	ImGui::SameLine();
+
+	static char buffer[256];
+	sprintf(buffer, "Ok (frame %d)", m_iFrameNo+1);
+
+	if (ImGui::Button(buffer, okSize))
+	{
+		// do the work
+
+		// Put some code here to dispatch the crop/resize
+		m_bShowSpriteChopUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
+
+	ImGui::SameLine();
+	if (ImGui::Button("Cancel", okSize))
+	{
+		m_bShowSpriteChopUI = false;
+		ImGui::CloseCurrentPopup();
+	}
+
 }
 
 //------------------------------------------------------------------------------
@@ -3210,6 +3807,206 @@ void ImageDocument::MirrorHorizontal()
 				int SourceIndex = (SourceY * SourceWidth) + SourceX;
 
 				pDestPixels[ DestIndex ] = pSourcePixels[ SourceIndex ];
+			}
+		}
+
+		delete[] pSourcePixels;
+		pSourcePixels = nullptr;
+
+		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, DestWidth, DestHeight);
+
+		pImages.push_back(pSurface);
+
+		delete[] pDestPixels;
+		pDestPixels = nullptr;
+	}
+
+	SetDocumentSurface( pImages );
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::HalfToneGenerator()
+{
+	std::vector<SDL_Surface*> pImages;
+
+	const int IMG_BOX_WIDTH = 16;
+	const int IMG_BOX_HEIGHT = 16;
+
+	const Uint32 BOX_COLOR = 0xF0F0F0F0;
+
+	const int canvas_width  = 17 * IMG_BOX_WIDTH;
+	const int canvas_height = 17 * IMG_BOX_HEIGHT;
+
+	Uint32* pDestPixels = new Uint32[canvas_width * canvas_height];
+
+	// Clear the Canvas, to black
+	memset(pDestPixels, 0, canvas_width*canvas_height*sizeof(Uint32));
+
+	Uint32 TrayColors[16 * 16] = {};
+
+	// Mix all the half tones here
+	for (int colorIndex = 0; colorIndex < 256; colorIndex++)
+	{
+		Uint32 pixel;
+		Uint8 r,g,b,a;
+
+		a = 255;
+
+		r = (unsigned char) (((m_targetColors[colorIndex & 0xF].x * 255.0f)+
+							  (m_targetColors[colorIndex >> 4].x * 255.0f))/
+							 2.0f);
+
+		g = (unsigned char) (((m_targetColors[colorIndex & 0xF].y * 255.0f)+
+							  (m_targetColors[colorIndex >> 4].y * 255.0f))/
+							 2.0f);
+
+		b = (unsigned char) (((m_targetColors[colorIndex & 0xF].z * 255.0f)+
+							  (m_targetColors[colorIndex >> 4].z * 255.0f))/
+							 2.0f);
+		
+		pixel = (((Uint32)a)<<24) |
+			    (((Uint32)b)<<16) |
+				(((Uint32)g)<<8)  |
+				(((Uint32)r));
+
+		TrayColors[colorIndex] = pixel;
+
+
+	}
+
+	// Colors
+	//color.a = (unsigned char) (m_targetColors[idx].w * 255.0f);
+
+	for (int boxpos_y = 0; boxpos_y < 17; ++boxpos_y)
+	{
+		for (int boxpos_x = 0; boxpos_x < 17; ++boxpos_x)
+		{
+			// hline
+			int x = boxpos_x * IMG_BOX_WIDTH;
+			int y = boxpos_y * IMG_BOX_HEIGHT;
+
+			// Draw Box Contents
+			for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+				for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+				{
+					int index;
+
+					if (boxpos_x && boxpos_y)
+					{
+						index = (boxpos_x-1) + ((boxpos_y-1)*16);
+					}
+					else
+					{
+						if (boxpos_x)
+						{
+							index = (boxpos_x-1)+((boxpos_x-1)*16);
+						}
+						else
+						{
+							index = (boxpos_y-1)+((boxpos_y-1)*16);
+						}
+					}
+
+					Uint32 color = TrayColors[index];
+					pDestPixels[ ((y + ly) * canvas_width) + x + lx ] = color;
+				}
+
+			// Draw Box Borders
+			for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+			{
+				pDestPixels[ (y * canvas_width) + x + lx ] = 0;
+			}
+
+			for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+			{
+				pDestPixels[ ((y + ly) * canvas_width) + x ] = 0;
+			}
+
+
+			if ( (( boxpos_x ==  boxpos_y) && (boxpos_x || boxpos_y)) ||
+				 ( boxpos_x && !boxpos_y) ||
+				 (!boxpos_x &&  boxpos_y) )
+			{
+				// Draw Box Borders
+				for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+				{
+					pDestPixels[ (y * canvas_width) + x + lx ] = BOX_COLOR;
+					pDestPixels[ ((y+15) * canvas_width) + x + lx ] = BOX_COLOR;
+				}
+
+				for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+				{
+					pDestPixels[ ((y + ly) * canvas_width) + x ] = BOX_COLOR;
+					pDestPixels[ ((y + ly) * canvas_width) + x + 15 ] = BOX_COLOR;
+				}
+
+			}
+		}
+	}
+
+
+	// Draw Stuff
+	SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA(pDestPixels, canvas_width, canvas_height);
+
+	pImages.push_back(pSurface);
+
+	// Free the raw memory
+	delete[] pDestPixels;
+	pDestPixels = nullptr;
+
+	SetDocumentSurface( pImages );
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::PlasmaFilter()
+{
+	// Results
+	std::vector<SDL_Surface*> pImages;
+
+	for (int idx = 0; idx < m_pSurfaces.size(); ++idx)
+	{
+		Uint32* pSourcePixels = SDL_SurfaceToUint32Array(m_pSurfaces[idx]);
+		Uint32 *pDestPixels = new Uint32[m_width * m_height * 3 * 3];
+
+		int SourceWidth = m_width;
+		int SourceHeight = m_height;
+		int DestWidth  = m_width * 3;
+		int DestHeight = m_height * 3;
+
+		// Each Source pixel, becomes 9 dest pixels
+		for (int SourceY = 0; SourceY < SourceHeight; ++SourceY)
+		{
+			for (int SourceX = 0; SourceX < SourceWidth; ++SourceX)
+			{
+				int DestX = SourceX*3;
+				int DestY = SourceY*3;
+				int DestIndex   = (DestY * DestWidth) + DestX;
+				int SourceIndex = (SourceY * SourceWidth) + SourceX;
+
+				Uint32 color = pSourcePixels[ SourceIndex ];
+				//Uint32 halfColor = color >>= 1;
+				//halfColor &= 0x7F7F7F7F;
+				//halfColor |= 0xFF000000;
+				//Uint32 midColor = halfColor >>= 1;
+				//midColor &= 0x003F3F3F;
+				//midColor += halfColor;
+				//Uint32 lowColor = 0;
+				//midColor = 0;
+				//Uint32 midColor = color;
+				Uint32 lowColor = color >> 1;
+				lowColor &=0x7F7F7F7F;
+
+				pDestPixels[ DestIndex+0 ] = lowColor;
+				pDestPixels[ DestIndex+1 ] = lowColor;
+				pDestPixels[ DestIndex+2 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth+0 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth+1 ] = color;
+				pDestPixels[ DestIndex+DestWidth+2 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth*2+0 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth*2+1 ] = lowColor;
+				pDestPixels[ DestIndex+DestWidth*2+2 ] = lowColor;
 			}
 		}
 

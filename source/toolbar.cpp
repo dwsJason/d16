@@ -88,7 +88,11 @@ static const char* helpStrings[] =
 	"Rotate Image\n90 Right/CW",
 	"Rotate Image\n90 Left/CCW",
 	"Mirror Image\nHorizontal",
-	"Mirror Image\nVertical"
+	"Mirror Image\nVertical",
+	"Plasma Filter\n(No Undo)",
+	"Generate Half Tones Image\nFrom the color bar",
+	"Jr. Sprite\nOBJ analyze",
+	"Jr. Sprite\nOBJ display"
 };
 
 static const int buttonXY[][2] =
@@ -100,6 +104,10 @@ static const int buttonXY[][2] =
 	{4,8},  // rotate left
 	{4,3},  // h-flip
 	{6,11}, // v-flip
+	{2,16}, // plastma filter
+	{4,5},  // Half Tone Generator
+	{0,17}, // obj analyzer
+	{0,18}, // toggle obj display
 
 };
 
@@ -110,6 +118,8 @@ static int lastHovered = -1;
 
 	int wasHovered = lastHovered;
 	lastHovered = -1;
+
+	ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2());
 
 	for (int idx = 0; idx < eToolBarMode_COUNT; ++idx)
 	{
@@ -122,8 +132,8 @@ static int lastHovered = -1;
 		SetButtonImage(buttonXY[idx][0] + (idx==GetCurrentMode() ? 1 : 0)
 					   ,buttonXY[idx][1]);
 
-		if (ImGui::ImageButton((ImTextureID)(m_GLImage),
-							   buttonSize, m_uv0, m_uv1, 0,
+		if (ImGui::ImageButton("",(ImTextureID)((uint64_t)m_GLImage),
+							   buttonSize, m_uv0, m_uv1,
 							   bg_color, tint_color))
 		{
 			SetCurrentMode( idx );
@@ -141,6 +151,8 @@ static int lastHovered = -1;
 			lastHovered = idx;
 		}
 	}
+
+	ImGui::PopStyleVar();
 }
 
 //------------------------------------------------------------------------------
@@ -199,8 +211,8 @@ static int lastHovered = -1;
 	SetButtonImage(col + (pressed ? 1 : 0), row);
 
 
-	bool result = ImGui::ImageButton((ImTextureID)(m_GLImage),
-						   buttonSize, m_uv0, m_uv1, 0,
+	bool result = ImGui::ImageButton("",(ImTextureID)((uint64_t)m_GLImage),
+						   buttonSize, m_uv0, m_uv1,
 						   bg_color, tint_color);
 
 	if (ImGui::IsItemHovered())

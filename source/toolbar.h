@@ -19,6 +19,13 @@ enum ToolBarMode
 	eMirrorHorizontal,
 	eMirrorVertical,
 
+	ePlasmaFilter,
+
+	eHalfToneGenerator,
+
+	eJrOBJAnalyze,
+	eJrOBJDisplay,
+
 	eToolBarMode_COUNT
 };
 

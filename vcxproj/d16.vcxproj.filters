@@ -191,6 +191,9 @@
     <ClCompile Include="..\libs\nativefiledialog-extended\src\nfd_win.cpp">
       <Filter>libs\nativefiledialog-extended</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\imgui\imgui_tables.cpp">
+      <Filter>libs\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">

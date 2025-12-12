@@ -4,6 +4,7 @@
 // (GL3W is a helper library to access OpenGL functions since there is no standard header to access modern OpenGL functions easily. Alternatives are GLEW, Glad, etc.)
 
 #include "imgui.h"
+#include "imgui_internal.h" // required for dock builder
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
@@ -372,15 +373,18 @@ void ShowLog()
 //------------------------------------------------------------------------------
 const float toolbarSize = 32;
 
+// Signal to rebuild the dock
+bool G_RebuildDock = false;
+
 void DockSpaceUI()
 {
-	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
 	ImGuiWindowFlags window_flags = /*ImGuiWindowFlags_MenuBar |*/ ImGuiWindowFlags_NoDocking;
 
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImVec2 WorkPos = viewport->GetWorkPos();
+	ImVec2 WorkPos = viewport->WorkPos;
 	WorkPos.y += toolbarSize;
-	ImVec2 WorkSize = viewport->GetWorkSize();
+	ImVec2 WorkSize = viewport->WorkSize;
 	WorkSize.y -= toolbarSize;
 
 	ImGui::SetNextWindowPos(WorkPos);
@@ -398,18 +402,83 @@ void DockSpaceUI()
 	ImGui::PopStyleVar(2);
 
 	ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+
+	static bool bFirstTime = true;
+
+	if (bFirstTime)
+	{
+		bFirstTime = false;
+
+		//$$TODO - Add code to preserve the current UI state, so when it rebuilds
+		// it matches what we have right now, instead of doing a full reset
+
+		// Clear out existing layout
+		ImGui::DockBuilderRemoveNode(dockspace_id);
+		// Add empty node
+		ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+		// Main node should cover entire window
+		ImGui::DockBuilderSetNodeSize(dockspace_id, WorkSize);
+		// get id of main dock space area
+		ImGuiID dockspace_main_id = dockspace_id;
+		// Create a dock node for the right docked window
+		ImGuiID right  = ImGui::DockBuilderSplitNode(dockspace_main_id, ImGuiDir_Right, 0.27f, nullptr, &dockspace_main_id);
+		ImGuiID bottom = ImGui::DockBuilderSplitNode(dockspace_main_id, ImGuiDir_Down, 0.25f, nullptr, &dockspace_main_id);
+
+		ImGui::DockBuilderDockWindow("Palettes", right);
+		ImGui::DockBuilderDockWindow("Dream16 Log", bottom);
+
+		// Dock all the elements
+		for (int idx = 0; idx < imageDocuments.size(); ++idx)
+		{
+			ImageDocument* pImageDoc = imageDocuments[idx];
+			ImGui::DockBuilderDockWindow(pImageDoc->WindowName(), dockspace_main_id);
+		}
+
+		ImGui::DockBuilderFinish(dockspace_id);
+
+	}
+
+	//
+	// The ImageDocument Windows must exist, before we dock them
+	// so we need to wait 1 frame from when a Rebuild is Requested
+	// stinky IMGUI
+	//
+	if (G_RebuildDock)
+	{
+		bFirstTime = true;
+		G_RebuildDock = false;
+	}
+
+	#if 0
+	// Check to see if we need to add any documents to the dock
+	for (int idx = 0; idx < imageDocuments.size(); ++idx)
+	{
+		ImageDocument* pImageDoc = imageDocuments[idx];
+
+		if (pImageDoc->IsNew())
+		{
+			ImGui::DockBuilderDockWindow(pImageDoc->WindowName(), G_DockSpaceMainID);
+		}
+
+		ImGui::DockBuilderFinish(ImGui::GetID("MyDockSpace"));
+	}
+	#endif
+
+	// Render DockSpace
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
 //---
 	ImGui::End();
+
+
 
 }
 
 void ToolBarUI()
 {
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->GetWorkPos());
-	ImVec2 WorkSize = viewport->GetWorkSize();
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImVec2 WorkSize = viewport->WorkSize;
 	WorkSize.y = toolbarSize;
 	ImGui::SetNextWindowSize(WorkSize);
 	ImGui::SetNextWindowViewport(viewport->ID);
@@ -464,8 +533,9 @@ void MainMenuBarUI()
 					NFD::PathSet::Count(outPaths, NumPaths);
 					for (unsigned int index = 0; index < NumPaths; ++index)
 					{
-						NFD::UniquePathSetPathU8 loadPath;
+						bool error = false;
 
+						NFD::UniquePathSetPathU8 loadPath;
 						NFD::PathSet::GetPath(outPaths, index, loadPath);
 
 						std::string pathName = loadPath.get();
@@ -541,7 +611,8 @@ void MainMenuBarUI()
 							}
 
 
-						} else if (endsWith(pathName, ".gif"))
+						}
+						else if (endsWith(pathName, ".gif"))
 						{
 							// Use GIF Library
 							std::vector<SDL_Surface*> frames = SDL_GIF_Load(pathName.c_str());
@@ -553,8 +624,11 @@ void MainMenuBarUI()
 								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
 							}
 							else
+							{
 								image=IMG_Load(pathName.c_str());
-						} else if (endsWith(pathName, ".fli") || (endsWith(pathName, ".flc")))
+							}
+						}
+						else if (endsWith(pathName, ".fli") || (endsWith(pathName, ".flc")))
 						{
 							// Use FLC/FLI Library
 							std::vector<SDL_Surface*> frames = SDL_FLC_Load(pathName.c_str());
@@ -577,11 +651,14 @@ void MainMenuBarUI()
 
 							imageDocuments.push_back(new ImageDocument(fileName, pathName, image));
 						}
-						else
+
+						if (true == error)
 						{
 							LOG("Failed %s\n", pathName.c_str());
 						}
 					}
+
+					G_RebuildDock = true;
 				}
 			}
 

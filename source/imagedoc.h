@@ -49,6 +49,40 @@ enum ScaleFilter
 };
 //-------------------------------
 
+class SpriteObjectDef
+{
+public:
+	int m_size;
+	int m_x;
+	int m_y;
+};
+
+class SpriteChopSettings
+{
+public:
+	bool m_bUse8x8;
+	bool m_bUse16x16;
+	bool m_bUse24x24;
+	bool m_bUse32x32;
+	bool m_bFavorMemory;  // if true optimize for memory, above all else
+	                      // if false, favor OBJ count over all else
+};
+
+
+class SpriteObjectDocument
+{
+public:
+	SpriteChopSettings m_settings;  // the settings used when we shopped this frame
+	int m_minX;
+	int m_maxX;
+	int m_minY;
+	int m_maxY;
+	std::vector<SpriteObjectDef> m_objs;
+};
+
+//-------------------------------
+
+
 class ImageDocument
 {
 public:
@@ -59,6 +93,9 @@ public:
 	bool IsClosed() { return !m_bOpen; }
 
 	void Render();
+
+	bool IsNew() { return m_bIsFirstRender; }
+	const char* WindowName() { return m_windowName.c_str(); }
 
 private:
 
@@ -71,6 +108,7 @@ private:
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant16();
 	void Quant256();
+	void Quant135();
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
@@ -81,11 +119,22 @@ private:
 	void RotateLeft();
 	void MirrorHorizontal();
 	void MirrorVertical();
+	void PlasmaFilter();
+	void HalfToneGenerator();
 
 	void RenderEyeDropper();
 	void RenderPanAndZoom(int iButtonIndex=0);
 	void RenderResizeDialog();
+	void RenderSpriteChopDialog();
 	void RenderTimeLine();
+
+	void RenderSpriteDoc(const float ScrollX, const float ScrollY);
+	void RenderOBJShapes(const float ScrollX, const float ScrollY);
+
+	bool CheckSurface8x8(SDL_Surface* pSurface, Uint32 bg_pixel, int x, int y);
+
+	bool CheckGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size);
+	void SetGrid(int gx, int gy, std::vector<int>& grid, int grid_w, int grid_h, int obj_size);
 
 	void SaveC1(std::string filenamepath);
 	void SaveC2(std::string filenamepath);
@@ -115,6 +164,7 @@ private:
 	// Turns out we now support Animation, weird
 	std::vector<GLuint> m_images; // GL Images
 	std::vector<SDL_Surface*> m_pSurfaces;
+	std::vector<SpriteObjectDocument*> m_spriteDocuments;
 
 	//
 	// For editing, and playing having a present time, that is a real time
@@ -153,14 +203,29 @@ private:
 	std::vector<ImVec4> m_targetColors;
 
 //-- UI State
-	bool m_bOpen;
-	bool m_bPanActive;
-	bool m_bShowResizeUI;
+	bool m_bOpen;      				// document open
+	bool m_bPanActive;  			// panning
+	bool m_bShowResizeUI;   		// resize image modal
+	bool m_bShowSpriteChopUI;   	// sprite chop modal
 	bool m_bEyeDropDrag;
 
 static int s_uniqueId;
 
 };
+
+enum 
+{
+	TILE_EMPTY,
+	TILE_USED,
+
+	TILE_8x8,
+	TILE_16x16,
+	TILE_24x24,
+	TILE_32x32,
+
+	TILE_SIZES_COUNT
+};
+
 
 #endif // _IMAGE_DOCUMENT_
 
