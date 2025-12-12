@@ -1,6 +1,71 @@
 
 #include "xu_line.h"
 
+#include <math.h>
+
+
+// Paint pixel white (floating point version, for reference only)
+void inline CRawCanvas::plotf(i16 x, i16 y, float alpha) {
+	m_pSurface[y*m_width + x] = 255 - ((255 - m_pSurface[y*m_width + x]) * (1.0f - alpha));
+}
+
+void CRawCanvas::WULine(float x0, float y0, float x1, float y1)
+{
+	bool steep = fabs(y1 - y0) > fabs(x1 - x0);
+
+	if(steep)   { float z = x0; x0 = y0; y0 = z; z = x1; x1 = y1; y1 = z; }
+	if(x0 > x1) { float z = x0; x0 = x1; x1 = z; z = y0; y0 = y1; y1 = z; }
+
+	float dx = x1 - x0, dy = y1 - y0;
+	float gradient = (dx == 0.0f) ? 1.0f : dy / dx;
+
+	// handle first endpoint
+	uint16_t xend = (uint16_t)round(x0);
+	float yend = y0 + gradient * ((float)xend - x0);
+	float xgap = (float)(1.0f - (x0 + 0.5f - floor(x0 + 0.5f)));
+	int16_t xpxl1 = xend; // this will be used in the main loop
+	int16_t ypxl1 = (int16_t)floor(yend);
+	if(steep) {
+		plotf(ypxl1,       xpxl1, (1.0f - (yend - floor(yend))) * xgap);
+		plotf(ypxl1 + 1.0f, xpxl1,        (yend - floor(yend))  * xgap);
+	} else {
+		plotf(xpxl1, ypxl1,       (1.0f - (yend - floor(yend))) * xgap);
+		plotf(xpxl1, ypxl1 + 1.0f,        (yend - floor(yend))  * xgap);
+	}
+	float intery = yend + gradient; // first y-intersection for the main loop
+
+	// handle second endpoint
+	xend = round(x1);
+	yend = y1 + gradient * ((float)xend - x1);
+	xgap = x1 + 0.5f - floor(x1 + 0.5f);
+	int16_t xpxl2 = xend; //this will be used in the main loop
+	int16_t ypxl2 = floor(yend);
+	if(steep) {
+		plotf(ypxl2,       xpxl2, (1.0f - (yend - floor(yend))) * xgap);
+		plotf(ypxl2 + 1.0f, xpxl2,        (yend - floor(yend))  * xgap);
+	} else {
+		plotf(xpxl2, ypxl2,       (1.0f - (yend - floor(yend))) * xgap);
+		plotf(xpxl2, ypxl2 + 1.0f,        (yend - floor(yend))  * xgap);
+	}
+
+	// main loop
+	if(steep) {
+		for(uint16_t x = xpxl1 + 1; x < xpxl2; x++) {
+			plotf(floor(intery),     x, (1.0f - (intery - floor(intery))));
+			plotf(floor(intery) + 1, x,        (intery - floor(intery) ));
+			intery += gradient;
+		}
+	} else {
+		for(uint16_t x = xpxl1 + 1; x < xpxl2; x++) {
+			plotf(x, floor(intery),     (1.0f - (intery - floor(intery))));
+			plotf(x, floor(intery) + 1,        (intery - floor(intery) ));
+			intery += gradient;
+		}
+	}
+
+}
+
+
 #if 0
 // fast fixed point
 // Something to draw on
