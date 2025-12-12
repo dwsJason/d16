@@ -40,6 +40,9 @@ public:
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
 
+	const std::vector<OBJFILE::vec2>& GetPoints() { return m_points; }
+	const std::vector<OBJFILE::int2>& GetLines()  { return m_lines; }
+
 private:
 
 	// center of rotation

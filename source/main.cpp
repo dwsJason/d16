@@ -17,6 +17,7 @@
 #include "dirent.h"
 #include "toolbar.h"
 #include "obj_file.h"
+#include "xu_line.h"
 
 #include "d16.h"
 
@@ -774,6 +775,9 @@ void MainMenuBarUI()
 
 							std::vector<SDL_Surface*> frames = pRawCanvas->RenderFrames();
 
+							imageDocuments.push_back(new ImageDocument(filename, pathName, frames));
+
+							delete pImportVector; // this also frees the pRawCanvas
 
 						}
 						else

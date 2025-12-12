@@ -9,16 +9,44 @@ CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 
 	pOBJFile->GetWidthHeight(&width, &height);
 
+	m_pOBJFile = pOBJFile;
+
 	m_width  = width;
 	m_height = height;
 	m_color = 0xFFFFFFFF;
 
-	m_pSurface = new u32[ width * height ];
+	m_pRawPixels = new u32[ width * height ];
+
 }
 
 std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 {
+	// Actually Render some stuff onto our m_pSurface
+
+	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
+	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
+
+
+	for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
+	{
+		float x0,y0,x1,y1;
+
+		x0 = points[ lines[ line_idx ].x - 1 ].x;
+		y0 = points[ lines[ line_idx ].x - 1 ].y;
+
+		x1 = points[ lines[ line_idx ].y - 1 ].x;
+		y1 = points[ lines[ line_idx ].y - 1 ].y;
+
+		WULine(x0,y0,x1,y1);
+	}
+
+
+	// return it back out
 	std::vector<SDL_Surface*> frames;
+
+	SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
+
+	frames.push_back(pSurface);
 
 	return frames;
 }
@@ -32,7 +60,7 @@ void inline CRawCanvas::plotf(i16 x, i16 y, float alpha)
 
 	int surfaceIndex = (y * m_width) + x;
 
-	u32 surfaceColor = m_pSurface[surfaceIndex];
+	u32 surfaceColor = m_pRawPixels[surfaceIndex];
 
 	// surface rgb
 	u8 sr, sg, sb, sa;
@@ -60,7 +88,7 @@ void inline CRawCanvas::plotf(i16 x, i16 y, float alpha)
 	    pixel|= g; pixel<<=8;
 		pixel|= r;
 
-	m_pSurface[ surfaceIndex ] = pixel;
+	m_pRawPixels[ surfaceIndex ] = pixel;
 
 
 
@@ -274,3 +302,43 @@ void wudemo() {
 
 }
 #endif
+
+SDL_Surface* CRawCanvas::SDL_SurfaceFromRawRGBA(Uint32 *pPixels, int iWidth, int iHeight)
+{
+	SDL_Surface *pImage = SDL_CreateRGBSurface(SDL_SWSURFACE, iWidth, iHeight,
+											   32,
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN     /* OpenGL RGBA masks */
+								 0x000000FF,
+								 0x0000FF00, 0x00FF0000, 0xFF000000
+#else
+								 0xFF000000,
+								 0x00FF0000, 0x0000FF00, 0x000000FF
+#endif
+								 );
+
+	if (nullptr == pImage)
+		return nullptr;
+
+	if( SDL_MUSTLOCK(pImage) )
+		SDL_LockSurface(pImage);
+
+
+	Uint32 *pRGBA = pPixels;  // Start with the first pixel
+
+	for (int y = 0; y < iHeight; ++y)
+	{
+		for (int x = 0; x < iWidth; ++x)
+		{
+			Uint8* pPixel = (Uint8*)pImage->pixels;
+			pPixel += (y*pImage->pitch) + (x * sizeof(Uint32));
+
+			*((Uint32*)pPixel) = *pRGBA++;
+		}
+	}
+
+	if( SDL_MUSTLOCK(pImage) )
+		SDL_UnlockSurface(pImage);
+
+	return pImage;
+}
+

@@ -20,16 +20,16 @@ public:
 		, m_height(height)
 	{
 		m_color = 0xFFFFFFFF; // rgba
-		m_pSurface = new u32[ m_width * m_height ];
+		m_pRawPixels = new u32[ m_width * m_height ];
 		m_pOBJFile = nullptr;
 	}
 
 	~CRawCanvas()
 	{
-		if (m_pSurface)
+		if (m_pRawPixels)
 		{
-			delete m_pSurface;
-			m_pSurface = nullptr;
+			delete m_pRawPixels;
+			m_pRawPixels = nullptr;
 		}
 
 		if (m_pOBJFile)
@@ -39,10 +39,11 @@ public:
 		}
 	}
 
+//-----------------------------------------------------------------------------
 
 	std::vector<SDL_Surface*> RenderFrames();
 
-	u32* m_pSurface;
+	u32* m_pRawPixels;
 	u32  m_color;
 
 	int m_width;
@@ -55,6 +56,8 @@ private:
 	COBJFile* m_pOBJFile;
 
 	void inline plotf(i16 x, i16 y, float alpha);
+
+	SDL_Surface* SDL_SurfaceFromRawRGBA(Uint32 *pPixels, int iWidth, int iHeight);
 
 };
 
