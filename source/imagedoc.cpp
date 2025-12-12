@@ -409,6 +409,21 @@ void ImageDocument::Render()
 		ImGui::EndTooltip();
 	}
 
+	// 135 Color Magic Machine
+	ImGui::SameLine();
+	if (ImGui::Button("135"))
+	{
+		Quant135();
+	}
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+		ImGui::Text("135 Color Half Tone/nGenerates 16 seed colors, for half tone images");
+		ImGui::EndTooltip();
+	}
+
+
 	ImVec2 buttonSize = ImVec2(20,20);
 
 	for (int idx = 0; idx < m_targetColors.size(); ++idx)
@@ -2090,6 +2105,23 @@ void ImageDocument::Quant16()
 	int saveTargetColorCount = m_iTargetColorCount;
 
 	m_iTargetColorCount = 16;
+
+	Quant256();
+
+	m_iTargetColorCount = saveTargetColorCount;
+}
+
+//------------------------------------------------------------------------------
+
+void ImageDocument::Quant135()
+{
+	// Do an actual color reduction on the source Image
+	// then generate an OGL Texture
+	LOG("Quant135 Color Reduce - Go!\n");
+
+	int saveTargetColorCount = m_iTargetColorCount;
+
+	m_iTargetColorCount = 135;
 
 	Quant256();
 
@@ -3801,7 +3833,7 @@ void ImageDocument::HalfToneGenerator()
 	const int IMG_BOX_WIDTH = 16;
 	const int IMG_BOX_HEIGHT = 16;
 
-	const Uint32 BOX_COLOR = 0x7F7F7F7F;
+	const Uint32 BOX_COLOR = 0xF0F0F0F0;
 
 	const int canvas_width  = 17 * IMG_BOX_WIDTH;
 	const int canvas_height = 17 * IMG_BOX_HEIGHT;
@@ -3880,16 +3912,35 @@ void ImageDocument::HalfToneGenerator()
 					pDestPixels[ ((y + ly) * canvas_width) + x + lx ] = color;
 				}
 
-
 			// Draw Box Borders
 			for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
 			{
-				pDestPixels[ (y * canvas_width) + x + lx ] = BOX_COLOR;
+				pDestPixels[ (y * canvas_width) + x + lx ] = 0;
 			}
 
 			for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
 			{
-				pDestPixels[ ((y + ly) * canvas_width) + x ] = BOX_COLOR;
+				pDestPixels[ ((y + ly) * canvas_width) + x ] = 0;
+			}
+
+
+			if ( (( boxpos_x ==  boxpos_y) && (boxpos_x || boxpos_y)) ||
+				 ( boxpos_x && !boxpos_y) ||
+				 (!boxpos_x &&  boxpos_y) )
+			{
+				// Draw Box Borders
+				for (int lx = 0; lx < IMG_BOX_WIDTH; ++lx)
+				{
+					pDestPixels[ (y * canvas_width) + x + lx ] = BOX_COLOR;
+					pDestPixels[ ((y+15) * canvas_width) + x + lx ] = BOX_COLOR;
+				}
+
+				for (int ly = 0; ly < IMG_BOX_HEIGHT; ++ly)
+				{
+					pDestPixels[ ((y + ly) * canvas_width) + x ] = BOX_COLOR;
+					pDestPixels[ ((y + ly) * canvas_width) + x + 15 ] = BOX_COLOR;
+				}
+
 			}
 		}
 	}

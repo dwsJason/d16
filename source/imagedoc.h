@@ -108,6 +108,7 @@ private:
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
 	void Quant16();
 	void Quant256();
+	void Quant135();
 
 	void PointSampleResize(int iNewWidth, int iNewHeight);
 	void LinearSampleResize(int iNewWidth, int iNewHeight);
