@@ -18,7 +18,7 @@ I recommend 444 (takes the colors down to 12-bit), 50% dither, and 16 colors.
 
 For FMX I recommend 888, 0% dither, and 256 colors.
 
-Once you press the button to quatize, a second version of the image appears to
+Once you press the button to quantize, a second version of the image appears to
 the right, quatized down for preview.  Right click on the second image, and you
 can choose to save as, multiple formats.
 
