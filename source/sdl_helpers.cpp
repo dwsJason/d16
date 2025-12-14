@@ -798,24 +798,60 @@ SDL_Surface* SDL_C1DataToSurface(unsigned char* bytes)
 {
 	SDL_Surface* pSurface = nullptr;
 
-	// Convert to 256 color index image. then take that into a surface
-	unsigned char* pRawPixels = new unsigned char[ 320 * 200 ];
-
-	// Get the pixels (no 640, and no fill mode)
-	for (int y = 0; y < 200; ++y)
+	if (bytes[ 0x7d00 ] & 0x80)
 	{
-		unsigned char pal_index = bytes[ 0x7D00 + y ] << 4;
+		// 640 mode
+		unsigned char* pRawPixels = new unsigned char[ 640 * 200 ];
 
-		int source_index = y * 160;
-		int dest_index = y * 320;
-
-		for (int x = 0; x < 320; x+=2)
+		// Get the pixels 640 mode only
+		for (int y = 0; y < 200; ++y)
 		{
-			unsigned char source_pixel = bytes[ source_index + (x>>1) ];
+			unsigned char pal_index = bytes[ 0x7D00 + y ] << 4;
 
-			pRawPixels[ dest_index + x + 0 ] = ((source_pixel>>4) & 0xF) | pal_index;
-			pRawPixels[ dest_index + x + 1 ] = ((source_pixel>>0) & 0xF) | pal_index;
+			int source_index = y * 160;
+			int dest_index = y * 640;
+
+			for (int x = 0; x < 640; x+=4)
+			{
+				unsigned char source_pixel = bytes[ source_index + (x>>2) ];
+
+				pRawPixels[ dest_index + x + 0 ] = ((source_pixel>>6) & 0x3) | pal_index | 0x8;
+				pRawPixels[ dest_index + x + 1 ] = ((source_pixel>>4) & 0x3) | pal_index | 0xC;
+				pRawPixels[ dest_index + x + 2 ] = ((source_pixel>>2) & 0x3) | pal_index | 0x0;
+				pRawPixels[ dest_index + x + 3 ] = ((source_pixel>>0) & 0x3) | pal_index | 0x4;
+			}
 		}
+
+		pSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+			pRawPixels, 640, 200,
+			8, 640, SDL_PIXELFORMAT_INDEX8);
+
+	}
+	else
+	{
+		// Convert to 256 color index image. then take that into a surface
+		unsigned char* pRawPixels = new unsigned char[ 320 * 200 ];
+
+		// Get the pixels (no 640, and no fill mode)
+		for (int y = 0; y < 200; ++y)
+		{
+			unsigned char pal_index = bytes[ 0x7D00 + y ] << 4;
+
+			int source_index = y * 160;
+			int dest_index = y * 320;
+
+			for (int x = 0; x < 320; x+=2)
+			{
+				unsigned char source_pixel = bytes[ source_index + (x>>1) ];
+
+				pRawPixels[ dest_index + x + 0 ] = ((source_pixel>>4) & 0xF) | pal_index;
+				pRawPixels[ dest_index + x + 1 ] = ((source_pixel>>0) & 0xF) | pal_index;
+			}
+		}
+
+		pSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+			pRawPixels, 320, 200,
+			8, 320, SDL_PIXELFORMAT_INDEX8);
 	}
 
 	// GS Colors to SDL Colors
@@ -837,10 +873,6 @@ SDL_Surface* SDL_C1DataToSurface(unsigned char* bytes)
 
 		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
 	}
-
-	pSurface = SDL_CreateRGBSurfaceWithFormatFrom(
-		pRawPixels, 320, 200,
-		8, 320, SDL_PIXELFORMAT_INDEX8);
 
 	SDL_SetSurfacePalette(pSurface, pPalette);
 
