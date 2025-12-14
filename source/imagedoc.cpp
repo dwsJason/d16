@@ -3005,7 +3005,7 @@ Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
 
 //------------------------------------------------------------------------------
 // Just return the index, that has the closest match to the passed in color
-static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor)
+static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor, Uint32 uNumColors=16)
 {
 	int closestIndex = 0;
 	long closestDistance;
@@ -3028,7 +3028,7 @@ static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor)
 
 	closestDistance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
 
-	for (int idx = 1; idx < 16; ++idx)
+	for (int idx = 1; idx < uNumColors; ++idx)
 	{
 		color = pClut[ idx ];
 
@@ -3082,32 +3082,88 @@ unsigned char* ImageDocument::CreateC1Data(int frameNo)
 // Choose a surface to save
 	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[frameNo] : m_pSurfaces[frameNo];
 
-	// Nibblized pixel data
-	for (int y = 0; y < 200; ++y)
+	if (640 == pImage->w)
 	{
-		for (int x = 0; x < 320; x+=2)
+		//$$JGA this kind of sucks, but it's what I can do for now
+		for (int index = 4; index < m_targetColors.size(); ++index)
 		{
-			Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
-			Uint32 index0 = ClosestIndex(pClut, pixel0);
-			Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
-			Uint32 index1 = ClosestIndex(pClut, pixel1);
-
-			c1data[ (y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+			if (!m_bLocks[ index ])
+			{
+				m_targetColors[ index ] = m_targetColors[ index & 3 ];
+				pClut[ index ] = pClut[ index & 3 ];
+			}
 		}
+
+		// 640 mode
+		// convert pixel data into 2 bit indices
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 640; x+=4)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut+8, pixel0, 4);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut+12, pixel1, 4);
+				Uint32 pixel2 = SDL_GetPixel(pImage, x+2, y);
+				Uint32 index2 = ClosestIndex(pClut+0, pixel2, 4);
+				Uint32 pixel3 = SDL_GetPixel(pImage, x+3, y);
+				Uint32 index3 = ClosestIndex(pClut+4, pixel3, 4);
+
+				c1data[ (y * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
+			}
+		}
+
+		// put the lines into 640 mode
+		for (int idx = 0x7D00; idx < 0x7DC8; ++idx)
+		{
+			c1data[idx] = 0x80;
+		}
+
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+		}
+
 	}
-
-	// Color Data, just doing a floor conversion
-
-	Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
-	for (int idx = 0; idx < 16; ++idx)
+	else
 	{
-		Uint32 sourceColor = pClut[ idx ];
-		Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+		// 320 mode
+		// Nibblized pixel data
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 320; x+=2)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut, pixel0);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut, pixel1);
 
-		targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
-		targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+				c1data[ (y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+			}
+		}
 
-		pPal[ idx ] = targetColor;
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+		}
 	}
 
 	return c1data;
