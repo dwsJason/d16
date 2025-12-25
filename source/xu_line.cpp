@@ -31,10 +31,10 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
 	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
 
-	float scale = 0.25f;
+	float scale = m_pOBJFile->GetScale();
 
-	float tx = 319.0;
-	float ty = 199.0;
+	float tx = 319.0f;
+	float ty = 199.0f;
 
 	const float PI_2 = (float) (M_PI * 2.0f);
 
@@ -59,14 +59,14 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 			y1*=scale;
 
 			// rotate
-			float rx = x0 * cos(theta) - y0 * sin(theta);
-			float ry = x0 * sin(theta) + y0 * cos(theta);
+			float rx = float(x0 * cos(theta) - y0 * sin(theta));
+			float ry = float(x0 * sin(theta) + y0 * cos(theta));
 
 			x0 = rx;
 			y0 = ry;
 
-			rx = x1 * cos(theta) - y1 * sin(theta);
-			ry = x1 * sin(theta) + y1 * cos(theta);
+			rx = float(x1 * cos(theta) - y1 * sin(theta));
+			ry = float(x1 * sin(theta) + y1 * cos(theta));
 
 			x1 = rx;
 			y1 = ry;
@@ -81,6 +81,7 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 		}
 
 		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
+		pSurface->userdata = (void*)1; // hacked animation time into here
 
 		frames.push_back(pSurface);
 	}

@@ -36,6 +36,7 @@ public:
 
 	// Information
 	void GetWidthHeight(int* pWidth, int* pHeight);
+	float GetScale() { return m_scale; }
 
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
@@ -48,6 +49,7 @@ private:
 
 	// center of rotation
 	OBJFILE::vec2 m_center; 
+	float m_scale;
 
 	std::vector<OBJFILE::vec2> m_points;
 	std::vector<OBJFILE::int2> m_lines;

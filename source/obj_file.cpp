@@ -18,6 +18,8 @@ COBJFile::COBJFile(const char *pFilePath)
 	m_center.x = 0.0f;
 	m_center.y = 0.0f;
 
+	m_scale = 1.0f;
+
 	LoadFromFile(pFilePath);
 }
 //------------------------------------------------------------------------------
@@ -185,6 +187,13 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 						sscanf_s(tokens[2].c_str(), "%d", &ivec.y );
 
 						m_lines.push_back(ivec);
+					}
+				}
+				else if (tokens[0] == "scale")
+				{
+					if (tokens.size() >= 2)
+					{
+						sscanf_s(tokens[1].c_str(), "%f", &m_scale );
 					}
 				}
 
