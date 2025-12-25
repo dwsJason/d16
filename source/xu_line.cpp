@@ -31,10 +31,15 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
 	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
 
-	float scale = m_pOBJFile->GetScale();
+	const OBJFILE::vec2& scale = m_pOBJFile->GetScale();
 
-	float tx = 319.0f;
-	float ty = 199.0f;
+	int width = 640;
+	int height = 400;
+
+	m_pOBJFile->GetWidthHeight(&width, &height);
+
+	float tx = (width / 2) - 1.0f;
+	float ty = (height / 2) - 1.0f;
 
 	const float PI_2 = (float) (M_PI * 2.0f);
 
@@ -53,10 +58,10 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 			x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
 			y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
 			// scale
-			x0*=scale;
-			x1*=scale;
-			y0*=scale;
-			y1*=scale;
+			x0*=scale.x;
+			x1*=scale.x;
+			y0*=scale.y;
+			y1*=scale.y;
 
 			// rotate
 			float rx = float(x0 * cos(theta) - y0 * sin(theta));

@@ -14,11 +14,13 @@
 // Load in a COBJFile constructor
 //
 COBJFile::COBJFile(const char *pFilePath)
+	: m_width(0)
+	, m_height(0)
 {
 	m_center.x = 0.0f;
 	m_center.y = 0.0f;
 
-	m_scale = 1.0f;
+	m_scale.x = m_scale.y = 1.0f;
 
 	LoadFromFile(pFilePath);
 }
@@ -191,14 +193,39 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 				}
 				else if (tokens[0] == "scale")
 				{
-					if (tokens.size() >= 2)
+					if (tokens.size() == 2)
 					{
-						sscanf_s(tokens[1].c_str(), "%f", &m_scale );
+						float scale = 1.0f;
+						sscanf_s(tokens[1].c_str(), "%f", &scale );
+						m_scale.x = scale;
+						m_scale.y = scale;
+					}
+					else if (tokens.size() >= 3)
+					{
+						sscanf_s(tokens[1].c_str(), "%f", &m_scale.x );
+						sscanf_s(tokens[2].c_str(), "%f", &m_scale.y );
+					}
+				}
+				else if (tokens[0] == "canvas")
+				{
+					// set the render canvas size
+					if (tokens.size() >= 3)
+					{
+						sscanf_s(tokens[1].c_str(), "%d", &m_width );
+						sscanf_s(tokens[2].c_str(), "%d", &m_height );
 					}
 				}
 
-			}
 
+			}
+		}
+
+		// auto width + height
+		if (0==m_width || 0==m_height)
+		{
+			//$$TODO -- analyze the data to make a good width + height
+			m_width  = 640;
+			m_height = 400;
 		}
 	}
 }
@@ -207,8 +234,8 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 
 void COBJFile::GetWidthHeight(int* pWidth, int* pHeight)
 {
-	pWidth[0] = 640;
-	pHeight[0] = 400;
+	pWidth[0] = m_width;
+	pHeight[0] = m_height;
 }
 
 //------------------------------------------------------------------------------
