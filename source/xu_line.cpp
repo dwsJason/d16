@@ -43,7 +43,7 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 
 	const float PI_2 = (float) (M_PI * 2.0f);
 
-	for (float angle = 0.0f; angle < 256.0f; angle+=1.0f)
+	for (float angle = 0.0f; angle < 256.0f; angle+=2.0f)
 	{
 		float theta = angle * PI_2 / 256.0f;
 		memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);
