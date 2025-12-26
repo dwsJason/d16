@@ -85,6 +85,40 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 			BLine((int)x0,(int)y0,(int)x1,(int)y1);
 		}
 
+		// Weird AA
+		// Half Tone AA
+		if (true)
+		{
+			// Fill in half-tone AA, when we have pixels like this   0F F0
+			// 0 converts to half tone                               F0 0F
+
+			for (int y = 0; y < (m_height-1); ++y)
+			{
+				u32 *pLine0 = m_pRawPixels + (y*m_width);
+				u32 *pLine1 = pLine0 + m_width;
+
+				for (int x = 0; x < (m_width-1); ++x)
+				{
+					// case 1
+					if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
+						(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+					{
+						// Halftones
+						pLine0[x+0] = 0xFF808080;
+						pLine1[x+1] = 0xFF808080;
+					}
+					else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
+							 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+					{
+						// Halftones
+						pLine0[x+1] = 0xFF808080;
+						pLine1[x+0] = 0xFF808080;
+					}
+				}
+			}
+		}
+		// End weird AA
+
 		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
 		pSurface->userdata = (void*)1; // hacked animation time into here
 
