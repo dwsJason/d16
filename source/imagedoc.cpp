@@ -27,6 +27,7 @@
 
 #include "sdl_helpers.h"
 
+#include "blit_file.h"
 #include "gsla_file.h"
 
 // Stuff for Journey
@@ -716,6 +717,8 @@ void ImageDocument::Render()
 
 					if (result == NFD_OKAY)
 					{
+						BLITFile blit( m_pTargetSurfaces );
+						blit.SaveToFile( savePath.get() );
 					}
 				}
 

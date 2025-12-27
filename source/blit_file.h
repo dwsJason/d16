@@ -5,15 +5,16 @@
 #ifndef BLIT_FILE_H
 #define BLIT_FILE_H
 
+#include <vector>
+#include "SDL_Surface.h"
+
 class BLITFile
 {
 public:
-	// Load in a GSLA File
-	BLITFile(const char *pFilePath);
+	// Creation
+	BLITFile(const std::vector<SDL_Surface*>& pSurfaces);
 	~BLITFile();
 
-	// Creation
-	BLITFile(int iWidthPixels, int iHeightPixels, int iFrameSizeBytes);
 	void AddImages( const std::vector<unsigned char*>& pFrameBytes );
 	void SaveToFile(const char* pFilenamePath);
 

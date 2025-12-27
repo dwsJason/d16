@@ -273,6 +273,7 @@
     <ClCompile Include="..\libs\nativefiledialog-extended\src\nfd_win.cpp" />
     <ClCompile Include="..\source\256_file.cpp" />
     <ClCompile Include="..\source\anm_file.cpp" />
+    <ClCompile Include="..\source\blit_file.cpp" />
     <ClCompile Include="..\source\c2_file.cpp" />
     <ClCompile Include="..\source\common\cursor.cpp" />
     <ClCompile Include="..\source\common\limage.cpp" />
@@ -445,6 +446,7 @@
     <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
     <ClInclude Include="..\source\256_file.h" />
     <ClInclude Include="..\source\anm_file.h" />
+    <ClInclude Include="..\source\blit_file.h" />
     <ClInclude Include="..\source\c2_file.h" />
     <ClInclude Include="..\source\common\bctypes.h" />
     <ClInclude Include="..\source\common\concurrent_queue.h" />

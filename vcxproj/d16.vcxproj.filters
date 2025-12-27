@@ -203,6 +203,9 @@
     <ClCompile Include="..\source\compiled.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\blit_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\common\concurrent_queue.h">
@@ -719,6 +722,9 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="..\source\compiled.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\blit_file.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
