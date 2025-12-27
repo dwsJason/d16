@@ -8,7 +8,7 @@
 
 //------------------------------------------------------------------------------
 
-BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces)
+BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector<ImVec4>& targetColors)
 {
 }
 
@@ -38,9 +38,9 @@ void BLITFile::AddImages( const std::vector<unsigned char*>& pFrameBytes )
 	}
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //
-// Compress / Serialize a new GSLA File
+// basically we're going to print out source code
 //
 void BLITFile::SaveToFile(const char* pFilenamePath)
 {
@@ -51,5 +51,222 @@ void BLITFile::SaveToFile(const char* pFilenamePath)
 	}
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+Uint32 BLITFile::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
+{
+	Uint32 color = 0;
+
+	if (pSurface)
+	{
+		// Keep x and y legitimate
+		if (x < 0) x = 0;
+		if (x >= pSurface->w) x = pSurface->w-1;
+		if (y < 0) y = 0;
+		if (y >= pSurface->h) y = pSurface->h-1;
+
+		if (pSurface->flags & SDL_PREALLOC)
+		{
+			// This is only true if I allocated the pixels
+			// which means this has to be 8 bit indexed
+			Uint8* pPixel = (Uint8*)pSurface->pixels;
+			pPixel += (y * pSurface->pitch) + x;
+
+			int index = *pPixel;
+
+			color = *((Uint32*)&pSurface->format->palette->colors[ index ]);
+
+		}
+		else
+		{
+			// Better be 32 bit per pixel
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_LockSurface(pSurface);
+
+			int BytesPerPixel = pSurface->format->BytesPerPixel;
+
+			Uint8 * pixel = (Uint8*)pSurface->pixels;
+			pixel += (y * pSurface->pitch) + (x * BytesPerPixel);
+
+			//
+			//color = *((Uint32*)pixel);
+
+			color  =  (Uint32)pixel[0];
+			color |= ((Uint32)pixel[1]) << 8;
+			color |= ((Uint32)pixel[2]) << 16;
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_UnlockSurface(pSurface);
+		}
+	}
+
+	color |= 0xFF000000;  // We don't support Alpha
+	return color;
+}
+
+//-----------------------------------------------------------------------------
+// Just return the index, that has the closest match to the passed in color
+Uint32 BLITFile::ClosestIndex(Uint32* pClut, Uint32 uColor, Uint32 uNumColors)
+{
+	int closestIndex = 0;
+	long closestDistance;
+	Uint32 color = pClut[0];
+	int red,green,blue;
+	int targetRed, targetGreen, targetBlue;
+	int deltaRed, deltaGreen, deltaBlue;
+
+	targetRed   = (uColor >> 0) & 0xFF;
+	targetGreen = (uColor >> 8) & 0xFF;
+	targetBlue  = (uColor >>16) & 0xFF;
+
+	red   = (color >> 0) & 0xFF;
+	green = (color >> 8) & 0xFF;
+	blue  = (color >>16) & 0xFF;
+
+	deltaRed   = red - targetRed;
+	deltaGreen = green - targetGreen;
+	deltaBlue  = blue - targetBlue;
+
+	closestDistance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
+
+	for (unsigned int idx = 1; idx < uNumColors; ++idx)
+	{
+		color = pClut[ idx ];
+
+		red   = (color >> 0) & 0xFF;
+		green = (color >> 8) & 0xFF;
+		blue  = (color >>16) & 0xFF;
+
+		deltaRed   = red - targetRed;
+		deltaGreen = green - targetGreen;
+		deltaBlue  = blue - targetBlue;
+
+		long distance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
+
+		if (distance < closestDistance)
+		{
+			closestDistance = distance;
+			closestIndex = idx;
+		}
+	}
+
+	return closestIndex;
+}
+//-----------------------------------------------------------------------------
+
+unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
+{
+	unsigned char *c1data = new unsigned char[ 0x8000 ];
+
+// Copy of the C1 memory
+	memset(c1data, 0, 0x8000 );
+
+// Get a copy of the clut
+	Uint32 pClut[ 16 ];
+
+	for (int idx = 0; idx < m_targetColors.size(); ++idx)
+	{
+		const ImVec4& floatColor = m_targetColors[ idx ];
+
+		float red   = floatColor.x * 255.0f;
+		float green = floatColor.y * 255.0f;
+		float blue  = floatColor.z * 255.0f;
+
+		Uint32 color = 0xFF000000;   					// A = 1.0
+		color       |= (((Uint32)blue)&0xFF)  << 16;
+		color       |= (((Uint32)green)&0xFF) << 8;
+		color       |= (((Uint32)red)&0xFF)   << 0;
+		
+		pClut[idx] = color;
+	}
+
+// Choose a surface to save
+	//SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[frameNo] : m_pSurfaces[frameNo];
+
+	if (640 == pImage->w)
+	{
+		//$$JGA this kind of sucks, but it's what I can do for now
+		for (int index = 4; index < m_targetColors.size(); ++index)
+		{
+			m_targetColors[ index ] = m_targetColors[ index & 3 ];
+			pClut[ index ] = pClut[ index & 3 ];
+		}
+
+		// 640 mode
+		// convert pixel data into 2 bit indices
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 640; x+=4)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut+8, pixel0, 4);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut+12, pixel1, 4);
+				Uint32 pixel2 = SDL_GetPixel(pImage, x+2, y);
+				Uint32 index2 = ClosestIndex(pClut+0, pixel2, 4);
+				Uint32 pixel3 = SDL_GetPixel(pImage, x+3, y);
+				Uint32 index3 = ClosestIndex(pClut+4, pixel3, 4);
+
+				c1data[ (y * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
+			}
+		}
+
+		// put the lines into 640 mode
+		for (int idx = 0x7D00; idx < 0x7DC8; ++idx)
+		{
+			c1data[idx] = 0x80;
+		}
+
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+		}
+
+	}
+	else
+	{
+		// 320 mode
+		// Nibblized pixel data
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 320; x+=2)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut, pixel0);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut, pixel1);
+
+				c1data[ (y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+			}
+		}
+
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+		}
+	}
+
+	return c1data;
+}
+
+//-----------------------------------------------------------------------------
 

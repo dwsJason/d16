@@ -717,7 +717,7 @@ void ImageDocument::Render()
 
 					if (result == NFD_OKAY)
 					{
-						BLITFile blit( m_pTargetSurfaces );
+						BLITFile blit( m_pTargetSurfaces, m_targetColors );
 						blit.SaveToFile( savePath.get() );
 					}
 				}
