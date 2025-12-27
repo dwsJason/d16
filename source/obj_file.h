@@ -37,6 +37,7 @@ public:
 	// Information
 	void GetWidthHeight(int* pWidth, int* pHeight);
 	const OBJFILE::vec2& GetScale() { return m_scale; }
+	const OBJFILE::vec2& GetHotSpot() { return m_hotspot; }
 
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
@@ -49,6 +50,9 @@ private:
 
 	int m_width;
 	int m_height;
+
+	// hot spot
+	OBJFILE::vec2 m_hotspot; // location where to render the vector image in the canvas
 
 	// center of rotation
 	OBJFILE::vec2 m_center; 

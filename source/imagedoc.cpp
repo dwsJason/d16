@@ -702,6 +702,26 @@ void ImageDocument::Render()
 				ImGui::Separator();
 				ImGui::Separator();
 
+				if (ImGui::MenuItem("Export for Odds") )
+				{
+					NFD::UniquePathU8 savePath;
+
+					const nfdu8char_t* defaultFileName = FixExtension( m_filename, ".txt" );
+
+					nfdresult_t result = NFD::SaveDialog(savePath,
+														 nullptr,    // filter
+														 0,          // filterCount
+														 nullptr,    // default path !!! FIXME
+														 defaultFileName);  // default filename
+
+					if (result == NFD_OKAY)
+					{
+					}
+				}
+
+				ImGui::Separator();
+				ImGui::Separator();
+
 				if (ImGui::MenuItem("Save as GSLA") )
 				{
 

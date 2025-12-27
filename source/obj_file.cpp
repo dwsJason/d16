@@ -20,6 +20,9 @@ COBJFile::COBJFile(const char *pFilePath)
 	m_center.x = 0.0f;
 	m_center.y = 0.0f;
 
+	m_hotspot.x = 0.0f;
+	m_hotspot.y = 0.0f;
+
 	m_scale.x = m_scale.y = 1.0f;
 
 	LoadFromFile(pFilePath);
@@ -213,6 +216,20 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 					{
 						sscanf_s(tokens[1].c_str(), "%d", &m_width );
 						sscanf_s(tokens[2].c_str(), "%d", &m_height );
+
+						if ((0.0f == m_hotspot.x) && (0.0f == m_hotspot.y))
+						{
+							m_hotspot.x = (float)(m_width / 2.0f) - 1.0f;
+							m_hotspot.y = (float)(m_height / 2.0f) - 1.0f;
+						}
+					}
+				}
+				else if (tokens[0] == "hotspot")
+				{
+					if (tokens.size() >= 3)
+					{
+						sscanf_s(tokens[1].c_str(), "%f", &m_hotspot.x );
+						sscanf_s(tokens[2].c_str(), "%f", &m_hotspot.y );
 					}
 				}
 

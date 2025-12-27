@@ -30,16 +30,16 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
 	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
 	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
-
 	const OBJFILE::vec2& scale = m_pOBJFile->GetScale();
+	const OBJFILE::vec2& hotspot = m_pOBJFile->GetHotSpot();
 
 	int width = 640;
 	int height = 400;
 
 	m_pOBJFile->GetWidthHeight(&width, &height);
 
-	float tx = (width / 2) - 1.0f;
-	float ty = (height / 2) - 1.0f;
+	float tx = hotspot.x;
+	float ty = hotspot.y;
 
 	const float PI_2 = (float) (M_PI * 2.0f);
 
