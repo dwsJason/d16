@@ -3051,7 +3051,7 @@ static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor, Uint32 uNumColors=16)
 
 	closestDistance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
 
-	for (int idx = 1; idx < uNumColors; ++idx)
+	for (unsigned int idx = 1; idx < uNumColors; ++idx)
 	{
 		color = pClut[ idx ];
 
@@ -3420,7 +3420,7 @@ void ImageDocument::SaveC1(std::string filenamepath)
 void ImageDocument::SavePNG(std::string filenamepath)
 {
 // Choose a surface to save
-	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[0] : m_pSurfaces[0];
+	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[ m_iFrameNo ] : m_pSurfaces[ m_iFrameNo ];
 
 	IMG_SavePNG(pImage, filenamepath.c_str());
 }
