@@ -29,9 +29,11 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 
 	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
 	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
+	const std::vector<OBJFILE::object>& objects = m_pOBJFile->GetObjects();
 	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
 	const OBJFILE::vec2& scale = m_pOBJFile->GetScale();
 	const OBJFILE::vec2& hotspot = m_pOBJFile->GetHotSpot();
+	const OBJFILE::vec2& fontsize = m_pOBJFile->GetFontSize();
 
 	int width = 640;
 	int height = 400;
@@ -41,88 +43,191 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 	float tx = hotspot.x;
 	float ty = hotspot.y;
 
-	const float PI_2 = (float) (M_PI * 2.0f);
-
-	for (float angle = 0.0f; angle < 256.0f; angle+=2.0f)
+	if (m_pOBJFile->IsFont())
 	{
-		float theta = angle * PI_2 / 256.0f;
-		memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);
+		// if it's a font, we're going to render something different
+		// choose between an animation (where each frame is a glyph)
+		// or a single sheet ATLAS
+		bool bIsAtlas = true;
 
-		for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
+		if (bIsAtlas)
 		{
-			float x0,y0,x1,y1;
+			// one of each glyph onto this canvas, as an ATLAS
+			memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);
 
-			x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
-			y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
-
-			x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
-			y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
-			// scale
-			x0*=scale.x;
-			x1*=scale.x;
-			y0*=scale.y;
-			y1*=scale.y;
-
-			// rotate
-			float rx = float(x0 * cos(theta) - y0 * sin(theta));
-			float ry = float(x0 * sin(theta) + y0 * cos(theta));
-
-			x0 = rx;
-			y0 = ry;
-
-			rx = float(x1 * cos(theta) - y1 * sin(theta));
-			ry = float(x1 * sin(theta) + y1 * cos(theta));
-
-			x1 = rx;
-			y1 = ry;
-
-			// translate
-
-			x0+=tx;x1+=tx;
-			y0+=ty;y1+=ty;
-
-			//WULine(x0,y0,x1,y1);
-			BLine((int)x0,(int)y0,(int)x1,(int)y1);
-		}
-
-		// Weird AA
-		// Half Tone AA
-		if (true)
-		{
-			// Fill in half-tone AA, when we have pixels like this   0F F0
-			// 0 converts to half tone                               F0 0F
-
-			for (int y = 0; y < (m_height-1); ++y)
+			for (int objectIndex = 0; objectIndex < objects.size(); ++objectIndex)
 			{
-				u32 *pLine0 = m_pRawPixels + (y*m_width);
-				u32 *pLine1 = pLine0 + m_width;
+				const OBJFILE::object& current_object = objects[objectIndex];
 
-				for (int x = 0; x < (m_width-1); ++x)
+				if (current_object.m_lines.size() > 0)
 				{
-					// case 1
-					if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
-						(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+					for (int objLineIndex = 0; objLineIndex < current_object.m_lines.size(); ++objLineIndex)
 					{
-						// Halftones
-						pLine0[x+0] = 0xFF808080;
-						pLine1[x+1] = 0xFF808080;
+						int line_idx = current_object.m_lines[ objLineIndex ] - 1;  // these object collections, start counting at 1
+
+						float x0,y0,x1,y1;
+
+						x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
+						y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
+
+						x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
+						y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
+						// scale
+						x0*=scale.x;
+						x1*=scale.x;
+						y0*=scale.y;
+						y1*=scale.y;
+
+						// translate
+						x0+=tx;x1+=tx;
+						y0+=ty;y1+=ty;
+
+						//WULine(x0,y0,x1,y1);
+						BLine((int)x0,(int)y0,(int)x1,(int)y1);
 					}
-					else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
-							 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+
+					// move the hotspot / glyph cursor
+					tx+=fontsize.x;
+					if (tx >= (float)width)
 					{
-						// Halftones
-						pLine0[x+1] = 0xFF808080;
-						pLine1[x+0] = 0xFF808080;
+						tx = 0.0f;
+						ty += fontsize.y;
 					}
 				}
 			}
+
+			// Weird AA
+			// Half Tone AA
+			if (true)
+			{
+				// Fill in half-tone AA, when we have pixels like this   0F F0
+				// 0 converts to half tone                               F0 0F
+
+				for (int y = 0; y < (m_height-1); ++y)
+				{
+					u32 *pLine0 = m_pRawPixels + (y*m_width);
+					u32 *pLine1 = pLine0 + m_width;
+
+					for (int x = 0; x < (m_width-1); ++x)
+					{
+						// case 1
+						if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
+							(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+						{
+							// Halftones
+							pLine0[x+0] = 0xFF808080;
+							pLine1[x+1] = 0xFF808080;
+						}
+						else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
+								 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+						{
+							// Halftones
+							pLine0[x+1] = 0xFF808080;
+							pLine1[x+0] = 0xFF808080;
+						}
+					}
+				}
+			}
+			// End weird AA
+
+			SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
+			pSurface->userdata = (void*)1; // hacked animation time into here
+
+			frames.push_back(pSurface);
+
 		}
-		// End weird AA
+		else
+		{
+			// do it as a flipbook animation
+			// spin through and render a frame for each non-empty object
+		}
 
-		SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
-		pSurface->userdata = (void*)1; // hacked animation time into here
+	}
+	else
+	{
+		const float PI_2 = (float) (M_PI * 2.0f);
 
-		frames.push_back(pSurface);
+		for (float angle = 0.0f; angle < 256.0f; angle+=2.0f)
+		{
+			float theta = angle * PI_2 / 256.0f;
+			memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);
+
+			for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
+			{
+				float x0,y0,x1,y1;
+
+				x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
+				y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
+
+				x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
+				y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
+				// scale
+				x0*=scale.x;
+				x1*=scale.x;
+				y0*=scale.y;
+				y1*=scale.y;
+
+				// rotate
+				float rx = float(x0 * cos(theta) - y0 * sin(theta));
+				float ry = float(x0 * sin(theta) + y0 * cos(theta));
+
+				x0 = rx;
+				y0 = ry;
+
+				rx = float(x1 * cos(theta) - y1 * sin(theta));
+				ry = float(x1 * sin(theta) + y1 * cos(theta));
+
+				x1 = rx;
+				y1 = ry;
+
+				// translate
+
+				x0+=tx;x1+=tx;
+				y0+=ty;y1+=ty;
+
+				//WULine(x0,y0,x1,y1);
+				BLine((int)x0,(int)y0,(int)x1,(int)y1);
+			}
+
+			// Weird AA
+			// Half Tone AA
+			if (true)
+			{
+				// Fill in half-tone AA, when we have pixels like this   0F F0
+				// 0 converts to half tone                               F0 0F
+
+				for (int y = 0; y < (m_height-1); ++y)
+				{
+					u32 *pLine0 = m_pRawPixels + (y*m_width);
+					u32 *pLine1 = pLine0 + m_width;
+
+					for (int x = 0; x < (m_width-1); ++x)
+					{
+						// case 1
+						if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
+							(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+						{
+							// Halftones
+							pLine0[x+0] = 0xFF808080;
+							pLine1[x+1] = 0xFF808080;
+						}
+						else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
+								 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+						{
+							// Halftones
+							pLine0[x+1] = 0xFF808080;
+							pLine1[x+0] = 0xFF808080;
+						}
+					}
+				}
+			}
+			// End weird AA
+
+			SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
+			pSurface->userdata = (void*)1; // hacked animation time into here
+
+			frames.push_back(pSurface);
+		}
 	}
 
 	return frames;

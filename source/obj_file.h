@@ -53,6 +53,11 @@ public:
 	const std::vector<OBJFILE::int2>& GetLines()  { return m_lines; }
 	const OBJFILE::vec2& GetCenter() { return m_center; }
 
+	const bool IsFont() { return m_bFont; }
+	const OBJFILE::vec2& GetFontSize() { return m_fontsize; }
+
+	const std::vector<OBJFILE::object>& GetObjects() { return m_objects; }
+
 private:
 
 	bool m_bFont;

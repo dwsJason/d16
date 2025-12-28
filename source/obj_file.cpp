@@ -152,7 +152,7 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 
 		m_objects.push_back(global_object);
 
-		OBJFILE::object& current_object = m_objects[0];
+		OBJFILE::object* pCurrentObject = &m_objects[0];
 
 
 		while (memStream.NumBytesAvailable())
@@ -208,7 +208,7 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 							m_lines.push_back(ivec);
 
 							// track which lines belong to this object
-							current_object.m_lines.push_back( (int)m_lines.size() );
+							pCurrentObject->m_lines.push_back( (int)m_lines.size() );
 						}
 					}
 				}
@@ -276,9 +276,9 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 						m_objects.push_back(new_object);
 
 						// current object, reference object in the list
-						current_object = m_objects[m_objects.size() - 1];
+						pCurrentObject = &m_objects[m_objects.size() - 1];
 
-						current_object.m_name = tokens[1];
+						pCurrentObject->m_name = tokens[1];
 					}
 				}
 
