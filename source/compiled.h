@@ -22,9 +22,11 @@ public:
 	void SetName(std::string name);
 
 	void CalcBlitClocks();
-	void ExportBlit();
+	void ExportBlit(std::vector<u8>& output);
 
 private:
+
+	int AddLine(std::vector<u8>& output, char* pLabel, char* pInst, char* pExp, int val, int clocks);
 
 	std::string m_name;
 

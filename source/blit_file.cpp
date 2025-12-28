@@ -4,12 +4,25 @@
 
 #include "blit_file.h"
 
+// compiled data class
+#include "compiled.h"
+
 #include <stdio.h>
 
 //------------------------------------------------------------------------------
 
 BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector<ImVec4>& targetColors)
 {
+	m_targetColors = targetColors;
+
+	std::vector<unsigned char*> c1Frames;
+
+	for (int index = 0; index < pSurfaces.size(); ++index)
+	{
+		c1Frames.push_back(CreateC1Data(pSurfaces[index]));
+	}
+
+	AddImages(c1Frames);
 }
 
 //------------------------------------------------------------------------------
@@ -48,6 +61,33 @@ void BLITFile::SaveToFile(const char* pFilenamePath)
 	if (m_pC1PixelMaps.size() < 1)
 	{
 		return;
+	}
+
+	unsigned char* pBlankC1 = new unsigned char[m_frameSize];
+
+	memcpy(pBlankC1, m_pC1PixelMaps[0], m_frameSize);
+	memset(pBlankC1, 0, 0x7D00);
+	if (m_frameSize > 0x8000)
+	{
+		// double frame / interlaced VOC image
+		memset(pBlankC1+0x8000, 0, 0x7D00);
+	}
+
+	CCompiledData data(m_pC1PixelMaps[0], pBlankC1, m_frameSize);
+
+	std::vector<u8> output;
+
+	data.ExportBlit(output);
+
+	//-------------------------------------------------------------------------
+	// Create the file and write it
+	FILE* pFile = nullptr;
+	errno_t err = fopen_s(&pFile, pFilenamePath, "wb");
+
+	if (0==err)
+	{
+		fwrite(&output[0], sizeof(u8), output.size(), pFile);
+		fclose(pFile);
 	}
 }
 
@@ -157,10 +197,24 @@ Uint32 BLITFile::ClosestIndex(Uint32* pClut, Uint32 uColor, Uint32 uNumColors)
 
 unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 {
-	unsigned char *c1data = new unsigned char[ 0x8000 ];
+	int c1_size = 0x8000;
+	bool b400LineMode = false;
+	int LINE_TOTAL = 200;
+
+	if (400 == pImage->h)
+	{
+		// stacked C1, for 400 line mode
+		c1_size = 0x10000;
+		b400LineMode = true;
+		LINE_TOTAL = 400;
+	}
+
+	m_frameSize = c1_size;
+
+	unsigned char* c1data = new unsigned char[c1_size];
 
 // Copy of the C1 memory
-	memset(c1data, 0, 0x8000 );
+	memset(c1data, 0, c1_size );
 
 // Get a copy of the clut
 	Uint32 pClut[ 16 ];
@@ -181,9 +235,6 @@ unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 		pClut[idx] = color;
 	}
 
-// Choose a surface to save
-	//SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[frameNo] : m_pSurfaces[frameNo];
-
 	if (640 == pImage->w)
 	{
 		//$$JGA this kind of sucks, but it's what I can do for now
@@ -195,8 +246,20 @@ unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 
 		// 640 mode
 		// convert pixel data into 2 bit indices
-		for (int y = 0; y < 200; ++y)
+		for (int y = 0; y < LINE_TOTAL; ++y)
 		{
+			int offset = 0;
+			int use_y = y;
+
+			if (b400LineMode)
+			{
+				if (y & 0x1)
+				{
+					offset = 0x8000;
+				}
+				use_y >>= 1;
+			}
+
 			for (int x = 0; x < 640; x+=4)
 			{
 				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
@@ -208,7 +271,7 @@ unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 				Uint32 pixel3 = SDL_GetPixel(pImage, x+3, y);
 				Uint32 index3 = ClosestIndex(pClut+4, pixel3, 4);
 
-				c1data[ (y * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
+				c1data[ offset + (use_y * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
 			}
 		}
 
@@ -216,37 +279,9 @@ unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 		for (int idx = 0x7D00; idx < 0x7DC8; ++idx)
 		{
 			c1data[idx] = 0x80;
-		}
-
-		// Color Data, just doing a floor conversion
-
-		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
-		for (int idx = 0; idx < 16; ++idx)
-		{
-			Uint32 sourceColor = pClut[ idx ];
-			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
-
-			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
-			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
-
-			pPal[ idx ] = targetColor;
-		}
-
-	}
-	else
-	{
-		// 320 mode
-		// Nibblized pixel data
-		for (int y = 0; y < 200; ++y)
-		{
-			for (int x = 0; x < 320; x+=2)
+			if (b400LineMode)
 			{
-				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
-				Uint32 index0 = ClosestIndex(pClut, pixel0);
-				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
-				Uint32 index1 = ClosestIndex(pClut, pixel1);
-
-				c1data[ (y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+				c1data[idx + 0x8000] = 0x80;
 			}
 		}
 
@@ -262,6 +297,58 @@ unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
 
 			pPal[ idx ] = targetColor;
+			if (b400LineMode)
+			{
+				pPal[ 0x4000 + idx ] = targetColor;
+			}
+		}
+
+	}
+	else
+	{
+		// 320 mode
+		// Nibblized pixel data
+		for (int y = 0; y < LINE_TOTAL; ++y)
+		{
+			int offset = 0;
+			int use_y = y;
+
+			if (b400LineMode)
+			{
+				if (y & 0x1)
+				{
+					offset = 0x8000;
+				}
+				use_y >>= 1;
+			}
+
+			for (int x = 0; x < 320; x+=2)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut, pixel0);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut, pixel1);
+
+				c1data[ offset + (use_y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+			}
+		}
+
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+			if (b400LineMode)
+			{
+				pPal[ 0x4000 + idx ] = targetColor;
+			}
 		}
 	}
 

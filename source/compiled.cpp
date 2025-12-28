@@ -82,8 +82,65 @@ void CCompiledData::CalcBlitClocks()
 
 //-----------------------------------------------------------------------------
 
-void ExportBlit()
+void CCompiledData::ExportBlit(std::vector<u8>& output)
 {
+	int clocks = 0;
+
+	for (auto const& [key, address] : m_ShortMap)
+	{
+		u16 pixel = key;
+
+		clocks += AddLine(output,"","LDA","#$%04X",pixel,3);
+
+		for (int idx = 0; idx < address.size(); ++idx)
+		{
+			clocks += AddLine(output,"", "STA", "|$%04X,X", address[idx], 6);
+		}
+	}
+
+	clocks += AddLine(output,"","SEP","#$30 ;%d cycles",clocks+3,3);
+
+	for (auto const& [key, address] : m_ByteMap)
+	{
+		u8 pixel = key;
+
+		clocks += AddLine(output,"","LDA","#$%02X",pixel,2);
+
+		for (int idx = 0; idx < address.size(); ++idx)
+		{
+			clocks += AddLine(output,"", "STA", "|$%04X,X", address[idx], 5);
+		}
+	}
+
+	clocks += AddLine(output,"","RTL"," ;%d cycles",clocks+6,6);
+
+}
+
+//-----------------------------------------------------------------------------
+
+int CCompiledData::AddLine(std::vector<u8>& output,char*pLabel,char*pInst,char*pExp,int val,int clocks)
+{
+	char temp[256];
+	char pArg[256];
+
+	memset(pArg,0,256);
+	sprintf(pArg,pExp,val);
+
+	sprintf(temp, "%8s %3s %s\n", pLabel,pInst,pArg);
+
+	for (int idx = 0; idx < 256; ++idx)
+	{
+		if (temp[idx])
+		{
+			output.push_back(temp[idx]);
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return clocks;
 }
 
 //-----------------------------------------------------------------------------
