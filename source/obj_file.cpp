@@ -17,6 +17,10 @@ COBJFile::COBJFile(const char *pFilePath)
 	: m_width(0)
 	, m_height(0)
 {
+	m_bFont = false;
+	m_fontsize.x = 16.0f;
+	m_fontsize.y = 16.0f;
+
 	m_center.x = 0.0f;
 	m_center.y = 0.0f;
 
@@ -143,6 +147,14 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 	{
 		MemoryStream memStream(bytes.data(), bytes.size());
 
+		OBJFILE::object global_object;
+		global_object.m_name = "$global";
+
+		m_objects.push_back(global_object);
+
+		OBJFILE::object& current_object = m_objects[0];
+
+
 		while (memStream.NumBytesAvailable())
 		{
 			std::string lineData = memStream.ReadLine();
@@ -185,13 +197,19 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 					if (tokens.size() >= 3)
 					{
 						// the line has at least 2 points (it could have more)
-						// $$TODO support more than 2 points
-						OBJFILE::int2 ivec;
 
-						sscanf_s(tokens[1].c_str(), "%d", &ivec.x );
-						sscanf_s(tokens[2].c_str(), "%d", &ivec.y );
+						for (int pointsIndex = 1; pointsIndex < (tokens.size() - 1); ++pointsIndex)
+						{
+							OBJFILE::int2 ivec;
 
-						m_lines.push_back(ivec);
+							sscanf_s(tokens[pointsIndex+0].c_str(), "%d", &ivec.x );
+							sscanf_s(tokens[pointsIndex+1].c_str(), "%d", &ivec.y );
+
+							m_lines.push_back(ivec);
+
+							// track which lines belong to this object
+							current_object.m_lines.push_back( (int)m_lines.size() );
+						}
 					}
 				}
 				else if (tokens[0] == "scale")
@@ -207,6 +225,23 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 					{
 						sscanf_s(tokens[1].c_str(), "%f", &m_scale.x );
 						sscanf_s(tokens[2].c_str(), "%f", &m_scale.y );
+					}
+				}
+				else if (tokens[0] == "font")
+				{
+					m_bFont = true;
+
+					if (tokens.size() == 2)
+					{
+						float fontsize = 16.0f;
+						sscanf_s(tokens[1].c_str(), "%f", &fontsize );
+						m_fontsize.x = fontsize;
+						m_fontsize.y = fontsize;
+					}
+					else if (tokens.size() >= 3)
+					{
+						sscanf_s(tokens[1].c_str(), "%f", &m_fontsize.x );
+						sscanf_s(tokens[2].c_str(), "%f", &m_fontsize.y );
 					}
 				}
 				else if (tokens[0] == "canvas")
@@ -232,7 +267,20 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 						sscanf_s(tokens[2].c_str(), "%f", &m_hotspot.y );
 					}
 				}
+				else if (tokens[0] == "o")
+				{
+					if (tokens.size() >= 2)
+					{
+						// object!
+						OBJFILE::object new_object;
+						m_objects.push_back(new_object);
 
+						// current object, reference object in the list
+						current_object = m_objects[m_objects.size() - 1];
+
+						current_object.m_name = tokens[1];
+					}
+				}
 
 			}
 		}

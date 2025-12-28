@@ -8,6 +8,7 @@
 #define COBJ_FILE_H
 
 #include <vector>
+#include <string>
 
 
 namespace OBJFILE
@@ -21,6 +22,12 @@ struct vec2
 struct int2
 {
 	int x,y;
+};
+
+struct object
+{
+	std::string m_name;
+	std::vector<int> m_lines;
 };
 
 };
@@ -48,6 +55,9 @@ public:
 
 private:
 
+	bool m_bFont;
+	OBJFILE::vec2 m_fontsize;
+
 	int m_width;
 	int m_height;
 
@@ -60,6 +70,8 @@ private:
 
 	std::vector<OBJFILE::vec2> m_points;
 	std::vector<OBJFILE::int2> m_lines;
+
+	std::vector<OBJFILE::object> m_objects;
 
 };
 
