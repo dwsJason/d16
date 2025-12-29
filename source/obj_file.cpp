@@ -18,6 +18,7 @@ COBJFile::COBJFile(const char *pFilePath)
 	, m_height(0)
 {
 	m_bFont = false;
+	m_bAtlas = false;
 	m_fontsize.x = 16.0f;
 	m_fontsize.y = 16.0f;
 
@@ -280,6 +281,17 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 
 						pCurrentObject->m_name = tokens[1];
 					}
+				}
+				else if (tokens[0] == "atlas" && tokens.size() >= 2)
+				{
+					int bIsAtlas = 0;
+					sscanf_s(tokens[1].c_str(), "%d", &bIsAtlas );
+
+					m_bAtlas = bIsAtlas > 0;
+				}
+				else if (tokens[0] == "anim_rotate_frames" && tokens.size() >= 2)
+				{
+					sscanf_s(tokens[1].c_str(), "%d", &m_rotationframes );
 				}
 
 			}

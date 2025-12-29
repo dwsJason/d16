@@ -48,7 +48,7 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 		// if it's a font, we're going to render something different
 		// choose between an animation (where each frame is a glyph)
 		// or a single sheet ATLAS
-		bool bIsAtlas = true;
+		bool bIsAtlas = m_pOBJFile->IsAtlas();
 
 		if (bIsAtlas)
 		{
@@ -147,7 +147,16 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 	{
 		const float PI_2 = (float) (M_PI * 2.0f);
 
-		for (float angle = 0.0f; angle < 256.0f; angle+=2.0f)
+		float ANGLE_STEP = 256.0f;
+
+		if (m_pOBJFile->GetRotationFrames())
+		{
+			float rot_frames = (float)m_pOBJFile->GetRotationFrames();
+
+			ANGLE_STEP = 256.0f / rot_frames;
+		}
+
+		for (float angle = 0.0f; angle < 256.0f; angle+=ANGLE_STEP)
 		{
 			float theta = angle * PI_2 / 256.0f;
 			memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);

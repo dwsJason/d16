@@ -53,7 +53,10 @@ public:
 	const std::vector<OBJFILE::int2>& GetLines()  { return m_lines; }
 	const OBJFILE::vec2& GetCenter() { return m_center; }
 
+	int GetRotationFrames() { return m_rotationframes; }
+
 	const bool IsFont() { return m_bFont; }
+	const bool IsAtlas() { return m_bAtlas; }
 	const OBJFILE::vec2& GetFontSize() { return m_fontsize; }
 
 	const std::vector<OBJFILE::object>& GetObjects() { return m_objects; }
@@ -63,8 +66,12 @@ private:
 	bool m_bFont;
 	OBJFILE::vec2 m_fontsize;
 
+	bool m_bAtlas;
+
 	int m_width;
 	int m_height;
+
+	int m_rotationframes;
 
 	// hot spot
 	OBJFILE::vec2 m_hotspot; // location where to render the vector image in the canvas
