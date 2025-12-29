@@ -94,11 +94,19 @@ void CCompiledData::ExportBlit(std::vector<u8>& output)
 
 		for (int idx = 0; idx < address.size(); ++idx)
 		{
-			clocks += AddLine(output,"", "STA", "|$%04X,X", address[idx], 6);
+			char *pFormat = "|$%04X,X";
+			int addy = address[idx];
+			if (addy & 0x8000)
+			{
+				addy &= 0x7FFF;
+				addy |= 0xE00000;
+				pFormat = ">$%06X,X";
+			}
+			clocks += AddLine(output,"", "STA", pFormat, addy, 6);
 		}
 	}
 
-	clocks += AddLine(output,"","SEP","#$30 ;%d cycles",clocks+3,3);
+	clocks += AddLine(output,"","SEP","#$20 ;%d cycles",clocks+3,3);
 
 	for (auto const& [key, address] : m_ByteMap)
 	{
@@ -108,7 +116,15 @@ void CCompiledData::ExportBlit(std::vector<u8>& output)
 
 		for (int idx = 0; idx < address.size(); ++idx)
 		{
-			clocks += AddLine(output,"", "STA", "|$%04X,X", address[idx], 5);
+			char *pFormat = "|$%04X,X";
+			int addy = address[idx];
+			if (addy & 0x8000)
+			{
+				addy &= 0x7FFF;
+				addy |= 0xE00000;
+				pFormat = ">$%06X,X";
+			}
+			clocks += AddLine(output,"", "STA", pFormat, addy, 5);
 		}
 	}
 
