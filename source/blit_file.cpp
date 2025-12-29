@@ -13,6 +13,9 @@
 
 BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector<ImVec4>& targetColors)
 {
+	bool bShiftPixels = true;
+	bool bShiftRows = true;
+
 	m_targetColors = targetColors;
 
 	std::vector<unsigned char*> c1Frames;
@@ -20,6 +23,95 @@ BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector
 	for (int index = 0; index < pSurfaces.size(); ++index)
 	{
 		c1Frames.push_back(CreateC1Data(pSurfaces[index]));
+
+		if (bShiftPixels && m_widthPixels == 640)
+		{
+			for (int shifts = 0; shifts < 3; ++shifts)
+			{
+				// generate pixel shifted frames
+				unsigned char *pSrc = c1Frames[ c1Frames.size() - 1 ];
+				unsigned char *pImage = new unsigned char[ m_frameSize ];
+
+				memcpy(pImage, pSrc, m_frameSize);
+
+				for (int y = 0; y < 200; ++y)
+				{
+					u8* pPixels  = pImage + (160 * y);
+					u8* pPixels2 = pPixels+=0x8000;
+
+					for (int x = 0; x < 160; ++x)
+					{
+						pPixels[x]<<=2;
+						if (x<159)
+						{
+							u8 neighbor = pPixels[x + 1];
+							neighbor>>=6;
+							pPixels[x]|=neighbor;
+						}
+						if (400 == m_heightPixels)
+						{
+							// do second page
+							pPixels2[x]<<=2;
+							if (x<159)
+							{
+								u8 neighbor = pPixels2[x + 1];
+								neighbor>>=6;
+								pPixels2[x]|=neighbor;
+							}
+						}
+					}
+				}
+
+				c1Frames.push_back(pImage);
+			}
+		}
+		else if (bShiftPixels && m_widthPixels == 320)
+		{
+			// generate pixel shifted frames
+			unsigned char *pSrc = c1Frames[ c1Frames.size() - 1 ];
+			unsigned char *pImage = new unsigned char[ m_frameSize ];
+
+			memcpy(pImage, pSrc, m_frameSize);
+
+			for (int y = 0; y < 200; ++y)
+			{
+				u8* pPixels  = pImage + (160 * y);
+				u8* pPixels2 = pPixels+=0x8000;
+
+				for (int x = 0; x < 160; ++x)
+				{
+					pPixels[x]<<=4;
+					if (x<159)
+					{
+						u8 neighbor = pPixels[x + 1];
+						neighbor>>=4;
+						pPixels[x]|=neighbor;
+					}
+					if (400 == m_heightPixels)
+					{
+						// do second page
+						pPixels2[x]<<=4;
+						if (x<159)
+						{
+							u8 neighbor = pPixels2[x + 1];
+							neighbor>>=4;
+							pPixels2[x]|=neighbor;
+						}
+					}
+				}
+			}
+
+			c1Frames.push_back(pImage);
+		}
+
+		if (bShiftRows && m_heightPixels == 400)
+		{
+			// this is only needed for 400 line mode
+			// if width is 320, we have 2 images to shift down
+			// if width is 640, we have 4 images to shift down
+
+		}
+
 	}
 
 	AddImages(c1Frames);
