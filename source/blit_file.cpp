@@ -107,11 +107,40 @@ BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector
 		if (bShiftRows && m_heightPixels == 400)
 		{
 			// this is only needed for 400 line mode
-			// if width is 320, we have 2 images to shift down
-			// if width is 640, we have 4 images to shift down
+			// Default we have 1 image to shift down
+			int numShifts = 1;
+			// if bShiftPixels && width is 320, we have 2 images to shift down
+			if (bShiftPixels && 320 == m_widthPixels)
+			{
+				numShifts = 2;
+			}
+			// if bShiftPixels && width is 640, we have 4 images to shift down
+			if (bShiftPixels && 640 == m_widthPixels)
+			{
+				numShifts = 4;
+			}
 
+			// generate pixel shifted frames
+			for (int shifts = 0; shifts < numShifts; ++shifts)
+			{
+				unsigned char *pSrc = c1Frames[c1Frames.size() - numShifts];
+				unsigned char *pImage = new unsigned char[ m_frameSize ];
+
+				// initial copy
+				memcpy(pImage, pSrc, m_frameSize);
+
+				// copying page 0 to page 1, moves it a whole line
+				memcpy(pImage+0x8000, pSrc, 200*160);
+				
+				// first page, first row needs erased
+				memset(pImage, 0, 160);
+
+				// copy 199 lines from page 1 to page 0
+				memcpy(pImage+160, pSrc+0x8000, 199*160);
+
+				c1Frames.push_back(pImage);
+			}
 		}
-
 	}
 
 	AddImages(c1Frames);
