@@ -420,6 +420,8 @@ unsigned char* BLITFile::CreateC1Data(SDL_Surface* pImage)
 	}
 
 	m_frameSize = c1_size;
+	m_widthPixels  = pImage->w;
+	m_heightPixels = pImage->h;
 
 	unsigned char* c1data = new unsigned char[c1_size];
 
