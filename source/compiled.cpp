@@ -128,6 +128,8 @@ void CCompiledData::ExportBlit(std::vector<u8>& output)
 		}
 	}
 
+	clocks += AddLine(output,"","REP","#$30 ;%d cycles",clocks+3,3);
+
 	clocks += AddLine(output,"","RTL"," ;%d cycles",clocks+6,6);
 
 }
