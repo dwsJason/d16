@@ -21,8 +21,7 @@ public:
 
 	void SetName(std::string name);
 
-	void CalcBlitClocks();
-	void ExportBlit(std::vector<u8>& output);
+	int ExportBlit(std::vector<u8>& output);
 
 private:
 

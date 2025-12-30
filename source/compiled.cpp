@@ -75,15 +75,11 @@ void CCompiledData::SetName(std::string name)
 }
 
 //-----------------------------------------------------------------------------
+//
 
-void CCompiledData::CalcBlitClocks()
+int CCompiledData::ExportBlit(std::vector<u8>& output)
 {
-}
-
-//-----------------------------------------------------------------------------
-
-void CCompiledData::ExportBlit(std::vector<u8>& output)
-{
+	int bytes_total = 0;
 	int clocks = 0;
 
 	for (auto const& [key, address] : m_ShortMap)
@@ -91,46 +87,59 @@ void CCompiledData::ExportBlit(std::vector<u8>& output)
 		u16 pixel = key;
 
 		clocks += AddLine(output,"","LDA","#$%04X",pixel,3);
+		bytes_total += 3;
 
 		for (int idx = 0; idx < address.size(); ++idx)
 		{
 			char *pFormat = "|$%04X,X";
 			int addy = address[idx];
+			bytes_total += 3;
+
 			if (addy & 0x8000)
 			{
 				addy &= 0x7FFF;
 				addy |= 0xE00000;
 				pFormat = ">$%06X,X";
+				bytes_total += 1;
 			}
 			clocks += AddLine(output,"", "STA", pFormat, addy, 6);
 		}
 	}
 
 	clocks += AddLine(output,"","SEP","#$20 ;%d cycles",clocks+3,3);
+	bytes_total += 2;
 
 	for (auto const& [key, address] : m_ByteMap)
 	{
 		u8 pixel = key;
 
 		clocks += AddLine(output,"","LDA","#$%02X",pixel,2);
+		bytes_total += 2;
 
 		for (int idx = 0; idx < address.size(); ++idx)
 		{
 			char *pFormat = "|$%04X,X";
 			int addy = address[idx];
+			bytes_total += 3;
+
 			if (addy & 0x8000)
 			{
 				addy &= 0x7FFF;
 				addy |= 0xE00000;
 				pFormat = ">$%06X,X";
+				bytes_total += 1;
 			}
 			clocks += AddLine(output,"", "STA", pFormat, addy, 5);
 		}
 	}
 
 	clocks += AddLine(output,"","REP","#$30 ;%d cycles",clocks+3,3);
+	bytes_total += 2;
 
 	clocks += AddLine(output,"","RTL"," ;%d cycles",clocks+6,6);
+	bytes_total += 1;
+
+	return bytes_total;
 
 }
 
