@@ -14,7 +14,7 @@
 BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector<ImVec4>& targetColors)
 {
 	bool bShiftPixels = true;
-	bool bShiftRows = true;
+	bool bShiftRows = false;
 
 	m_targetColors = targetColors;
 
@@ -36,8 +36,8 @@ BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector
 
 				for (int y = 0; y < 200; ++y)
 				{
-					u8* pPixels  = pImage + (160 * y);
-					u8* pPixels2 = pPixels+=0x8000;
+					u8* pPixels  = pImage  + (160 * y);
+					u8* pPixels2 = pPixels + 0x8000;
 
 					u8 neighbor  = 0;
 					u8 neighbor2 = 0;
@@ -72,8 +72,8 @@ BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector
 
 			for (int y = 0; y < 200; ++y)
 			{
-				u8* pPixels  = pImage + (160 * y);
-				u8* pPixels2 = pPixels+=0x8000;
+				u8* pPixels  = pImage  + (160 * y);
+				u8* pPixels2 = pPixels + 0x8000;
 
 				u8 neighbor  = 0;
 				u8 neighbor2 = 0;
