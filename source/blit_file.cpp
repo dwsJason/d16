@@ -39,25 +39,22 @@ BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector
 					u8* pPixels  = pImage + (160 * y);
 					u8* pPixels2 = pPixels+=0x8000;
 
+					u8 neighbor  = 0;
+					u8 neighbor2 = 0;
+
 					for (int x = 0; x < 160; ++x)
 					{
-						pPixels[x]<<=2;
-						if (x<159)
-						{
-							u8 neighbor = pPixels[x + 1];
-							neighbor>>=6;
-							pPixels[x]|=neighbor;
-						}
+						u8 pixel = pPixels[x];
+
+						pPixels[x] = (pixel>>2) | neighbor;
+						neighbor = pixel<<6;
+
 						if (400 == m_heightPixels)
 						{
-							// do second page
-							pPixels2[x]<<=2;
-							if (x<159)
-							{
-								u8 neighbor = pPixels2[x + 1];
-								neighbor>>=6;
-								pPixels2[x]|=neighbor;
-							}
+							pixel = pPixels2[x];
+
+							pPixels2[x] = (pixel>>2) | neighbor2;
+							neighbor2 = pixel<<6;
 						}
 					}
 				}
@@ -78,25 +75,22 @@ BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector
 				u8* pPixels  = pImage + (160 * y);
 				u8* pPixels2 = pPixels+=0x8000;
 
+				u8 neighbor  = 0;
+				u8 neighbor2 = 0;
+
 				for (int x = 0; x < 160; ++x)
 				{
-					pPixels[x]<<=4;
-					if (x<159)
-					{
-						u8 neighbor = pPixels[x + 1];
-						neighbor>>=4;
-						pPixels[x]|=neighbor;
-					}
+					u8 pixel = pPixels[x];
+
+					pPixels[x] = (pixel>>4) | neighbor;
+					neighbor = pixel<<4;
+
 					if (400 == m_heightPixels)
 					{
-						// do second page
-						pPixels2[x]<<=4;
-						if (x<159)
-						{
-							u8 neighbor = pPixels2[x + 1];
-							neighbor>>=4;
-							pPixels2[x]|=neighbor;
-						}
+						pixel = pPixels2[x];
+
+						pPixels2[x] = (pixel>>4) | neighbor2;
+						neighbor2 = pixel<<4;
 					}
 				}
 			}
