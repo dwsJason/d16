@@ -707,7 +707,7 @@ void ImageDocument::Render()
 				{
 					NFD::UniquePathU8 savePath;
 
-					const nfdu8char_t* defaultFileName = FixExtension( m_filename, ".txt" );
+					const nfdu8char_t* defaultFileName = FixExtension( m_filename, ".s" );
 
 					nfdresult_t result = NFD::SaveDialog(savePath,
 														 nullptr,    // filter
@@ -718,7 +718,7 @@ void ImageDocument::Render()
 					if (result == NFD_OKAY)
 					{
 						BLITFile blit( m_pTargetSurfaces, m_targetColors );
-						blit.SaveToFile( savePath.get() );
+						blit.SaveToFile( savePath.get(), m_filename );
 					}
 				}
 

@@ -5,6 +5,7 @@
 #ifndef BLIT_FILE_H
 #define BLIT_FILE_H
 
+#include <string>
 #include <vector>
 
 #include "imgui.h"
@@ -18,7 +19,7 @@ public:
 	~BLITFile();
 
 	void AddImages( const std::vector<unsigned char*>& pFrameBytes );
-	void SaveToFile(const char* pFilenamePath);
+	void SaveToFile(const char* pFilenamePath, const std::string& filename);
 
 private:
 
