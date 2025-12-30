@@ -786,6 +786,7 @@ void MainMenuBarUI()
 						}
 					}
 
+					G_RebuildDock = true;
 				}
 
 			}
