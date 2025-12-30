@@ -55,7 +55,7 @@ static void SaveHunk(const std::vector<u8> hunk, std::string filenamePath)
 BLITFile::BLITFile(const std::vector<SDL_Surface*>& pSurfaces, const std::vector<ImVec4>& targetColors)
 {
 	bool bShiftPixels = true;
-	bool bShiftRows = false;
+	bool bShiftRows = true;
 
 	m_targetColors = targetColors;
 
