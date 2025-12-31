@@ -30,6 +30,8 @@ COBJFile::COBJFile(const char *pFilePath)
 
 	m_scale.x = m_scale.y = 1.0f;
 
+	m_rotationframes = 1;
+
 	LoadFromFile(pFilePath);
 }
 //------------------------------------------------------------------------------
