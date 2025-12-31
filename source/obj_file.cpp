@@ -31,6 +31,7 @@ COBJFile::COBJFile(const char *pFilePath)
 	m_scale.x = m_scale.y = 1.0f;
 
 	m_rotationframes = 1;
+	m_scaleframes = 1;  // default - 1 scale
 
 	LoadFromFile(pFilePath);
 }
@@ -294,6 +295,10 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 				else if (tokens[0] == "anim_rotate_frames" && tokens.size() >= 2)
 				{
 					sscanf_s(tokens[1].c_str(), "%d", &m_rotationframes );
+				}
+				else if (tokens[0] == "anim_scale_frames" && tokens.size() >= 2)
+				{
+					sscanf_s(tokens[1].c_str(), "%d", &m_scaleframes );
 				}
 
 			}

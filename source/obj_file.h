@@ -54,6 +54,7 @@ public:
 	const OBJFILE::vec2& GetCenter() { return m_center; }
 
 	int GetRotationFrames() { return m_rotationframes; }
+	int GetScaleFrames() { return m_scaleframes; }
 
 	const bool IsFont() { return m_bFont; }
 	const bool IsAtlas() { return m_bAtlas; }
@@ -72,6 +73,7 @@ private:
 	int m_height;
 
 	int m_rotationframes;
+	int m_scaleframes;
 
 	// hot spot
 	OBJFILE::vec2 m_hotspot; // location where to render the vector image in the canvas
