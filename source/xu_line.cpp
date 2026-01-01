@@ -2,6 +2,10 @@
 #include "xu_line.h"
 
 #include <math.h>
+#include <cmath>
+#include "vec2d.hpp"
+
+using namespace Vectormath;
 
 CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 {
@@ -36,11 +40,11 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 
 	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
 	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
-	const std::vector<OBJFILE::object>& objects = m_pOBJFile->GetObjects();
+	//const std::vector<OBJFILE::object>& objects = m_pOBJFile->GetObjects();
 	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
 	      OBJFILE::vec2  scale = m_pOBJFile->GetScale();
 	const OBJFILE::vec2& hotspot = m_pOBJFile->GetHotSpot();
-	const OBJFILE::vec2& fontsize = m_pOBJFile->GetFontSize();
+	//const OBJFILE::vec2& fontsize = m_pOBJFile->GetFontSize();
 
 	int width = 640;
 	int height = 400;
@@ -55,6 +59,7 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 
 	float ANGLE_STEP = 256.0f;
 	int NUM_SCALES = 1;
+	int NUM_FRAMES = 16;
 
 	if (m_pOBJFile->GetRotationFrames())
 	{
@@ -63,13 +68,27 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 		ANGLE_STEP = 256.0f / rot_frames;
 	}
 
+	ANGLE_STEP = 256.0f; // Right now I don't want more than 1 angle
+
 	if (m_pOBJFile->GetScaleFrames())
 	{
 		NUM_SCALES = m_pOBJFile->GetScaleFrames();
 	}
 
+	// I want the size of the object, because it will determine how
+	// far the debris moves
+	OBJFILE::vec2 size_xy;
+	size_xy = GetVectorWidthHeight();
+	size_xy.x *= scale.x;
+	size_xy.y *= scale.y;
+	
+	float debris_radius = 0.5f;
+		
+	Vector2 total_distance( size_xy.x * debris_radius, size_xy.y * debris_radius );
+
 	for (int downscaleIndex = 0; downscaleIndex < NUM_SCALES; ++downscaleIndex)
 	{
+		for (int currentFrame = 0; currentFrame < NUM_FRAMES; ++currentFrame)
 		for (float angle = 0.0f; angle < 256.0f; angle+=ANGLE_STEP)
 		{
 			float theta = angle * PI_2 / 256.0f;
@@ -104,12 +123,23 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 				y1 = ry;
 
 				// translate
-
 				x0+=tx;x1+=tx;
 				y0+=ty;y1+=ty;
 
+				// now we apply the explosion effect
+
+				Vector2 line_center((x0+x1)/2.0f, (y0+y1)/2.0f);
+				Vector2 target_direction(line_center.getX() - tx, line_center.getY() - ty);
+
+				target_direction = normalize(target_direction);
+
+				Vector2 current_distance = total_distance * ((float)currentFrame/(float)NUM_FRAMES);
+
+				current_distance = Vector2(target_direction.getX() * current_distance.getX(), target_direction.getY() * current_distance.getY());
+
 				//WULine(x0,y0,x1,y1);
-				BLine((int)x0,(int)y0,(int)x1,(int)y1);
+				BLine((int)(x0+current_distance.getX()),(int)(y0+current_distance.getY()),
+					  (int)(x1+current_distance.getX()),(int)(y1+current_distance.getY()));
 			}
 
 			// Weird AA
@@ -154,6 +184,7 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 
 		scale.x *= 0.5f;
 		scale.y *= 0.5f;
+		//total_distance *= 0.5f;
 
 	}
 
@@ -797,5 +828,47 @@ SDL_Surface* CRawCanvas::SDL_SurfaceFromRawRGBA(Uint32 *pPixels, int iWidth, int
 		SDL_UnlockSurface(pImage);
 
 	return pImage;
+}
+
+//-----------------------------------------------------------------------------
+//
+// Raw points
+//
+void CRawCanvas::GetVectorMinMax(OBJFILE::vec2& minxy, OBJFILE::vec2& maxxy)
+{
+	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
+
+	if (points.size())
+	{
+		minxy = maxxy = points[0]; // need to start somewhere
+
+		for (int index = 0; index < points.size(); ++index)
+		{
+			const OBJFILE::vec2& point = points[index];
+
+			if (point.x < minxy.x) minxy.x = point.x;
+			if (point.y < minxy.y) minxy.y = point.y;
+			if (point.x > maxxy.x) maxxy.x = point.x;
+			if (point.y > maxxy.y) maxxy.y = point.y;
+		}
+	}
+	else
+	{
+		minxy.x = 0.0f; minxy.y =0.0f;
+		maxxy.x = 0.0f; maxxy.y =0.0f;
+	}
+
+}
+
+//-----------------------------------------------------------------------------
+
+OBJFILE::vec2 CRawCanvas::GetVectorWidthHeight()
+{
+	OBJFILE::vec2 min_xy;
+	OBJFILE::vec2 max_xy;
+
+	GetVectorMinMax(min_xy, max_xy);
+
+	return { max_xy.x-min_xy.x, max_xy.y - min_xy.y };
 }
 

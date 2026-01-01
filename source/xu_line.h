@@ -56,7 +56,11 @@ public:
 	void WULine(float x0, float y0, float x1, float y1);
 	void BLine(int x0, int y0, int x1, int y1);
 
+	OBJFILE::vec2 GetVectorWidthHeight();
+
 private:
+
+	void GetVectorMinMax(OBJFILE::vec2& minxy, OBJFILE::vec2& maxxy);
 
 	COBJFile* m_pOBJFile;
 
