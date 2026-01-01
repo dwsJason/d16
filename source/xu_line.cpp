@@ -3,6 +3,8 @@
 
 #include <math.h>
 #include <cmath>
+// for random
+#include <stdlib.h>
 #include "vec2d.hpp"
 
 using namespace Vectormath;
@@ -86,6 +88,9 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 		
 	Vector2 total_distance( size_xy.x * debris_radius, size_xy.y * debris_radius );
 
+	// trying to be deterministic here
+	srand((unsigned int)points.size());
+
 	for (int downscaleIndex = 0; downscaleIndex < NUM_SCALES; ++downscaleIndex)
 	{
 		for (int currentFrame = 0; currentFrame < NUM_FRAMES; ++currentFrame)
@@ -146,6 +151,8 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 			// Half Tone AA
 			if (true)
 			{
+				// chance of blacking out the pixel
+
 				// Fill in half-tone AA, when we have pixels like this   0F F0
 				// 0 converts to half tone                               F0 0F
 
@@ -156,21 +163,31 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 
 					for (int x = 0; x < (m_width-1); ++x)
 					{
-						// case 1
-						if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
-							(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+						int dice = rand() % NUM_FRAMES;
+
+						if (dice >= currentFrame)
 						{
-							// Halftones
-							pLine0[x+0] = 0xFF808080;
-							pLine1[x+1] = 0xFF808080;
+							// case 1
+							if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
+								(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+							{
+								// Halftones
+								pLine0[x+0] = 0xFF808080;
+								pLine1[x+1] = 0xFF808080;
+							}
+							else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
+									 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+							{
+								// Halftones
+								pLine0[x+1] = 0xFF808080;
+								pLine1[x+0] = 0xFF808080;
+							}
 						}
-						else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
-								 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+						else
 						{
-							// Halftones
-							pLine0[x+1] = 0xFF808080;
-							pLine1[x+0] = 0xFF808080;
+							pLine0[x] = 0;
 						}
+
 					}
 				}
 			}
