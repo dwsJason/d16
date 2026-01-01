@@ -39,6 +39,10 @@ public:
 		}
 	}
 
+	// rendering mode, to generate explosion animation
+	// for Odds video game
+	std::vector<SDL_Surface*> RenderExplosion();
+
 //-----------------------------------------------------------------------------
 
 	std::vector<SDL_Surface*> RenderFrames();

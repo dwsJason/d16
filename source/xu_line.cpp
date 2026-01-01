@@ -23,9 +23,141 @@ CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 static bool g_RenderExplosion = true;
 
 //-----------------------------------------------------------------------------
+//
+// Used to generate breakup animations
+// for Odds video game
+//
 std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 {
+	// result
+	std::vector<SDL_Surface*> frames;
 
+	// Actually Render some stuff onto our m_pSurface
+
+	const std::vector<OBJFILE::vec2>& points = m_pOBJFile->GetPoints();
+	const std::vector<OBJFILE::int2>& lines  = m_pOBJFile->GetLines();
+	const std::vector<OBJFILE::object>& objects = m_pOBJFile->GetObjects();
+	const OBJFILE::vec2& center = m_pOBJFile->GetCenter();
+	      OBJFILE::vec2  scale = m_pOBJFile->GetScale();
+	const OBJFILE::vec2& hotspot = m_pOBJFile->GetHotSpot();
+	const OBJFILE::vec2& fontsize = m_pOBJFile->GetFontSize();
+
+	int width = 640;
+	int height = 400;
+
+	m_pOBJFile->GetWidthHeight(&width, &height);
+
+	float tx = hotspot.x;
+	float ty = hotspot.y;
+
+	
+	const float PI_2 = (float) (M_PI * 2.0f);
+
+	float ANGLE_STEP = 256.0f;
+	int NUM_SCALES = 1;
+
+	if (m_pOBJFile->GetRotationFrames())
+	{
+		float rot_frames = (float)m_pOBJFile->GetRotationFrames();
+
+		ANGLE_STEP = 256.0f / rot_frames;
+	}
+
+	if (m_pOBJFile->GetScaleFrames())
+	{
+		NUM_SCALES = m_pOBJFile->GetScaleFrames();
+	}
+
+	for (int downscaleIndex = 0; downscaleIndex < NUM_SCALES; ++downscaleIndex)
+	{
+		for (float angle = 0.0f; angle < 256.0f; angle+=ANGLE_STEP)
+		{
+			float theta = angle * PI_2 / 256.0f;
+			memset(m_pRawPixels, 0, sizeof(u32) * m_width * m_height);
+
+			for (int line_idx = 0; line_idx < lines.size(); ++line_idx)
+			{
+				float x0,y0,x1,y1;
+
+				x0 = points[ lines[ line_idx ].x - 1 ].x - center.x;
+				y0 = points[ lines[ line_idx ].x - 1 ].y - center.y;
+
+				x1 = points[ lines[ line_idx ].y - 1 ].x - center.x;
+				y1 = points[ lines[ line_idx ].y - 1 ].y - center.y;
+				// scale
+				x0*=scale.x;
+				x1*=scale.x;
+				y0*=scale.y;
+				y1*=scale.y;
+
+				// rotate
+				float rx = float(x0 * cos(theta) - y0 * sin(theta));
+				float ry = float(x0 * sin(theta) + y0 * cos(theta));
+
+				x0 = rx;
+				y0 = ry;
+
+				rx = float(x1 * cos(theta) - y1 * sin(theta));
+				ry = float(x1 * sin(theta) + y1 * cos(theta));
+
+				x1 = rx;
+				y1 = ry;
+
+				// translate
+
+				x0+=tx;x1+=tx;
+				y0+=ty;y1+=ty;
+
+				//WULine(x0,y0,x1,y1);
+				BLine((int)x0,(int)y0,(int)x1,(int)y1);
+			}
+
+			// Weird AA
+			// Half Tone AA
+			if (true)
+			{
+				// Fill in half-tone AA, when we have pixels like this   0F F0
+				// 0 converts to half tone                               F0 0F
+
+				for (int y = 0; y < (m_height-1); ++y)
+				{
+					u32 *pLine0 = m_pRawPixels + (y*m_width);
+					u32 *pLine1 = pLine0 + m_width;
+
+					for (int x = 0; x < (m_width-1); ++x)
+					{
+						// case 1
+						if ((0 == pLine0[x]) && (m_color == pLine0[x+1]) &&
+							(m_color == pLine1[x]) && (0 == pLine1[x+1]))
+						{
+							// Halftones
+							pLine0[x+0] = 0xFF808080;
+							pLine1[x+1] = 0xFF808080;
+						}
+						else if ((m_color == pLine0[x]) && (0 == pLine0[x+1]) &&
+								 (0 == pLine1[x]) && (m_color == pLine1[x+1]))
+						{
+							// Halftones
+							pLine0[x+1] = 0xFF808080;
+							pLine1[x+0] = 0xFF808080;
+						}
+					}
+				}
+			}
+			// End weird AA
+
+			SDL_Surface* pSurface = SDL_SurfaceFromRawRGBA((Uint32*)m_pRawPixels, m_width, m_height);
+			pSurface->userdata = (void*)((size_t)ANGLE_STEP); // hacked animation time into here
+
+			frames.push_back(pSurface);
+		}
+
+		scale.x *= 0.5f;
+		scale.y *= 0.5f;
+
+	}
+
+	return frames;
 }
 
 
@@ -351,6 +483,10 @@ std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 // Paint pixel white (floating point version, for reference only)
 void inline CRawCanvas::plotf(i16 x, i16 y, float alpha)
 {
+	// Keep pixel from corrupting memory
+	if ((y < 0) || (x < 0)) return;
+	if ((y >= m_height) || (x >= m_width)) return;
+
 	//m_pSurface[y*m_width + x] = 255 - ((255 - m_pSurface[y*m_width + x]) * (1.0f - alpha));
 
 	int surfaceIndex = (y * m_width) + x;
@@ -447,6 +583,10 @@ void CRawCanvas::WULine(float x0, float y0, float x1, float y1)
 
 void CRawCanvas::setPixel(i16 x, i16 y)
 {
+	// Keep pixel from corrupting memory
+	if ((y < 0) || (x < 0)) return;
+	if ((y >= m_height) || (x >= m_width)) return;
+
 	int surfaceIndex = (y*m_width) + x;
 	m_pRawPixels[surfaceIndex] = m_color;
 }
