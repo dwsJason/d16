@@ -20,8 +20,23 @@ CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 
 }
 
+static bool g_RenderExplosion = true;
+
+//-----------------------------------------------------------------------------
+std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
+{
+
+}
+
+
+//-----------------------------------------------------------------------------
+
 std::vector<SDL_Surface*> CRawCanvas::RenderFrames()
 {
+	if (g_RenderExplosion)
+	{
+		return RenderExplosion();
+	}
 	// result
 	std::vector<SDL_Surface*> frames;
 
