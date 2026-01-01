@@ -26,7 +26,7 @@ CRawCanvas::CRawCanvas(COBJFile* pOBJFile)
 
 }
 
-static bool g_RenderExplosion = true;
+static bool g_RenderExplosion = false;
 
 //-----------------------------------------------------------------------------
 //
@@ -56,6 +56,9 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 	float tx = hotspot.x;
 	float ty = hotspot.y;
 
+	// $$ WE CANT GO MUCH BIGGER THAN THIS, BECAUSE ADDRESSING MODES
+	tx = 100.0f;
+	ty = 100.0f;
 	
 	const float PI_2 = (float) (M_PI * 2.0f);
 
@@ -84,7 +87,9 @@ std::vector<SDL_Surface*> CRawCanvas::RenderExplosion()
 	size_xy.x *= scale.x;
 	size_xy.y *= scale.y;
 	
-	float debris_radius = 0.5f;
+	//float debris_radius = 0.5f; // for falcon
+	//float debris_radius = 0.15f; // for asteroids
+	float debris_radius = 1.0f; // generic
 		
 	Vector2 total_distance( size_xy.x * debris_radius, size_xy.y * debris_radius );
 
