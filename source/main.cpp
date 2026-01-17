@@ -697,20 +697,8 @@ void MainMenuBarUI()
 						// .pal extension
 						std::string& fullpath = pathName;
 
-						std::string extension = ".pal";
-
-						if (fullpath.length() > extension.length())
+						if (endsWith(pathName, ".pal"))
 						{
-							size_t fullpath_offset = fullpath.length() - extension.length();
-
-							for (int idx = 0; idx < extension.length(); ++idx)
-							{
-								if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
-								{
-									LOG("FAILED %s\n", filename.c_str());
-								}
-							}
-
 							PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, fullpath));
 						}
 						else
@@ -728,7 +716,7 @@ void MainMenuBarUI()
 				// Open File
 				NFD::UniquePathSet outPaths;
 
-				nfdu8filteritem_t filterItem[1] = { {"Wavefront OBJ", "obj"} };
+				nfdu8filteritem_t filterItem[1] = { {"Wavefront OBJ", "obj,svg"} };
 
 
 				nfdresult_t result = NFD::OpenDialogMultiple(outPaths,
@@ -756,20 +744,8 @@ void MainMenuBarUI()
 						// .pal extension
 						std::string& fullpath = pathName;
 
-						std::string extension = ".obj";
-
-						if (fullpath.length() > extension.length())
+						if (endsWith(pathName, ".obj") || endsWith(pathName, ".svg"))
 						{
-							size_t fullpath_offset = fullpath.length() - extension.length();
-
-							for (int idx = 0; idx < extension.length(); ++idx)
-							{
-								if (tolower(fullpath[ fullpath_offset + idx ]) != extension[ idx])
-								{
-									LOG("FAILED %s\n", filename.c_str());
-								}
-							}
-
 							COBJFile* pImportVector = new COBJFile(fullpath.c_str());
 							CRawCanvas* pRawCanvas = new CRawCanvas(pImportVector);
 

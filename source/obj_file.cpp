@@ -9,6 +9,7 @@
 #include "memstream.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 //------------------------------------------------------------------------------
 // Load in a COBJFile constructor
@@ -48,6 +49,31 @@ COBJFile::~COBJFile()
 //------------------------------------------------------------------------------
 // Static Helpers $$TODO just add these to the memStream class
 //                       we always need these
+
+static std::string toLower(const std::string s)
+{
+	std::string result = s;
+
+	for (int idx = 0; idx < result.size(); ++idx)
+	{
+		result[ idx ] = (char)tolower(result[idx]);
+	}
+
+	return result;
+}
+
+// Case Insensitive
+static bool endsWith(const std::string& S, const std::string& SUFFIX)
+{
+	bool bResult = false;
+
+	std::string s = toLower(S);
+	std::string suffix = toLower(SUFFIX);
+
+    bResult = s.rfind(suffix) == (s.size()-suffix.size());
+
+	return bResult;
+}
 
 static bool contains(char x, const char* pSeparators)
 {
@@ -102,6 +128,7 @@ static std::vector<std::string> split(const std::string& s, const char* separato
 		}
 	}
 
+	if (!contains(s[s.length() - 1], separators))
     output.push_back(s.substr(prev_pos, pos-prev_pos+1)); // Last word
 
     return output;
@@ -120,6 +147,219 @@ static void tolower(std::string& s)
 
 //------------------------------------------------------------------------------
 
+void COBJFile::LoadFromSVG(std::vector<unsigned char>& bytes)
+{
+	if (bytes.size())
+	{
+		MemoryStream memStream(bytes.data(), bytes.size());
+
+		OBJFILE::object global_object;
+		global_object.m_name = "$global";
+
+		m_objects.push_back(global_object);
+
+		OBJFILE::object* pCurrentObject = &m_objects[0];
+
+		bool path_is_open = false;
+
+		OBJFILE::vec2 cursor = { 0.0f, 0.0f };
+
+		while (memStream.NumBytesAvailable())
+		{
+			std::string lineData = memStream.ReadLine();
+
+			std::vector<std::string> tokens = split(lineData, " \t<>\"");
+
+			// technically # is the comment token
+			// but all lines I don't understand, are "comments"
+
+			char mode = 'l';
+
+			if (tokens.size())
+			{
+				if (path_is_open)
+				{
+					if (tokens[0] == "d=")
+					{
+						cursor = { 0.0f, 0.0f }; // reset the cursor for this specific path
+						mode = 'l'; 			 // reset mode for this path
+
+						if (tokens[1] == "M" || tokens[1] == "m")
+						{
+							char move = tokens[1][0];
+							if ('M' == move)
+							{
+								mode = 'L';
+							}
+
+							int current_point = (int)m_points.size()+1;
+							int close_loop = false;
+
+							for (int index = 2; index < tokens.size(); ++index)
+							{
+								if (tokens[index] == "z" || tokens[index] == "Z")
+								{
+									// mixing Mz or mZ is just a dump case, not supporting it
+									close_loop = true;
+								}
+								else if (tokens[index] == "l" || tokens[index] == "L")
+								{
+									// not supporting Ml or mL
+									mode = tokens[index][0];
+								}
+								else if (tokens[index] == "h" || tokens[index] == "H")
+								{
+									// not supporting Mh or mH
+									// technically we're in horizontal line mode
+									mode = tokens[index][0];
+								}
+								else if (tokens[index] == "v" || tokens[index] == "V")
+								{
+									// not supporting Mv or mV
+									mode =tokens[index][0];
+									// technically we're in vertical line mode
+								}
+								else if (tokens[index] == "c" || tokens[index] == "C")
+								{
+									assert(0); // curve to
+								}
+								else if (tokens[index] == "s" || tokens[index] == "S")
+								{
+									assert(0); // smooth curve to
+								}
+								else if (tokens[index] == "q" || tokens[index] == "Q")
+								{
+									assert(0); // quadradic Bezier curve to
+								}
+								else if (tokens[index] == "t" || tokens[index] == "T")
+								{
+									assert(0); // smooth quadradic Bezier curve to
+								}
+								else if (tokens[index] == "a" || tokens[index] == "A")
+								{
+									assert(0); // elliptical arc
+								}
+								else
+								{
+									OBJFILE::vec2 vec;
+
+									switch (mode)
+									{
+									case 'l':
+									case 'L':
+										{
+											std::vector<std::string> xy = split(tokens[index], ",");
+
+											sscanf_s(xy[0].c_str(), "%f", &vec.x );
+											sscanf_s(xy[1].c_str(), "%f", &vec.y );
+
+											if (mode=='l')
+											{
+												vec.x+=cursor.x;
+												vec.y+=cursor.y;
+											}
+										}
+										break;
+									case 'v':
+									case 'V':
+										{
+											sscanf_s(tokens[index].c_str(), "%f", &vec.y );
+											vec.x = m_points[ m_points.size() -1 ].x;
+
+											if (mode=='v')
+											{
+												vec.y+=cursor.y;
+											}
+										}
+										break;
+									case 'h':
+									case 'H':
+										{
+											sscanf_s(tokens[index].c_str(), "%f", &vec.x );
+											vec.y = m_points[ m_points.size() -1 ].y;
+
+											if (mode=='h')
+											{
+												vec.x+=cursor.x;
+											}
+										}
+										break;
+									default:
+										assert(0);
+									}
+
+
+									cursor.x = vec.x;
+									cursor.y = vec.y;
+
+
+									m_points.push_back(vec);
+								}
+							}
+
+							for (int index = current_point; index < m_points.size(); index++)
+							{
+								OBJFILE::int2 ivec;
+
+								ivec.x = index;
+								ivec.y = index+1;
+
+								m_lines.push_back(ivec);
+
+								// track which lines belong to this object
+								pCurrentObject->m_lines.push_back( (int)m_lines.size() );
+							}
+
+							if (close_loop)
+							{
+								OBJFILE::int2 ivec;
+								ivec.x = current_point;
+								ivec.y = (int)m_points.size();
+
+								cursor.x = m_points[ current_point-1 ].x;
+								cursor.y = m_points[ current_point-1 ].y;
+
+								m_lines.push_back(ivec);
+								// track which lines belong to this object
+								pCurrentObject->m_lines.push_back( (int)m_lines.size() );
+							}
+						}
+
+						// we have a new absolute path
+						path_is_open = false;
+					}
+				}
+				else
+				{
+					if (tokens[tokens.size()-1] == "path")
+					{
+						path_is_open = true;
+					}
+				}
+			}
+		}
+
+		m_scale.x = 5.0f;
+		m_scale.y = 5.0f;
+
+		m_center.x = 16.0;
+		m_center.y = 16.0;
+
+		m_hotspot.x = 320.0f;
+		m_hotspot.y = 200.0f;
+
+		m_rotationframes = 1;
+
+
+		// auto width + height
+		if (0==m_width || 0==m_height)
+		{
+			//$$TODO -- analyze the data to make a good width + height
+			m_width  = 640;
+			m_height = 400;
+		}
+	}
+}
 
 //------------------------------------------------------------------------------
 
@@ -147,7 +387,11 @@ void COBJFile::LoadFromFile(const char* pFilePath)
 		fclose(pFile);
 	}
 
-	if (bytes.size())
+	if (endsWith(pFilePath, ".svg"))
+	{
+		LoadFromSVG(bytes);
+	}
+	else if (bytes.size())
 	{
 		MemoryStream memStream(bytes.data(), bytes.size());
 
