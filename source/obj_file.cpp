@@ -357,6 +357,48 @@ void COBJFile::LoadFromSVG(std::vector<unsigned char>& bytes)
 			//$$TODO -- analyze the data to make a good width + height
 			m_width  = 640;
 			m_height = 400;
+
+			if (m_points.size() > 0)
+			{
+				// I really need this, at the moment for xml files
+				OBJFILE::vec2 bounds_min;
+				OBJFILE::vec2 bounds_max;
+
+				bounds_min.x = bounds_max.x = m_points[0].x;
+				bounds_min.y = bounds_max.y = m_points[0].y;
+
+				for (int pointIndex = 1; pointIndex < m_points.size(); ++pointIndex)
+				{
+					const OBJFILE::vec2& point = m_points[ pointIndex ];
+
+					if (point.x < bounds_min.x) bounds_min.x = point.x;
+					if (point.y < bounds_min.y) bounds_min.y = point.y;
+					if (point.x > bounds_max.x) bounds_max.x = point.x;
+					if (point.y > bounds_max.y) bounds_max.y = point.y;
+				}
+
+				m_center.x = (bounds_min.x + bounds_max.x) / 2.0f;
+				m_center.y = (bounds_min.y + bounds_max.y) / 2.0f;
+
+				float width  = bounds_max.x - bounds_min.x;
+				float height = bounds_max.y - bounds_min.y;
+
+				if ((width > 0.0f) && (height > 0.0f))
+				{
+					float scale = 1.0f;
+
+					if (width > height)
+					{
+						scale = 320.0f / width;
+					}
+					else
+					{
+						scale = 200.0f / height;
+					}
+
+					m_scale.x = m_scale.y = scale;
+				}
+			}
 		}
 	}
 }
