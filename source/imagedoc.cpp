@@ -33,6 +33,8 @@
 // Stuff for Journey
 #include "gsdx_file.h"
 
+#include "bctypes.h"
+
 // Statics
 int ImageDocument::s_uniqueId = 0;
 
@@ -3026,6 +3028,58 @@ Uint32 ImageDocument::SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
 	return color;
 }
 
+static Uint32 SDL_GetPixel(SDL_Surface* pSurface, int x, int y)
+{
+	Uint32 color = 0;
+
+	if (pSurface)
+	{
+		// Keep x and y legitimate
+		if (x < 0) x = 0;
+		if (x >= pSurface->w) x = pSurface->w-1;
+		if (y < 0) y = 0;
+		if (y >= pSurface->h) y = pSurface->h-1;
+
+		if (pSurface->flags & SDL_PREALLOC)
+		{
+			// This is only true if I allocated the pixels
+			// which means this has to be 8 bit indexed
+			Uint8* pPixel = (Uint8*)pSurface->pixels;
+			pPixel += (y * pSurface->pitch) + x;
+
+			int index = *pPixel;
+
+			color = *((Uint32*)&pSurface->format->palette->colors[ index ]);
+
+		}
+		else
+		{
+			// Better be 32 bit per pixel
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_LockSurface(pSurface);
+
+			int BytesPerPixel = pSurface->format->BytesPerPixel;
+
+			Uint8 * pixel = (Uint8*)pSurface->pixels;
+			pixel += (y * pSurface->pitch) + (x * BytesPerPixel);
+
+			//
+			//color = *((Uint32*)pixel);
+
+			color  =  (Uint32)pixel[0];
+			color |= ((Uint32)pixel[1]) << 8;
+			color |= ((Uint32)pixel[2]) << 16;
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_UnlockSurface(pSurface);
+		}
+	}
+
+	color |= 0xFF000000;  // We don't support Alpha
+	return color;
+}
+
 //------------------------------------------------------------------------------
 // Just return the index, that has the closest match to the passed in color
 static Uint32 ClosestIndex(Uint32* pClut, Uint32 uColor, Uint32 uNumColors=16)
@@ -3192,6 +3246,191 @@ unsigned char* ImageDocument::CreateC1Data(int frameNo)
 	return c1data;
 }
 
+
+struct SColorTable
+{
+	u32 usedColors[16];
+	u32 colors[ 256 ];
+};
+
+static int FindMatchingPalette( SColorTable* pColorTable, const std::vector<u32> colors )
+{
+	int match = -1;
+
+	for (int paletteIndex = 0; paletteIndex < 16; ++paletteIndex)
+	{
+		if (colors.size() <= pColorTable->usedColors[ paletteIndex ])
+		{
+			// we can check this palette for colors
+			// if all my colors exist, then yes, this is the palette for me
+
+			// if it's a match, then go ahead, and set match
+			// break the loop
+		}
+
+		if (pColorTable->usedColors[ paletteIndex ] == 0)
+		{
+			// Let's just use this palette
+			// add all my dumb colors to this palette
+			// set match and return
+		}
+	}
+
+	return match;
+}
+
+
+static u8 C1PickColors640( SColorTable* pColorTable, SDL_Surface* pImage, int y)
+{
+	// What this is going to do, is build a list of the most used colors
+	// on the passed in line, then see if theres already a palette in the color
+	// table with these colors, if there is, return the existing palette to use
+	// if there's not, add a new entry, for our new colors
+
+	std::map<u32,u32> histogram;
+
+	for (int x = 0; x < pImage->w; ++x)
+	{
+		u32 pixel = SDL_GetPixel(pImage, x, y);
+
+		std::map<u32,u32>::const_iterator it = histogram.find(pixel);
+		if (it != histogram.end())
+		{
+			histogram[ pixel ]++;
+		}
+		else
+		{
+			histogram[ pixel ] = 1;
+		}
+
+		if (histogram.size() <= 4)
+		{
+			// This is great
+			std::vector<u32> colors;
+
+			std::map<int, int>::iterator it;
+
+			for (std::map<u32, u32>::const_iterator it = histogram.begin(); it != histogram.end(); it++)
+			{
+				colors.push_back(it->first);
+				//counts.push_back(it->second);
+			}
+
+			int paletteNo = FindMatchingPalette( pColorTable, colors );
+		}
+		else
+		{
+			assert(0); // This is hard
+		}
+
+	}
+
+
+}
+
+//------------------------------------------------------------------------------
+//
+// This function assumes the colors are going to fit the rules
+//
+unsigned char* ImageDocument::CreateC1DataInterlaced(int frameNo, int interlaceNo)
+{
+	unsigned char *c1data = new unsigned char[ 0x8000 ];
+
+// Copy of the C1 memory
+	memset(c1data, 0, 0x8000 );
+
+// Get a copy of the clut
+	Uint32 pClut[ 256 ];
+	u8  pSCB [ 200 ];
+
+	SColorTable colorTable;
+	memset(&colorTable, 0, sizeof(SColorTable));
+
+// Choose a surface to save
+	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[frameNo] : m_pSurfaces[frameNo];
+
+	if (640 == pImage->w)
+	{
+		for (int scanlineNo = 199; scanlineNo >= 0; scanlineNo--)
+		{
+			pSCB[ scanlineNo ] = C1PickColors640( &colorTable, pImage, (scanlineNo*2) + interlaceNo);
+		}
+
+		// 640 mode
+		// convert pixel data into 2 bit indices
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 640; x+=4)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut+8, pixel0, 4);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut+12, pixel1, 4);
+				Uint32 pixel2 = SDL_GetPixel(pImage, x+2, y);
+				Uint32 index2 = ClosestIndex(pClut+0, pixel2, 4);
+				Uint32 pixel3 = SDL_GetPixel(pImage, x+3, y);
+				Uint32 index3 = ClosestIndex(pClut+4, pixel3, 4);
+
+				c1data[ (y * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
+			}
+		}
+
+		// put the lines into 640 mode
+		for (int idx = 0x7D00; idx < 0x7DC8; ++idx)
+		{
+			c1data[idx] = 0x80;
+		}
+
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+		}
+
+	}
+	else
+	{
+		// 320 mode
+		// Nibblized pixel data
+		for (int y = 0; y < 200; ++y)
+		{
+			for (int x = 0; x < 320; x+=2)
+			{
+				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
+				Uint32 index0 = ClosestIndex(pClut, pixel0);
+				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
+				Uint32 index1 = ClosestIndex(pClut, pixel1);
+
+				c1data[ (y * 160) + (x>>1) ] = (unsigned char) (index1 | (index0<<4));
+			}
+		}
+
+		// Color Data, just doing a floor conversion
+
+		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
+		for (int idx = 0; idx < 16; ++idx)
+		{
+			Uint32 sourceColor = pClut[ idx ];
+			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
+
+			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
+			targetColor |= (Uint16) (((sourceColor>>20) & 0xF) << 0); // Blue
+
+			pPal[ idx ] = targetColor;
+		}
+	}
+
+	return c1data;
+}
+
 //------------------------------------------------------------------------------
 // Save As GS Lzb Animation Format
 // 
@@ -3199,47 +3438,85 @@ unsigned char* ImageDocument::CreateC1Data(int frameNo)
 //
 void ImageDocument::SaveGSLA(std::string filenamepath)
 {
-	// First Collect a list of C1 images
-	// $C1 is just the 32KB blob of data, as it sits in the IIgs video memory
-	std::vector<unsigned char*> c1Images;
+	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[0] : m_pSurfaces[0];
 
-	for (int frameIndex = 0; frameIndex < m_pSurfaces.size(); ++frameIndex)
+	if (640 == pImage->w && 400 == pImage->h && 256 == m_iTargetColorCount)
 	{
-		c1Images.push_back( CreateC1Data( frameIndex ) );
-	}
+		// code to make the starwars movie work
+		LOG("Starwars Movie\n");
 
-	// Now the gsla support class can do the heavy lifting
+		std::string filename0 = filenamepath+'0';
+		std::string filename1 = filenamepath+'1';
 
-	GSLAFile anim(320,200, 0x8000);
+		std::vector<unsigned char*> c1Images0;
+		std::vector<unsigned char*> c1Images1;
 
-	anim.AddImages(c1Images);
-
-	anim.SaveToFile(filenamepath.c_str());
-
-	#if 1
-	{
-		// Verify the conversion is good
-		// Load the file back in
-		GSLAFile verify(filenamepath.c_str());
-
-		const std::vector<unsigned char *> &frames = verify.GetPixelMaps();
-
-		for (int idx = 0; idx < frames.size(); ++idx)
+		for (int frameIndex = 0; frameIndex < m_pSurfaces.size(); ++frameIndex)
 		{
-			int result = memcmp(c1Images[idx % c1Images.size()], frames[idx], verify.GetFrameSize());
-			LOG("Verify Frame %d - %s\n", idx, result ? "Failed" : "Good");
+			c1Images0.push_back( CreateC1DataInterlaced( frameIndex, 0 ) );
+			c1Images1.push_back( CreateC1DataInterlaced( frameIndex, 1 ) );
+		}
+
+		GSLAFile anim0(320,200, 0x8000);
+		anim0.AddImages(c1Images0);
+		anim0.SaveToFile(filename0.c_str());
+
+		GSLAFile anim1(320,200, 0x8000);
+		anim1.AddImages(c1Images1);
+		anim1.SaveToFile(filename1.c_str());
+
+		// Free the memory
+		for (int idx = 0; idx < c1Images0.size(); ++idx)
+		{
+			delete[] c1Images0[idx];
+			c1Images0[idx] = nullptr;
+			delete[] c1Images1[idx];
+			c1Images1[idx] = nullptr;
+		}
+
+	}
+	else
+	{
+		// First Collect a list of C1 images
+		// $C1 is just the 32KB blob of data, as it sits in the IIgs video memory
+		std::vector<unsigned char*> c1Images;
+
+		for (int frameIndex = 0; frameIndex < m_pSurfaces.size(); ++frameIndex)
+		{
+			c1Images.push_back( CreateC1Data( frameIndex ) );
+		}
+
+		// Now the gsla support class can do the heavy lifting
+
+		GSLAFile anim(320,200, 0x8000);
+
+		anim.AddImages(c1Images);
+
+		anim.SaveToFile(filenamepath.c_str());
+
+		#if 1
+		{
+			// Verify the conversion is good
+			// Load the file back in
+			GSLAFile verify(filenamepath.c_str());
+
+			const std::vector<unsigned char *> &frames = verify.GetPixelMaps();
+
+			for (int idx = 0; idx < frames.size(); ++idx)
+			{
+				int result = memcmp(c1Images[idx % c1Images.size()], frames[idx], verify.GetFrameSize());
+				LOG("Verify Frame %d - %s\n", idx, result ? "Failed" : "Good");
+			}
+		}
+		#endif
+
+		// Free the memory
+		for (int idx = 0; idx < c1Images.size(); ++idx)
+		{
+			delete[] c1Images[idx];
+			c1Images[idx] = nullptr;
 		}
 	}
-	#endif
-
-	// Free the memory
-	for (int idx = 0; idx < c1Images.size(); ++idx)
-	{
-		delete[] c1Images[idx];
-		c1Images[idx] = nullptr;
-	}
-
-
 }
 
 //------------------------------------------------------------------------------

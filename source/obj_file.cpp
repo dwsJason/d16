@@ -319,9 +319,12 @@ void COBJFile::LoadFromSVG(std::vector<unsigned char>& bytes)
 								cursor.x = m_points[ current_point-1 ].x;
 								cursor.y = m_points[ current_point-1 ].y;
 
-								m_lines.push_back(ivec);
-								// track which lines belong to this object
-								pCurrentObject->m_lines.push_back( (int)m_lines.size() );
+								// if (ivec.x != ivec.y) add this to skip plotting 0 length lines
+								{
+									m_lines.push_back(ivec);
+									// track which lines belong to this object
+									pCurrentObject->m_lines.push_back( (int)m_lines.size() );
+								}
 							}
 						}
 
@@ -389,11 +392,11 @@ void COBJFile::LoadFromSVG(std::vector<unsigned char>& bytes)
 
 					if (width > height)
 					{
-						scale = 320.0f / width;
+						scale = 56.0f / width;
 					}
 					else
 					{
-						scale = 200.0f / height;
+						scale = 56.0f / height;
 					}
 
 					m_scale.x = m_scale.y = scale;

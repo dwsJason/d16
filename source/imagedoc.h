@@ -103,6 +103,7 @@ private:
 
 	//$$JGA TODO - move this crap into a separate file/ class
 	unsigned char* CreateC1Data(int frameNo);
+	unsigned char* CreateC1DataInterlaced(int frameNo, int interlaceNo);
 	std::vector<unsigned char> C2EncodeFrame(unsigned char* pPrev, unsigned char* pNext);
 
 	void CropImage(int iNewWidth, int iNewHeight, int iJustify);
