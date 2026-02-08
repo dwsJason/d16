@@ -134,6 +134,12 @@ add_executable(d16
     ${NFD_SOURCES}
 )
 
+# --- Xcode scheme: set working directory so the app finds ./data/ ---
+set_target_properties(d16 PROPERTIES
+    XCODE_GENERATE_SCHEME TRUE
+    XCODE_SCHEME_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+)
+
 # --- Include directories ---
 target_include_directories(d16 PRIVATE
     source
