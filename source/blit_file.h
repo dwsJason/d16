@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "imgui.h"
-#include "SDL_Surface.h"
+#include "SDL_surface.h"
 
 class BLITFile
 {

@@ -25,7 +25,7 @@
 
 #include <map>
 #include <vector>
-#include <SDL_Surface.h>
+#include <SDL_surface.h>
 
 #ifndef GLuint
 typedef unsigned int	GLuint;		/* 4-byte unsigned */

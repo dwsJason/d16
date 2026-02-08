@@ -16,6 +16,7 @@
 //
 #include "c2_file.h"
 #include <stdio.h>
+#include "compat.h"
 
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler

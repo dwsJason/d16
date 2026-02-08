@@ -8,16 +8,21 @@
 #include "256_file.h"
 
 #include <stdio.h>
+#include "compat.h"
 
 // I have to say, it's a good thing that lzsa2 has good compression ratios
 // because these include names are fucking terrible
 
-//lzsa numeric includes
-#include "lib.h"
 //lzsa memory compressor
 #include "shrink_inmem.h"
 //lzsa memory decompressor
 #include "expand_inmem.h"
+
+// LZSA flags (from lib.h, included directly to avoid C++ incompatibility)
+#ifndef LZSA_FLAG_FAVOR_RATIO
+#define LZSA_FLAG_FAVOR_RATIO    (1<<0)
+#define LZSA_FLAG_RAW_BLOCK      (1<<1)
+#endif
 
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler

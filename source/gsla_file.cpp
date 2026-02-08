@@ -6,7 +6,7 @@
 // Care is taken in the encoder, to make sure the 65816 does not have to cross
 // bank boundaries during any copy.  This is so we can use the MVN instruction,
 // and so we can reduce the number of bank checks in the code.  We will have an
-// opcode, that says “source data bank has changed”
+// opcode, that says ï¿½source data bank has changedï¿½
 // 
 // The file will be laid out such that you load the file in at a 64K memory
 // boundary
@@ -23,10 +23,10 @@
 //
 //File Offset			Data	Commentary
 //------------------------------------------------------------------
-//0				0x47	; ‘G’  Graphics
-//1				0x53	; ‘S’ 
-//2             0x4C    ; ‘L’  LZB
-//3				0x41    ; ‘A’  Animation
+//0				0x47	; ï¿½Gï¿½  Graphics
+//1				0x53	; ï¿½Sï¿½ 
+//2             0x4C    ; ï¿½Lï¿½  LZB
+//3				0x41    ; ï¿½Aï¿½  Animation
 //
 // File Length, is the total length of the file
 //4				FileLengthLow    ; Low byte, 32-bit file length
@@ -43,7 +43,7 @@
 //					 ; R = 1, there is a ring frame
 //					 ; A Ring Frame is a frame that will delta from the last
 //                   ; frame of the animation, back to the first, for smoother
-//                   ; playback looping ,  If a ring frame exists, it’s also
+//                   ; playback looping ,  If a ring frame exists, itï¿½s also
 // 					 ; included in the frame count
 //
 // next is a word, width in bytes (likely 160 for now)
@@ -53,7 +53,7 @@
 // next is a word, height (likely 200 for now)
 //0xC				HL	    ; Display Height in bytes, low byte
 //0xD				HH      ; Display Height in bytes, high byte
-// 2 bytes, Frame Size in Bytes, since a “Frame” may contain more than just the
+// 2 bytes, Frame Size in Bytes, since a ï¿½Frameï¿½ may contain more than just the
 // width * height, worth of pixels, for now this is $8000, or 32768
 //0xE				FBL     ; Frame Buffer Length Low
 //0xF				FBH     ; Frame Buffer Length High
@@ -67,34 +67,34 @@
 //
 // After this comes AIFF style chunks of data,  basically a 4 byte chunk name,
 // followed by a 4 byte length (inclusive of the chunk size).   The idea is that
-// you can skip chunks you don’t understand.
+// you can skip chunks you donï¿½t understand.
 //
 //File Offset:
 //0x14				First Chunk  (followed by more Chunks, until end of file)
 //
 //Chunk Definitions
-//Name:  ‘INIT’   -  Initial Frame Chunk, this is the data used to first initialize the playback buffer
-//0:	0x49	‘I’
-//1: 	0x4E	‘N’
-//2: 	0x49	‘I’
-//3: 	0x54	‘T’
+//Name:  ï¿½INITï¿½   -  Initial Frame Chunk, this is the data used to first initialize the playback buffer
+//0:	0x49	ï¿½Iï¿½
+//1: 	0x4E	ï¿½Nï¿½
+//2: 	0x49	ï¿½Iï¿½
+//3: 	0x54	ï¿½Tï¿½
 // 32 bit long, length, little endian, including the 8 byte header
 //4:	length low low
 //5:	length low high
 //6:	length high low
 //7:	length high high
 //
-//8: ….   This is a single frame of data, that decodes/decompresses into frame
+//8: ï¿½.   This is a single frame of data, that decodes/decompresses into frame
 //        sized bytes (right now 0x8000)
 // This data stream includes, an end of animation opcode, so that the normal
 // animation decompressor, can be called on this data, and it will emit the
 // initial frame onto the screen
 //
-//Name: ‘ANIM’ - Frames
-//0:	0x41 ‘A’
-//1:	0x4E ‘N’
-//2:	0x49 ‘I’
-//3:	0x4D ‘M’
+//Name: ï¿½ANIMï¿½ - Frames
+//0:	0x41 ï¿½Aï¿½
+//1:	0x4E ï¿½Nï¿½
+//2:	0x49 ï¿½Iï¿½
+//3:	0x4D ï¿½Mï¿½
 // 32 bit long, length, little endian, including chunk header
 //4:	length low low
 //5:	length low high
@@ -103,7 +103,7 @@
 //
 // This is followed by the frames, with the intention of decompressing them at
 // 60FPS, which is why no play speed is included, if you need a play-rate
-// slower than this, blank frame’s should be inserted into the animation data
+// slower than this, blank frameï¿½s should be inserted into the animation data
 //
 // Every attempt is made to delta encode the image,  meaning we just encode
 // information about what changed each frame.   We attempt to make the size
@@ -130,6 +130,7 @@
 #include "lzb.h"
 
 #include <stdio.h>
+#include "compat.h"
 
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler

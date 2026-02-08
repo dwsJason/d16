@@ -9,6 +9,7 @@
 #include "memstream.h"
 
 #include <stdio.h>
+#include "compat.h"
 #include <assert.h>
 
 //------------------------------------------------------------------------------

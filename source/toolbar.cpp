@@ -23,7 +23,7 @@ Toolbar::Toolbar()
 	// an XPM image like the eye dropper?
 
 	// Get Icons loaded into an OpenGL Texture
-	SDL_Surface* pImage = IMG_Load(".\\data\\buttons.png");
+	SDL_Surface* pImage = IMG_Load("./data/buttons.png");
 
 	if (pImage)
 	{

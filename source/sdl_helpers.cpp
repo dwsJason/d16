@@ -5,6 +5,7 @@
 //
 
 #include "sdl_helpers.h"
+#include "compat.h"
 
 #include "256_file.h"  // Support C256 Image File
 #include "anm_file.h"  // Support Deluxe Animation File

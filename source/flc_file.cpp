@@ -4,6 +4,7 @@
 // 
 #include "flc_file.h"
 #include <stdio.h>
+#include "compat.h"
 #include <assert.h>
 
 

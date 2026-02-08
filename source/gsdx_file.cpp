@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string>
 
-#include "SDL_Surface.h"
+#include "SDL_surface.h"
 
 #include "bctypes.h"
 

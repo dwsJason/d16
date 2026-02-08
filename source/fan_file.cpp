@@ -17,6 +17,7 @@
 #include "lz4hc.h" // For the lz4 high-compression implementation
 
 #include <stdio.h>
+#include "compat.h"
 
 // If these structs are the wrong size, there's an issue with type sizes, and
 // your compiler

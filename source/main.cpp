@@ -14,7 +14,11 @@
 #include <nfd.hpp>  // needed for the native file dialog
 #include "imagedoc.h"
 #include "paldoc.h"
+#ifdef _WIN32
 #include "dirent.h"
+#else
+#include <dirent.h>
+#endif
 #include "toolbar.h"
 #include "obj_file.h"
 #include "xu_line.h"
@@ -199,7 +203,7 @@ int main(int, char**)
 		// Scan preset palette directory
 		LOG("Load Preset Palettes\n");
 
-		std::string vPath = ".\\data\\palettes";
+		std::string vPath = "./data/palettes";
 		struct dirent **files = nullptr;
 		int fileCount = scandir(vPath.c_str(), &files, nullptr, alphaSort);
 
@@ -214,7 +218,7 @@ int main(int, char**)
 				if (endsWith(filename, ".pal"))
 				{
 					LOG("%s\n", filename.c_str());
-					PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, vPath+"\\"+filename ));
+					PaletteDocument::GDocuments.push_back(new PaletteDocument(filename, vPath+"/"+filename ));
 				}
 			}
 		}

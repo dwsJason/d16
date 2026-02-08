@@ -9,6 +9,7 @@
 //
 #include "anm_file.h"
 #include <stdio.h>
+#include "compat.h"
 #include <assert.h>
 
 // If these structs are the wrong size, there's an issue with type sizes, and
