@@ -3263,18 +3263,22 @@ static int FindMatchingPalette( SColorTable* pColorTable, const std::vector<u32>
 		{
 			// we can check this palette for colors
 			// if all my colors exist, then yes, this is the palette for me
-
 			// if it's a match, then go ahead, and set match
-			// break the loop
+			// 	break the loop
 		}
 
 		if (pColorTable->usedColors[ paletteIndex ] == 0)
 		{
+			// at this point, since we're allocating from top to bottom
+			// we know there are not matches
 			// Let's just use this palette
 			// add all my dumb colors to this palette
 			// set match and return
 		}
 	}
+
+	// if we get here, and there's no match, we have to fall back, and find
+	// the closest match, then return that
 
 	return match;
 }
