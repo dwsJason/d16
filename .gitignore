@@ -18,3 +18,8 @@ vcxproj/d16.VC.db
 *.vpwhistxml
 *.o
 *.d
+build/
+imgui.ini
+node_modules/
+package.json
+package-lock.json
