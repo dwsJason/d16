@@ -3253,32 +3253,141 @@ struct SColorTable
 	u32 colors[ 256 ];
 };
 
-static int FindMatchingPalette( SColorTable* pColorTable, const std::vector<u32> colors )
+static int FindMatchingPalette640( SColorTable* pColorTable, const std::vector<u32> colors )
 {
 	int match = -1;
 
+	// 640 mode: only 4 unique colors per palette, repeated 4 times across
+	// the 16 entries (groups at +0, +4, +8, +12)
+	const u32 maxColors = 4;
+
 	for (int paletteIndex = 0; paletteIndex < 16; ++paletteIndex)
 	{
-		if (colors.size() <= pColorTable->usedColors[ paletteIndex ])
-		{
-			// we can check this palette for colors
-			// if all my colors exist, then yes, this is the palette for me
-			// if it's a match, then go ahead, and set match
-			// 	break the loop
-		}
+		u32 used = pColorTable->usedColors[ paletteIndex ];
 
-		if (pColorTable->usedColors[ paletteIndex ] == 0)
+		if (used > 0)
 		{
-			// at this point, since we're allocating from top to bottom
-			// we know there are not matches
-			// Let's just use this palette
-			// add all my dumb colors to this palette
-			// set match and return
+			// Check if all our colors already exist in this palette
+			bool allFound = true;
+			for (size_t ci = 0; ci < colors.size(); ++ci)
+			{
+				bool found = false;
+				for (u32 pi = 0; pi < used; ++pi)
+				{
+					if (pColorTable->colors[ (paletteIndex * 16) + pi ] == colors[ci])
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+				{
+					allFound = false;
+					break;
+				}
+			}
+
+			if (allFound)
+			{
+				match = paletteIndex;
+				break;
+			}
+
+			// Check if this palette has room for our new colors
+			u32 newCount = 0;
+			for (size_t ci = 0; ci < colors.size(); ++ci)
+			{
+				bool found = false;
+				for (u32 pi = 0; pi < used; ++pi)
+				{
+					if (pColorTable->colors[ (paletteIndex * 16) + pi ] == colors[ci])
+					{
+						found = true;
+						break;
+					}
+				}
+				if (!found)
+					newCount++;
+			}
+
+			if (used + newCount <= maxColors)
+			{
+				// Add the new colors, replicated across all 4 groups
+				for (size_t ci = 0; ci < colors.size(); ++ci)
+				{
+					bool found = false;
+					for (u32 pi = 0; pi < used; ++pi)
+					{
+						if (pColorTable->colors[ (paletteIndex * 16) + pi ] == colors[ci])
+						{
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+					{
+						u32 base = paletteIndex * 16;
+						pColorTable->colors[ base + used      ] = colors[ci];
+						pColorTable->colors[ base + used + 4  ] = colors[ci];
+						pColorTable->colors[ base + used + 8  ] = colors[ci];
+						pColorTable->colors[ base + used + 12 ] = colors[ci];
+						used++;
+					}
+				}
+				pColorTable->usedColors[ paletteIndex ] = used;
+				match = paletteIndex;
+				break;
+			}
+		}
+		else
+		{
+			// Empty palette — claim it, replicate colors across all 4 groups
+			u32 base = paletteIndex * 16;
+			for (size_t ci = 0; ci < colors.size(); ++ci)
+			{
+				pColorTable->colors[ base + ci      ] = colors[ci];
+				pColorTable->colors[ base + ci + 4  ] = colors[ci];
+				pColorTable->colors[ base + ci + 8  ] = colors[ci];
+				pColorTable->colors[ base + ci + 12 ] = colors[ci];
+			}
+			pColorTable->usedColors[ paletteIndex ] = (u32)colors.size();
+			match = paletteIndex;
+			break;
 		}
 	}
 
-	// if we get here, and there's no match, we have to fall back, and find
-	// the closest match, then return that
+	// Fall back: find the palette with the most matching colors
+	if (match < 0)
+	{
+		int bestMatch = 0;
+		int bestCount = 0;
+
+		for (int paletteIndex = 0; paletteIndex < 16; ++paletteIndex)
+		{
+			u32 used = pColorTable->usedColors[ paletteIndex ];
+			int count = 0;
+
+			for (size_t ci = 0; ci < colors.size(); ++ci)
+			{
+				for (u32 pi = 0; pi < used; ++pi)
+				{
+					if (pColorTable->colors[ (paletteIndex * 16) + pi ] == colors[ci])
+					{
+						count++;
+						break;
+					}
+				}
+			}
+
+			if (count > bestCount)
+			{
+				bestCount = count;
+				bestMatch = paletteIndex;
+			}
+		}
+
+		match = bestMatch;
+	}
 
 	return match;
 }
@@ -3286,50 +3395,44 @@ static int FindMatchingPalette( SColorTable* pColorTable, const std::vector<u32>
 
 static u8 C1PickColors640( SColorTable* pColorTable, SDL_Surface* pImage, int y)
 {
-	// What this is going to do, is build a list of the most used colors
-	// on the passed in line, then see if theres already a palette in the color
-	// table with these colors, if there is, return the existing palette to use
-	// if there's not, add a new entry, for our new colors
-
+	// Build a histogram of all colors on this scanline
 	std::map<u32,u32> histogram;
 
 	for (int x = 0; x < pImage->w; ++x)
 	{
 		u32 pixel = SDL_GetPixel(pImage, x, y);
-
-		std::map<u32,u32>::const_iterator it = histogram.find(pixel);
-		if (it != histogram.end())
-		{
-			histogram[ pixel ]++;
-		}
-		else
-		{
-			histogram[ pixel ] = 1;
-		}
-
-		if (histogram.size() <= 4)
-		{
-			// This is great
-			std::vector<u32> colors;
-
-			std::map<int, int>::iterator it;
-
-			for (std::map<u32, u32>::const_iterator it = histogram.begin(); it != histogram.end(); it++)
-			{
-				colors.push_back(it->first);
-				//counts.push_back(it->second);
-			}
-
-			int paletteNo = FindMatchingPalette( pColorTable, colors );
-		}
-		else
-		{
-			assert(0); // This is hard
-		}
-
+		histogram[ pixel ]++;
 	}
 
+	// Pick up to 4 most popular colors
+	std::vector<u32> colors;
 
+	if (histogram.size() <= 4)
+	{
+		for (std::map<u32, u32>::const_iterator it = histogram.begin(); it != histogram.end(); ++it)
+		{
+			colors.push_back(it->first);
+		}
+	}
+	else
+	{
+		// Sort by frequency descending, pick top 4
+		std::vector<std::pair<u32,u32>> sorted(histogram.begin(), histogram.end());
+		std::sort(sorted.begin(), sorted.end(),
+			[](const std::pair<u32,u32>& a, const std::pair<u32,u32>& b)
+			{
+				return a.second > b.second;
+			});
+
+		for (int i = 0; i < 4; ++i)
+		{
+			colors.push_back(sorted[i].first);
+		}
+	}
+
+	int paletteNo = FindMatchingPalette640( pColorTable, colors );
+
+	return (u8)paletteNo;
 }
 
 //------------------------------------------------------------------------------
@@ -3344,11 +3447,11 @@ unsigned char* ImageDocument::CreateC1DataInterlaced(int frameNo, int interlaceN
 	memset(c1data, 0, 0x8000 );
 
 // Get a copy of the clut
-	Uint32 pClut[ 256 ];
 	u8  pSCB [ 200 ];
 
 	SColorTable colorTable;
 	memset(&colorTable, 0, sizeof(SColorTable));
+	Uint32 *pClut = colorTable.colors;
 
 // Choose a surface to save
 	SDL_Surface* pImage = m_pTargetSurfaces.size() ? m_pTargetSurfaces[frameNo] : m_pSurfaces[frameNo];
@@ -3362,35 +3465,37 @@ unsigned char* ImageDocument::CreateC1DataInterlaced(int frameNo, int interlaceN
 
 		// 640 mode
 		// convert pixel data into 2 bit indices
-		for (int y = 0; y < 200; ++y)
+		for (int yi = 0; yi < 200; ++yi)
 		{
+			int y = (yi*2) + interlaceNo;
+			Uint32* pLinePal = pClut + (pSCB[yi] * 16);
 			for (int x = 0; x < 640; x+=4)
 			{
 				Uint32 pixel0 = SDL_GetPixel(pImage, x, y);
-				Uint32 index0 = ClosestIndex(pClut+8, pixel0, 4);
+				Uint32 index0 = ClosestIndex(pLinePal+8, pixel0, 4);
 				Uint32 pixel1 = SDL_GetPixel(pImage, x+1, y);
-				Uint32 index1 = ClosestIndex(pClut+12, pixel1, 4);
+				Uint32 index1 = ClosestIndex(pLinePal+12, pixel1, 4);
 				Uint32 pixel2 = SDL_GetPixel(pImage, x+2, y);
-				Uint32 index2 = ClosestIndex(pClut+0, pixel2, 4);
+				Uint32 index2 = ClosestIndex(pLinePal+0, pixel2, 4);
 				Uint32 pixel3 = SDL_GetPixel(pImage, x+3, y);
-				Uint32 index3 = ClosestIndex(pClut+4, pixel3, 4);
+				Uint32 index3 = ClosestIndex(pLinePal+4, pixel3, 4);
 
-				c1data[ (y * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
+				c1data[ (yi * 160) + (x>>2) ] = (unsigned char) (index3 | (index2<<2) | (index1<<4) | (index0<<6));
 			}
 		}
 
 		// put the lines into 640 mode
 		for (int idx = 0x7D00; idx < 0x7DC8; ++idx)
 		{
-			c1data[idx] = 0x80;
+			c1data[idx] = 0x80 | pSCB[idx&0xFF];
 		}
 
 		// Color Data, just doing a floor conversion
 
 		Uint16* pPal = (Uint16*)(&c1data[ 0x7E00 ]);
-		for (int idx = 0; idx < 16; ++idx)
+		for (int idx = 0; idx < 256; ++idx)
 		{
-			Uint32 sourceColor = pClut[ idx ];
+			Uint32 sourceColor = colorTable.colors[idx];
 			Uint16 targetColor = (Uint16)(((sourceColor>>4) & 0xF) << 8); // Red
 
 			targetColor |= (Uint16) (((sourceColor>>12) & 0xF) << 4); // Green
@@ -3449,8 +3554,8 @@ void ImageDocument::SaveGSLA(std::string filenamepath)
 		// code to make the starwars movie work
 		LOG("Starwars Movie\n");
 
-		std::string filename0 = filenamepath+'0';
-		std::string filename1 = filenamepath+'1';
+		std::string filename0 = FixExtension(filenamepath, "0.gsla");
+		std::string filename1 = FixExtension(filenamepath, "1.gsla");
 
 		std::vector<unsigned char*> c1Images0;
 		std::vector<unsigned char*> c1Images1;
