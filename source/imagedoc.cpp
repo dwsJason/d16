@@ -22,6 +22,7 @@
 #include "toolbar.h"
 #include "cursor.h"
 
+#include <algorithm>
 #include <map>
 #include <vector>
 
