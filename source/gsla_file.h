@@ -6,7 +6,7 @@
 // Care is taken in the encoder, to make sure the 65816 does not have to cross
 // bank boundaries during any copy.  This is so we can use the MVN instruction,
 // and so we can reduce the number of bank checks in the code.  We will have an
-// opcode, that says “source data bank has changed”
+// opcode, that says ï¿½source data bank has changedï¿½
 // 
 // The file will be laid out such that you load the file in at a 64K memory
 // boundary
@@ -117,7 +117,7 @@ public:
 	// Creation
 	GSLAFile(int iWidthPixels, int iHeightPixels, int iFrameSizeBytes);
 	void AddImages( const std::vector<unsigned char*>& pFrameBytes );
-	void SaveToFile(const char* pFilenamePath);
+	void SaveToFile(const char* pFilenamePath, bool bVerbose = false);
 
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);

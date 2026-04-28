@@ -1,4 +1,4 @@
-//
+// Also see: https://github.com/dwsJason/gslaplay for this documentation
 // C++ Encoder/Decoder
 // For GSLA, GS Lzb Animation File Format
 // 
@@ -6,7 +6,7 @@
 // Care is taken in the encoder, to make sure the 65816 does not have to cross
 // bank boundaries during any copy.  This is so we can use the MVN instruction,
 // and so we can reduce the number of bank checks in the code.  We will have an
-// opcode, that says �source data bank has changed�
+// opcode, that says 'source data bank has changed'
 // 
 // The file will be laid out such that you load the file in at a 64K memory
 // boundary
@@ -23,10 +23,10 @@
 //
 //File Offset			Data	Commentary
 //------------------------------------------------------------------
-//0				0x47	; �G�  Graphics
-//1				0x53	; �S� 
-//2             0x4C    ; �L�  LZB
-//3				0x41    ; �A�  Animation
+//0				0x47	; 'G'  Graphics
+//1				0x53	; 'S' 
+//2				0x4C    ; 'L'  LZB
+//3				0x41    ; 'A'  Animation
 //
 // File Length, is the total length of the file
 //4				FileLengthLow    ; Low byte, 32-bit file length
@@ -43,7 +43,7 @@
 //					 ; R = 1, there is a ring frame
 //					 ; A Ring Frame is a frame that will delta from the last
 //                   ; frame of the animation, back to the first, for smoother
-//                   ; playback looping ,  If a ring frame exists, it�s also
+//                   ; playback looping ,  If a ring frame exists, it's also
 // 					 ; included in the frame count
 //
 // next is a word, width in bytes (likely 160 for now)
@@ -53,7 +53,7 @@
 // next is a word, height (likely 200 for now)
 //0xC				HL	    ; Display Height in bytes, low byte
 //0xD				HH      ; Display Height in bytes, high byte
-// 2 bytes, Frame Size in Bytes, since a �Frame� may contain more than just the
+// 2 bytes, Frame Size in Bytes, since a 'Frame' may contain more than just the
 // width * height, worth of pixels, for now this is $8000, or 32768
 //0xE				FBL     ; Frame Buffer Length Low
 //0xF				FBH     ; Frame Buffer Length High
@@ -67,34 +67,34 @@
 //
 // After this comes AIFF style chunks of data,  basically a 4 byte chunk name,
 // followed by a 4 byte length (inclusive of the chunk size).   The idea is that
-// you can skip chunks you don�t understand.
+// you can skip chunks you don't understand.
 //
 //File Offset:
 //0x14				First Chunk  (followed by more Chunks, until end of file)
 //
 //Chunk Definitions
-//Name:  �INIT�   -  Initial Frame Chunk, this is the data used to first initialize the playback buffer
-//0:	0x49	�I�
-//1: 	0x4E	�N�
-//2: 	0x49	�I�
-//3: 	0x54	�T�
+//Name:  'INIT'   -  Initial Frame Chunk, this is the data used to first initialize the playback buffer
+//0:	0x49	'I'
+//1: 	0x4E	'N'
+//2: 	0x49	'I'
+//3: 	0x54	'T'
 // 32 bit long, length, little endian, including the 8 byte header
 //4:	length low low
 //5:	length low high
 //6:	length high low
 //7:	length high high
 //
-//8: �.   This is a single frame of data, that decodes/decompresses into frame
+//8: ...   This is a single frame of data, that decodes/decompresses into frame
 //        sized bytes (right now 0x8000)
 // This data stream includes, an end of animation opcode, so that the normal
 // animation decompressor, can be called on this data, and it will emit the
 // initial frame onto the screen
 //
-//Name: �ANIM� - Frames
-//0:	0x41 �A�
-//1:	0x4E �N�
-//2:	0x49 �I�
-//3:	0x4D �M�
+//Name: 'ANIM' - Frames
+//0:	0x41 'A'
+//1:	0x4E 'N'
+//2:	0x49 'I'
+//3:	0x4D 'M'
 // 32 bit long, length, little endian, including chunk header
 //4:	length low low
 //5:	length low high
@@ -103,7 +103,7 @@
 //
 // This is followed by the frames, with the intention of decompressing them at
 // 60FPS, which is why no play speed is included, if you need a play-rate
-// slower than this, blank frame�s should be inserted into the animation data
+// slower than this, blank frame's should be inserted into the animation data
 //
 // Every attempt is made to delta encode the image,  meaning we just encode
 // information about what changed each frame.   We attempt to make the size
@@ -152,9 +152,9 @@ GSLAFile::GSLAFile(const char *pFilePath)
 //------------------------------------------------------------------------------
 
 GSLAFile::GSLAFile(int iWidthPixels, int iHeightPixels, int iFrameSizeBytes )
-	: m_widthPixels(iWidthPixels)
+	: m_frameSize( iFrameSizeBytes )
+	, m_widthPixels(iWidthPixels)
 	, m_heightPixels(iHeightPixels)
-	, m_frameSize( iFrameSizeBytes )
 {
 
 }
@@ -164,7 +164,7 @@ GSLAFile::GSLAFile(int iWidthPixels, int iHeightPixels, int iFrameSizeBytes )
 GSLAFile::~GSLAFile()
 {
 	// Free Up the memory
-	for (int idx = 0; idx < m_pC1PixelMaps.size(); ++idx)
+	for (unsigned int idx = 0; idx < m_pC1PixelMaps.size(); ++idx)
 	{
 		delete[] m_pC1PixelMaps[idx];
 		m_pC1PixelMaps[ idx ] = nullptr;
@@ -176,7 +176,7 @@ GSLAFile::~GSLAFile()
 void GSLAFile::LoadFromFile(const char* pFilePath)
 {
 	// Free Up the memory
-	for (int idx = 0; idx < m_pC1PixelMaps.size(); ++idx)
+	for (unsigned int idx = 0; idx < m_pC1PixelMaps.size(); ++idx)
 	{
 		delete[] m_pC1PixelMaps[idx];
 		m_pC1PixelMaps[ idx ] = nullptr;
@@ -286,7 +286,7 @@ void GSLAFile::UnpackAnimation(GSLA_ANIM* pANIM, GSLA_Header* pHeader)
 	// Initialize the Canvas with the first frame
 	memcpy(pCanvas, m_pC1PixelMaps[0], m_frameSize);
 
-	for (int idx = 1; idx < m_pC1PixelMaps.size(); ++idx)
+	for (unsigned int idx = 1; idx < m_pC1PixelMaps.size(); ++idx)
 	{
 		// Apply Changes to the Canvas
 		pData += DecompressFrame(pCanvas, pData, (unsigned char*) pHeader);
@@ -302,7 +302,7 @@ void GSLAFile::UnpackAnimation(GSLA_ANIM* pANIM, GSLA_Header* pHeader)
 //
 void GSLAFile::AddImages( const std::vector<unsigned char*>& pFrameBytes )
 {
-	for (int idx = 0; idx < pFrameBytes.size(); ++idx)
+	for (unsigned int idx = 0; idx < pFrameBytes.size(); ++idx)
 	{
 		unsigned char* pPixels = new unsigned char[ m_frameSize ];
 		memcpy(pPixels, pFrameBytes[ idx ], m_frameSize );
@@ -314,7 +314,7 @@ void GSLAFile::AddImages( const std::vector<unsigned char*>& pFrameBytes )
 //
 // Compress / Serialize a new GSLA File
 //
-void GSLAFile::SaveToFile(const char* pFilenamePath)
+void GSLAFile::SaveToFile(const char* pFilenamePath, bool bVerbose)
 {
 	// We're not going to even try encoding an empty file
 	if (m_pC1PixelMaps.size() < 1)
@@ -324,6 +324,9 @@ void GSLAFile::SaveToFile(const char* pFilenamePath)
 
 	// serialize to memory, then save that to a file
 	std::vector<unsigned char> bytes;
+	// Worst-case sizing: header + per-frame compressed bound (~ 2*frame_size).
+	// One reserve up front avoids ~hundreds of vector reallocs across frames.
+	bytes.reserve(sizeof(GSLA_Header) + (size_t)m_frameSize * (m_pC1PixelMaps.size() + 2) * 2);
 
 	//--------------------------------------------------------------------------
 	// Add the header
@@ -340,10 +343,10 @@ void GSLAFile::SaveToFile(const char* pFilenamePath)
 
 	pHeader->version = 0x8000; // Version 0, with a Ring/Loop Frame at the end
 
-	pHeader->width = (unsigned short)m_widthPixels >> 1;
-	pHeader->height = (unsigned short)m_heightPixels;
+	pHeader->width = m_widthPixels >> 1;
+	pHeader->height = m_heightPixels;
 
-	pHeader->frame_size = (unsigned short)m_frameSize;
+	pHeader->frame_size = m_frameSize;
 
 	pHeader->frame_count = (unsigned int)m_pC1PixelMaps.size() + 1; // + 1 for the ring frame
 
@@ -368,19 +371,31 @@ void GSLAFile::SaveToFile(const char* pFilenamePath)
 	// than the original data, I think if that happens, the image was probably
 	// designed to break this, anyway, give double theoretical max
 	unsigned char* pWorkBuffer = new unsigned char[ m_frameSize * 2 ];
+	unsigned char* pAltBuffer  = new unsigned char[ m_frameSize * 2 ];
 
 	unsigned char* pInitialFrame = m_pC1PixelMaps[ 0 ];
 
-	// We're not worried about bank wrap on the first frame, and we don't have a pre-populated
-	// dictionary - Also use the best compression we can get here
-	int compressedSize = Old_LZB_Compress(pWorkBuffer, pInitialFrame, m_frameSize);
-
-	printf("frameSize = %d\n", compressedSize);
-
-	for (int compressedIndex = 0; compressedIndex < compressedSize; ++compressedIndex)
+	// Bake-off: Old_LZB_Compress and LZB_Compress are different greedy strategies
+	// with different bias.  Run both on the INIT frame and keep the smaller.
+	int oldSize = Old_LZB_Compress(pAltBuffer,  pInitialFrame, m_frameSize);
+	int newSize = LZB_Compress    (pWorkBuffer, pInitialFrame, m_frameSize);
+	int compressedSize;
+	if (newSize <= oldSize)
 	{
-		bytes.push_back(pWorkBuffer[ compressedIndex ]);
+		compressedSize = newSize;
 	}
+	else
+	{
+		compressedSize = oldSize;
+		// Use the alternate buffer's data
+		unsigned char* tmp = pWorkBuffer;
+		pWorkBuffer = pAltBuffer;
+		pAltBuffer = tmp;
+	}
+
+	printf("frameSize = %d (old=%d new=%d)\n", compressedSize, oldSize, newSize);
+
+	bytes.insert(bytes.end(), pWorkBuffer, pWorkBuffer + compressedSize);
 
 	// Insert EOF/ End of Animation Done opcode
 	bytes.push_back( 0x06 );
@@ -411,48 +426,42 @@ void GSLAFile::SaveToFile(const char* pFilenamePath)
 	unsigned char *pCanvas = new unsigned char[ m_frameSize ];
 	memcpy(pCanvas, m_pC1PixelMaps[0], m_frameSize);
 
+	// gapMergeThreshold of 256 was empirically best on falcon-new.gsla
+	// (within 0.8% of the per-frame optimum across {3,16,64,128,256}).
+	// Lower values (3, 16, 64) cost double-digit-percent on real animations.
+	const int kGapMergeThreshold = 256;
+
 	// Let's encode some frames buddy
-	for (int frameIndex = 1; frameIndex < m_pC1PixelMaps.size(); ++frameIndex)
+	for (unsigned int frameIndex = 1; frameIndex < m_pC1PixelMaps.size(); ++frameIndex)
 	{
-		printf("Save Frame %d\n", frameIndex+1);
-
-		// I don't want random data in the bank gaps, so initialize this
-		// buffer with zero
-		//memset(pWorkBuffer, 0xEA, m_frameSize * 2);
-
-		int frameSize = LZBA_Compress(pWorkBuffer, m_pC1PixelMaps[ frameIndex ],
-									  m_frameSize, pWorkBuffer-bytes.size(),
-									  pCanvas, m_frameSize );
-
-		//int canvasDiff = memcmp(pCanvas, m_pC1PixelMaps[ frameIndex], m_frameSize);
-		//if (canvasDiff)
-		//{
-		//	printf("Canvas is not correct - %d\n", canvasDiff);
-		//}
-		printf("frameSize = %d\n", frameSize);
-
-
-		for (int index = 0; index < frameSize; ++index)
+		if (bVerbose)
 		{
-			bytes.push_back(pWorkBuffer[ index ]);
+			printf("Save Frame %d\n", frameIndex + 1);
 		}
+
+		int frameSize = LZBA_Compress(pWorkBuffer, m_pC1PixelMaps[frameIndex], m_frameSize,
+		                              pWorkBuffer - bytes.size(),
+		                              pCanvas, m_frameSize, kGapMergeThreshold);
+
+		if (bVerbose)
+		{
+			printf("frameSize = %d\n", frameSize);
+		}
+
+
+		bytes.insert(bytes.end(), pWorkBuffer, pWorkBuffer + frameSize);
 	}
 
 	// Add the RING Frame
-	//memset(pWorkBuffer, 0xAB, m_frameSize * 2);
-
 	printf("Save Ring Frame\n");
 
-	int ringSize = LZBA_Compress(pWorkBuffer, m_pC1PixelMaps[ 0 ],
-								  m_frameSize, pWorkBuffer-bytes.size(),
-								  pCanvas, m_frameSize  );
+	int ringSize = LZBA_Compress(pWorkBuffer, m_pC1PixelMaps[0], m_frameSize,
+	                             pWorkBuffer - bytes.size(),
+	                             pCanvas, m_frameSize, kGapMergeThreshold);
 
 	printf("Ring Size %d\n", ringSize);
 
-	for (int ringIndex = 0; ringIndex < ringSize; ++ringIndex)
-	{
-		bytes.push_back(pWorkBuffer[ ringIndex ]);
-	}
+	bytes.insert(bytes.end(), pWorkBuffer, pWorkBuffer + ringSize);
 
 	delete[] pCanvas; pCanvas = nullptr;
 
@@ -472,6 +481,7 @@ void GSLAFile::SaveToFile(const char* pFilenamePath)
 
 	// Try not to leak memory, even though we probably do
 	delete[] pWorkBuffer;
+	delete[] pAltBuffer;
 
 	//--------------------------------------------------------------------------
 	// Create the file and write it
@@ -482,6 +492,10 @@ void GSLAFile::SaveToFile(const char* pFilenamePath)
 	{
 		fwrite(&bytes[0], sizeof(unsigned char), bytes.size(), pFile);
 		fclose(pFile);
+	}
+	else
+	{
+		printf("Failed writing output with error %d\n",err);
 	}
 }
 
