@@ -5,7 +5,7 @@
 #include "imgui.h"
 // Including internal for the eyedropper
 #include "imgui_internal.h"
-#include "imgui_impl_sdl.h"
+#include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 
 #include <nfd.hpp>  // needed for the native file dialog

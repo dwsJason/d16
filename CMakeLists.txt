@@ -45,12 +45,7 @@ set(IMGUI_SOURCES
     libs/imgui/imgui_tables.cpp
     libs/imgui/imgui_widgets.cpp
     libs/imgui/examples/imgui_impl_opengl3.cpp
-    libs/imgui/examples/imgui_impl_sdl.cpp
-)
-
-# --- GL3W (OpenGL loader) ---
-set(GL3W_SOURCES
-    libs/imgui/examples/libs/gl3w/GL/gl3w.c
+    libs/imgui/examples/imgui_impl_sdl2.cpp
 )
 
 # --- libimagequant ---
@@ -125,7 +120,6 @@ endif()
 add_executable(d16
     ${APP_SOURCES}
     ${IMGUI_SOURCES}
-    ${GL3W_SOURCES}
     ${IMAGEQUANT_SOURCES}
     ${GIFLIB_SOURCES}
     ${LZSA_SOURCES}
@@ -150,7 +144,6 @@ target_include_directories(d16 PRIVATE
     libs/giflib-5.2.2
     libs/imgui
     libs/imgui/examples
-    libs/imgui/examples/libs/gl3w
     libs/libimagequant-msvc
     libs/lz4-dev/lib
     libs/lzsa/src
@@ -160,11 +153,6 @@ target_include_directories(d16 PRIVATE
     libs/vectormath
     ${SDL2_INCLUDE_DIRS}
     ${SDL2_IMAGE_INCLUDE_DIRS}
-)
-
-# --- Compiler definitions ---
-target_compile_definitions(d16 PRIVATE
-    IMGUI_IMPL_OPENGL_LOADER_GL3W
 )
 
 if(WIN32)
@@ -209,6 +197,5 @@ set_source_files_properties(
     ${GIFLIB_SOURCES}
     ${LZSA_SOURCES}
     ${LZ4_SOURCES}
-    ${GL3W_SOURCES}
     PROPERTIES COMPILE_FLAGS "-w"
 )
