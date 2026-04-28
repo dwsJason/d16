@@ -64,7 +64,7 @@ PaletteDocument::~PaletteDocument()
 
 void PaletteDocument::Render()
 {
-	ImGui::BeginChild(m_filename.c_str(), ImVec2(340, 56), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+	ImGui::BeginChild(m_filename.c_str(), ImVec2(340, 56), true, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings);
 
 
 		if (ImGui::BeginPopupContextWindow(nullptr))
