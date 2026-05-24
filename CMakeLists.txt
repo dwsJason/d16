@@ -59,6 +59,16 @@ set(IMAGEQUANT_SOURCES
     libs/libimagequant-msvc/pam.c
 )
 
+# --- Wu's color quantizer ---
+set(WUQUANT_SOURCES
+    libs/wuquant/wuquant.c
+)
+
+# --- Oklab k-means quantizer ---
+set(OKLAB_SOURCES
+    libs/oklab/oklab.cpp
+)
+
 # --- giflib ---
 set(GIFLIB_SOURCES
     libs/giflib-5.2.2/dgif_lib.c
@@ -121,6 +131,8 @@ add_executable(d16
     ${APP_SOURCES}
     ${IMGUI_SOURCES}
     ${IMAGEQUANT_SOURCES}
+    ${WUQUANT_SOURCES}
+    ${OKLAB_SOURCES}
     ${GIFLIB_SOURCES}
     ${LZSA_SOURCES}
     ${LZ4_SOURCES}
@@ -145,6 +157,8 @@ target_include_directories(d16 PRIVATE
     libs/imgui
     libs/imgui/examples
     libs/libimagequant-msvc
+    libs/wuquant
+    libs/oklab
     libs/lz4-dev/lib
     libs/lzsa/src
     libs/lzsa/src/libdivsufsort/include

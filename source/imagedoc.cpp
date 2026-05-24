@@ -15,6 +15,8 @@
 #include <SDL_image.h>
 #include "log.h"
 #include "libimagequant.h"
+#include "wuquant.h"
+#include "oklab.h"
 #include "limage.h"
 #include "avir.h"
 #include "lancir.h"
@@ -40,6 +42,78 @@
 int ImageDocument::s_uniqueId = 0;
 
 static SDL_Cursor* pEyeDropperCursor = nullptr;
+
+QuantAlgorithm g_eQuantAlgorithm = eQuantLibimagequant;
+
+// Walk the image left-to-right, top-to-bottom; pick the nearest palette
+// entry for each pixel and push the leftover error to neighbours with the
+// usual 7/3/5/1 weights. error_scale lets the dither slider dial it down.
+static void FloydSteinbergRemap(
+	const unsigned char* pSourceRGBA, int width, int height,
+	const unsigned char* pPaletteRGB, int paletteSize,
+	float error_scale,
+	unsigned char* pOutIndices)
+{
+	std::vector<float> diffused_error((size_t)width * (size_t)height * 3, 0.0f);
+
+	for (int y = 0; y < height; ++y)
+	{
+		for (int x = 0; x < width; ++x)
+		{
+			int pixel_idx = y * width + x;
+			float red   = (float)pSourceRGBA[pixel_idx*4 + 0] + diffused_error[pixel_idx*3 + 0];
+			float green = (float)pSourceRGBA[pixel_idx*4 + 1] + diffused_error[pixel_idx*3 + 1];
+			float blue  = (float)pSourceRGBA[pixel_idx*4 + 2] + diffused_error[pixel_idx*3 + 2];
+
+			int nearest_entry = 0;
+			float nearest_distance = 1e30f;
+			for (int entry = 0; entry < paletteSize; ++entry)
+			{
+				float delta_red   = red   - (float)pPaletteRGB[entry*3 + 0];
+				float delta_green = green - (float)pPaletteRGB[entry*3 + 1];
+				float delta_blue  = blue  - (float)pPaletteRGB[entry*3 + 2];
+				float distance = delta_red*delta_red + delta_green*delta_green + delta_blue*delta_blue;
+				if (distance < nearest_distance) { nearest_distance = distance; nearest_entry = entry; }
+			}
+			pOutIndices[pixel_idx] = (unsigned char)nearest_entry;
+
+			float error_red   = (red   - (float)pPaletteRGB[nearest_entry*3 + 0]) * error_scale;
+			float error_green = (green - (float)pPaletteRGB[nearest_entry*3 + 1]) * error_scale;
+			float error_blue  = (blue  - (float)pPaletteRGB[nearest_entry*3 + 2]) * error_scale;
+
+			if (x + 1 < width)
+			{
+				int neighbor_offset = (y * width + x + 1) * 3;
+				diffused_error[neighbor_offset + 0] += error_red   * (7.0f/16.0f);
+				diffused_error[neighbor_offset + 1] += error_green * (7.0f/16.0f);
+				diffused_error[neighbor_offset + 2] += error_blue  * (7.0f/16.0f);
+			}
+			if (y + 1 < height)
+			{
+				if (x > 0)
+				{
+					int neighbor_offset = ((y + 1) * width + x - 1) * 3;
+					diffused_error[neighbor_offset + 0] += error_red   * (3.0f/16.0f);
+					diffused_error[neighbor_offset + 1] += error_green * (3.0f/16.0f);
+					diffused_error[neighbor_offset + 2] += error_blue  * (3.0f/16.0f);
+				}
+				{
+					int neighbor_offset = ((y + 1) * width + x) * 3;
+					diffused_error[neighbor_offset + 0] += error_red   * (5.0f/16.0f);
+					diffused_error[neighbor_offset + 1] += error_green * (5.0f/16.0f);
+					diffused_error[neighbor_offset + 2] += error_blue  * (5.0f/16.0f);
+				}
+				if (x + 1 < width)
+				{
+					int neighbor_offset = ((y + 1) * width + x + 1) * 3;
+					diffused_error[neighbor_offset + 0] += error_red   * (1.0f/16.0f);
+					diffused_error[neighbor_offset + 1] += error_green * (1.0f/16.0f);
+					diffused_error[neighbor_offset + 2] += error_blue  * (1.0f/16.0f);
+				}
+			}
+		}
+	}
+}
 
 //------------------------------------------------------------------------------
 
@@ -3880,6 +3954,11 @@ void ImageDocument::Quant256()
 
 	//-----------------------------------------------
 
+	std::vector<SDL_Surface*> pResults;
+
+	if (g_eQuantAlgorithm == eQuantLibimagequant)
+	{
+
     liq_attr* attr_handle = liq_attr_create();
 
 	liq_set_max_colors(attr_handle, m_iTargetColorCount);
@@ -4000,8 +4079,6 @@ void ImageDocument::Quant256()
 	liq_set_dithering_level(quantization_result, m_iDither / 100.0f);  // 0.0->1.0
 //	liq_set_output_gamma(quantization_result, 1.0);
 
-	std::vector<SDL_Surface*> pResults;
-
 	for (int idx = 0; idx < input_images.size(); ++idx)
 	{
 		unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_size);
@@ -4064,6 +4141,352 @@ void ImageDocument::Quant256()
 		}
 	}
 
+	// Free up the memory used by libquant -------------------------------------
+    liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
+
+	while (input_images.size())
+	{
+		liq_image_destroy(input_images[input_images.size()-1]);
+		input_images.pop_back();
+	}
+
+    liq_attr_destroy(attr_handle);
+
+	}
+	else if (g_eQuantAlgorithm == eQuantWu)
+	{
+		LOG("Wu quantizer (Xiaolin Wu, GG II)\n");
+
+		// Match libimagequant's min_posterization: lop off low bits per channel
+		// so colors live on the IIgs 12-bit grid (or 15-bit, or full 24).
+		int min_posterize = 0;
+		switch (m_iPosterize)
+		{
+		case ePosterize444:
+			min_posterize = 4;
+			break;
+		case ePosterize555:
+			min_posterize = 3;
+			break;
+		case ePosterize888:
+			min_posterize = 0;
+			break;
+		}
+		unsigned char posterize_mask = (unsigned char)((0xFF << min_posterize) & 0xFF);
+
+		// Locked slots stay locked.  Wu doesn't know how to pin them so we let
+		// Wu pick the rest and we splice the locks back in at their slot.
+		int targetCount = m_iTargetColorCount;
+		int max_locks = (int)m_bLocks.size();
+		if (max_locks > targetCount) max_locks = targetCount;
+
+		int lockCount = 0;
+		for (int slot = 0; slot < max_locks; ++slot)
+		{
+			if (m_bLocks[slot]) lockCount++;
+		}
+		int freeCount = targetCount - lockCount;
+		if (freeCount < 1) freeCount = 1; // never ask Wu for zero colors
+
+		// Concatenate every frame into one tall buffer so Wu picks a single
+		// shared palette (otherwise animations would flicker).
+		size_t pixels_per_frame = (size_t)width * (size_t)height;
+		size_t frameCount = pRawPixels.size();
+		size_t pixels_total = pixels_per_frame * frameCount;
+
+		std::vector<unsigned char> concat_rgba(pixels_total * 4);
+		for (size_t frameIdx = 0; frameIdx < frameCount; ++frameIdx)
+		{
+			const unsigned char* pSrcFrame = pRawPixels[frameIdx];
+			unsigned char* pDstFrame = &concat_rgba[frameIdx * pixels_per_frame * 4];
+			for (size_t pixel_idx = 0; pixel_idx < pixels_per_frame; ++pixel_idx)
+			{
+				pDstFrame[pixel_idx*4 + 0] = pSrcFrame[pixel_idx*4 + 0] & posterize_mask;
+				pDstFrame[pixel_idx*4 + 1] = pSrcFrame[pixel_idx*4 + 1] & posterize_mask;
+				pDstFrame[pixel_idx*4 + 2] = pSrcFrame[pixel_idx*4 + 2] & posterize_mask;
+				pDstFrame[pixel_idx*4 + 3] = 255;
+			}
+		}
+
+		// Ask Wu for just the unlocked slots' worth of colors.
+		unsigned char wu_palette_rgb[256 * 3];
+		std::vector<unsigned char> wu_indices(pixels_total);
+		int wu_color_count = 0;
+
+		int wu_ok = wu_quantize_rgba(&concat_rgba[0],
+									 width, height * (int)frameCount,
+									 freeCount,
+									 wu_palette_rgb, &wu_indices[0], &wu_color_count);
+		if (!wu_ok)
+		{
+			LOG("Wu quantization failed\n");
+		}
+		else
+		{
+			LOG("Wu produced %d colors (%d locked, %d free)\n",
+				wu_color_count + lockCount, lockCount, wu_color_count);
+
+			// Splice locked colors into their reserved slots and apply Wu's
+			// colors to the rest.  wuIdxToSlot lets us rewrite Wu's indices
+			// over to the final palette layout.
+			unsigned char combined_palette[256 * 3];
+			memset(combined_palette, 0, sizeof(combined_palette));
+			unsigned char wuIdxToSlot[256];
+			int wu_idx = 0;
+			for (int slot = 0; slot < targetCount; ++slot)
+			{
+				if (slot < max_locks && m_bLocks[slot])
+				{
+					combined_palette[slot*3 + 0] = (unsigned char)(m_targetColors[slot].x * 255.0f);
+					combined_palette[slot*3 + 1] = (unsigned char)(m_targetColors[slot].y * 255.0f);
+					combined_palette[slot*3 + 2] = (unsigned char)(m_targetColors[slot].z * 255.0f);
+				}
+				else if (wu_idx < wu_color_count)
+				{
+					combined_palette[slot*3 + 0] = wu_palette_rgb[wu_idx*3 + 0];
+					combined_palette[slot*3 + 1] = wu_palette_rgb[wu_idx*3 + 1];
+					combined_palette[slot*3 + 2] = wu_palette_rgb[wu_idx*3 + 2];
+					wuIdxToSlot[wu_idx] = (unsigned char)slot;
+					wu_idx++;
+				}
+			}
+
+			float dither_amount = (float)m_iDither / 100.0f;
+
+			for (size_t frameIdx = 0; frameIdx < frameCount; ++frameIdx)
+			{
+				unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_per_frame);
+				const unsigned char* pFrameRGBA = &concat_rgba[frameIdx * pixels_per_frame * 4];
+
+				if (dither_amount > 0.0f)
+				{
+					// Dither against the full combined palette so locked colors
+					// can win pixels too.
+					FloydSteinbergRemap(pFrameRGBA, width, height,
+										combined_palette, targetCount, dither_amount,
+										raw_8bit_pixels);
+				}
+				else
+				{
+					// No dither, so just use Wu's nearest-neighbor output and
+					// rewrite each index through to its final slot.
+					const unsigned char* pWuFrame = &wu_indices[frameIdx * pixels_per_frame];
+					for (size_t pixel_idx = 0; pixel_idx < pixels_per_frame; ++pixel_idx)
+					{
+						raw_8bit_pixels[pixel_idx] = wuIdxToSlot[pWuFrame[pixel_idx]];
+					}
+				}
+
+				SDL_Surface *pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+												raw_8bit_pixels, width, height,
+												8, width, SDL_PIXELFORMAT_INDEX8);
+				SDL_Palette *pPalette = SDL_AllocPalette(targetCount);
+
+				SDL_Color sdl_palette[256];
+				memset(sdl_palette, 0, sizeof(sdl_palette));
+				for (int slot = 0; slot < targetCount; ++slot)
+				{
+					sdl_palette[slot].r = combined_palette[slot*3 + 0];
+					sdl_palette[slot].g = combined_palette[slot*3 + 1];
+					sdl_palette[slot].b = combined_palette[slot*3 + 2];
+					sdl_palette[slot].a = 255;
+				}
+				SDL_SetPaletteColors(pPalette, sdl_palette, 0, targetCount);
+				SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+				pResults.push_back(pTargetSurface);
+			}
+
+			// Show the result palette in the tray.
+			for (int slot = 0; slot < max_locks; ++slot)
+			{
+				m_targetColors[slot].x = combined_palette[slot*3 + 0] / 255.0f;
+				m_targetColors[slot].y = combined_palette[slot*3 + 1] / 255.0f;
+				m_targetColors[slot].z = combined_palette[slot*3 + 2] / 255.0f;
+				m_targetColors[slot].w = 1.0f;
+			}
+		}
+	}
+	else if (g_eQuantAlgorithm == eQuantOklab)
+	{
+		LOG("Oklab k-means quantizer\n");
+
+		// Same posterize trick we use for Wu: mask low bits per channel before
+		// clustering, so the centroids land near the IIgs gamut.
+		int min_posterize = 0;
+		switch (m_iPosterize)
+		{
+		case ePosterize444:
+			min_posterize = 4;
+			break;
+		case ePosterize555:
+			min_posterize = 3;
+			break;
+		case ePosterize888:
+			min_posterize = 0;
+			break;
+		}
+		unsigned char posterize_mask = (unsigned char)((0xFF << min_posterize) & 0xFF);
+
+		// Pack the locks into the front of a fixed-palette buffer; the
+		// k-means call freezes them at slots 0..n_locked-1 of its output and
+		// we splice them into their original UI slots after.
+		int target_count = m_iTargetColorCount;
+		int max_locks = (int)m_bLocks.size();
+		if (max_locks > target_count) max_locks = target_count;
+
+		unsigned char fixed_palette[256 * 3];
+		std::vector<int> lock_slots;
+		for (int slot = 0; slot < max_locks; ++slot)
+		{
+			if (m_bLocks[slot])
+			{
+				int li = (int)lock_slots.size();
+				fixed_palette[li*3 + 0] = (unsigned char)(m_targetColors[slot].x * 255.0f);
+				fixed_palette[li*3 + 1] = (unsigned char)(m_targetColors[slot].y * 255.0f);
+				fixed_palette[li*3 + 2] = (unsigned char)(m_targetColors[slot].z * 255.0f);
+				lock_slots.push_back(slot);
+			}
+		}
+		int lock_count = (int)lock_slots.size();
+
+		size_t pixels_per_frame = (size_t)width * (size_t)height;
+		size_t frame_count = pRawPixels.size();
+		size_t pixels_total = pixels_per_frame * frame_count;
+
+		// Concatenate frames so one palette covers the whole animation.
+		std::vector<unsigned char> concat_rgba(pixels_total * 4);
+		for (size_t frame_idx = 0; frame_idx < frame_count; ++frame_idx)
+		{
+			const unsigned char* pSrcFrame = pRawPixels[frame_idx];
+			unsigned char* pDstFrame = &concat_rgba[frame_idx * pixels_per_frame * 4];
+			for (size_t pixel_idx = 0; pixel_idx < pixels_per_frame; ++pixel_idx)
+			{
+				pDstFrame[pixel_idx*4 + 0] = pSrcFrame[pixel_idx*4 + 0] & posterize_mask;
+				pDstFrame[pixel_idx*4 + 1] = pSrcFrame[pixel_idx*4 + 1] & posterize_mask;
+				pDstFrame[pixel_idx*4 + 2] = pSrcFrame[pixel_idx*4 + 2] & posterize_mask;
+				pDstFrame[pixel_idx*4 + 3] = 255;
+			}
+		}
+
+		unsigned char oklab_palette_rgb[256 * 3];
+		std::vector<unsigned char> oklab_indices(pixels_total);
+		int oklab_color_count = 0;
+
+		int oklab_ok = oklab_kmeans_quantize_rgba(&concat_rgba[0],
+												  width, height * (int)frame_count,
+												  target_count,
+												  fixed_palette, lock_count,
+												  oklab_palette_rgb,
+												  &oklab_indices[0],
+												  &oklab_color_count);
+		if (!oklab_ok)
+		{
+			LOG("Oklab k-means quantization failed\n");
+		}
+		else
+		{
+			LOG("Oklab k-means produced %d colors (%d locked)\n", oklab_color_count, lock_count);
+
+			// k-means returned palette as [locks..., free...] -- put it back
+			// into target-slot order and build a remap table for the indices.
+			unsigned char final_palette[256 * 3];
+			memset(final_palette, 0, sizeof(final_palette));
+			unsigned char oklab_idx_to_slot[256];
+			memset(oklab_idx_to_slot, 0, sizeof(oklab_idx_to_slot));
+
+			for (int li = 0; li < lock_count; ++li)
+			{
+				int slot = lock_slots[li];
+				final_palette[slot*3 + 0] = oklab_palette_rgb[li*3 + 0];
+				final_palette[slot*3 + 1] = oklab_palette_rgb[li*3 + 1];
+				final_palette[slot*3 + 2] = oklab_palette_rgb[li*3 + 2];
+				oklab_idx_to_slot[li] = (unsigned char)slot;
+			}
+			int free_idx = lock_count;
+			for (int slot = 0; slot < target_count; ++slot)
+			{
+				if (slot < max_locks && m_bLocks[slot]) continue;
+				if (free_idx < oklab_color_count)
+				{
+					final_palette[slot*3 + 0] = oklab_palette_rgb[free_idx*3 + 0];
+					final_palette[slot*3 + 1] = oklab_palette_rgb[free_idx*3 + 1];
+					final_palette[slot*3 + 2] = oklab_palette_rgb[free_idx*3 + 2];
+					oklab_idx_to_slot[free_idx] = (unsigned char)slot;
+					free_idx++;
+				}
+			}
+
+			// k-means runs in Oklab and converts the centroids back to sRGB --
+			// the result is close to the IIgs gamut but not exact.  Snap the
+			// free entries to the grid so the output actually displays on
+			// hardware.  Locked entries came in through the picker and are
+			// already on-grid.
+			for (int slot = 0; slot < target_count; ++slot)
+			{
+				if (slot < max_locks && m_bLocks[slot]) continue;
+				final_palette[slot*3 + 0] &= posterize_mask;
+				final_palette[slot*3 + 1] &= posterize_mask;
+				final_palette[slot*3 + 2] &= posterize_mask;
+			}
+
+			float dither_amount = (float)m_iDither / 100.0f;
+
+			for (size_t frame_idx = 0; frame_idx < frame_count; ++frame_idx)
+			{
+				unsigned char *raw_8bit_pixels = (unsigned char*)malloc(pixels_per_frame);
+				const unsigned char* pFrameRGBA = &concat_rgba[frame_idx * pixels_per_frame * 4];
+
+				if (dither_amount > 0.0f)
+				{
+					// Dither against the full final palette so locked colors
+					// can also win pixels.
+					FloydSteinbergRemap(pFrameRGBA, width, height,
+										final_palette, target_count, dither_amount,
+										raw_8bit_pixels);
+				}
+				else
+				{
+					// Nearest-neighbor: rewrite k-means indices through to
+					// their final slot positions.
+					const unsigned char* pSrcIndices = &oklab_indices[frame_idx * pixels_per_frame];
+					for (size_t pixel_idx = 0; pixel_idx < pixels_per_frame; ++pixel_idx)
+					{
+						raw_8bit_pixels[pixel_idx] = oklab_idx_to_slot[pSrcIndices[pixel_idx]];
+					}
+				}
+
+				SDL_Surface *pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+												raw_8bit_pixels, width, height,
+												8, width, SDL_PIXELFORMAT_INDEX8);
+				SDL_Palette *pPalette = SDL_AllocPalette(target_count);
+
+				SDL_Color sdl_palette[256];
+				memset(sdl_palette, 0, sizeof(sdl_palette));
+				for (int slot = 0; slot < target_count; ++slot)
+				{
+					sdl_palette[slot].r = final_palette[slot*3 + 0];
+					sdl_palette[slot].g = final_palette[slot*3 + 1];
+					sdl_palette[slot].b = final_palette[slot*3 + 2];
+					sdl_palette[slot].a = 255;
+				}
+				SDL_SetPaletteColors(pPalette, sdl_palette, 0, target_count);
+				SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+				pResults.push_back(pTargetSurface);
+			}
+
+			// Show the result palette in the tray.
+			for (int slot = 0; slot < max_locks; ++slot)
+			{
+				m_targetColors[slot].x = final_palette[slot*3 + 0] / 255.0f;
+				m_targetColors[slot].y = final_palette[slot*3 + 1] / 255.0f;
+				m_targetColors[slot].z = final_palette[slot*3 + 2] / 255.0f;
+				m_targetColors[slot].w = 1.0f;
+			}
+		}
+	}
+
 	// Fix up the GUI application junk
 
 	// We need to clear and free up the target image lists
@@ -4095,20 +4518,6 @@ void ImageDocument::Quant256()
 		m_targetImages.push_back(SDL_GL_LoadTexture(pResults[idx], about_image_uv));
 		m_pTargetSurfaces.push_back(pResults[idx]);
 	}
-
-	//m_targetImage = m_targetImages[0];
-    //m_pTargetSurface = m_pTargetSurfaces[0];
-
-	// Free up the memory used by libquant -------------------------------------
-    liq_result_destroy(quantization_result); // Must be freed only after you're done using the palette
-
-	while (input_images.size())
-	{
-		liq_image_destroy(input_images[input_images.size()-1]);
-		input_images.pop_back();
-	}
-
-    liq_attr_destroy(attr_handle);
 
 	// SDL_CreateRGBSurfaceWithFormatFrom, makes you manage the raw pixels buffer
 	// instead of make a copy of it, so I'm supposed to free it manually, after

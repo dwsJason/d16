@@ -1,4 +1,4 @@
-// dear imgui: standalone example application for SDL2 + OpenGL
+    // dear imgui: standalone example application for SDL2 + OpenGL
 // If you are new to dear imgui, see examples/README.txt and documentation at the top of imgui.cpp.
 // (SDL is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan graphics context creation, etc.)
 // (GL3W is a helper library to access OpenGL functions since there is no standard header to access modern OpenGL functions easily. Alternatives are GLEW, Glad, etc.)
@@ -161,7 +161,25 @@ int main(int, char**)
     //io.Fonts->AddFontDefault();
 
 	//io.Fonts->AddFontFromFileTTF("./data/Inconsolata.otf", 15.0f);
-	io.Fonts->AddFontFromFileTTF("./data/ShastonHi640.ttf", 16.0f);
+
+	// Sanity-check the font file before handing it to imgui.  The 1.91.3
+	// error-tooltip path crashes if AddFontFromFileTTF can't read the file,
+	// so we'd rather catch that ourselves and fall back to the default font.
+	const char* shaston_path = "./data/ShastonHi640.ttf";
+	FILE* shaston_file = fopen(shaston_path, "rb");
+	if (shaston_file)
+	{
+		fclose(shaston_file);
+		io.Fonts->AddFontFromFileTTF(shaston_path, 16.0f);
+	}
+	else
+	{
+		fprintf(stderr,
+			"d16: could not open '%s' (cwd should be the project root).\n"
+			"     Falling back to the imgui default font.\n",
+			shaston_path);
+		io.Fonts->AddFontDefault();
+	}
 
 	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
@@ -776,6 +794,27 @@ void MainMenuBarUI()
 				// Quit the Application
 				bAppDone = true;
 			}
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Quantize"))
+		{
+			ImGui::TextDisabled("Algorithm");
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("libimagequant", nullptr, g_eQuantAlgorithm == eQuantLibimagequant))
+			{
+				g_eQuantAlgorithm = eQuantLibimagequant;
+			}
+			if (ImGui::MenuItem("Wu", nullptr, g_eQuantAlgorithm == eQuantWu))
+			{
+				g_eQuantAlgorithm = eQuantWu;
+			}
+			if (ImGui::MenuItem("Oklab k-means", nullptr, g_eQuantAlgorithm == eQuantOklab))
+			{
+				g_eQuantAlgorithm = eQuantOklab;
+			}
+
 			ImGui::EndMenu();
 		}
 

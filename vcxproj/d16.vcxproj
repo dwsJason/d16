@@ -90,7 +90,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\wuquant;..\libs\oklab;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -123,7 +123,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\nativefiledialog-extended\src\include;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\nativefiledialog-extended\src\include;..\libs\libimagequant-msvc;..\libs\wuquant;..\libs\oklab;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -154,7 +154,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\imgui\examples;..\libs\imgui;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\ImGuiFileDialog\ImGuiFileDialog;..\libs\libimagequant-msvc;..\libs\wuquant;..\libs\oklab;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -193,7 +193,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\nativefiledialog-extended\src\include;..\libs\libimagequant-msvc;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\libs\avir;..\libs\dirent;..\libs\flic;..\libs\giflib-5.2.2;..\libs\imgui\examples;..\libs\imgui;..\libs\lz4-dev\lib;..\libs\lzsa\src;..\libs\lzsa\src\libdivsufsort\include;..\libs\lzsa\src\libdivsufsort\lib;..\libs\SDL2-2.0.10\include;..\libs\SDL2_image-2.0.5\include;..\libs\imgui\examples\libs\gl3w;..\libs\nativefiledialog-extended\src\include;..\libs\libimagequant-msvc;..\libs\wuquant;..\libs\oklab;..\libs\vectormath;..\source\common;..\source\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PreprocessorDefinitions>GUID_WINDOWS=1;WIN32=1;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -247,6 +247,8 @@
     <ClCompile Include="..\libs\libimagequant-msvc\mempool.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\nearest.c" />
     <ClCompile Include="..\libs\libimagequant-msvc\pam.c" />
+    <ClCompile Include="..\libs\wuquant\wuquant.c" />
+    <ClCompile Include="..\libs\oklab\oklab.cpp" />
     <ClCompile Include="..\libs\lz4-dev\lib\lz4.c" />
     <ClCompile Include="..\libs\lz4-dev\lib\lz4frame.c" />
     <ClCompile Include="..\libs\lz4-dev\lib\lz4hc.c" />
@@ -317,6 +319,8 @@
     <ClInclude Include="..\libs\libimagequant-msvc\mempool.h" />
     <ClInclude Include="..\libs\libimagequant-msvc\nearest.h" />
     <ClInclude Include="..\libs\libimagequant-msvc\pam.h" />
+    <ClInclude Include="..\libs\wuquant\wuquant.h" />
+    <ClInclude Include="..\libs\oklab\oklab.h" />
     <ClInclude Include="..\libs\lz4-dev\lib\lz4.h" />
     <ClInclude Include="..\libs\lz4-dev\lib\lz4frame.h" />
     <ClInclude Include="..\libs\lz4-dev\lib\lz4frame_static.h" />

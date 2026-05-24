@@ -20,6 +20,15 @@ enum PosterizeTargets
 	ePosterize888
 };
 
+enum QuantAlgorithm
+{
+	eQuantLibimagequant,
+	eQuantWu,
+	eQuantOklab
+};
+
+extern QuantAlgorithm g_eQuantAlgorithm;
+
 //-------------------------------
 //  0 1 2
 //  3 4 5
