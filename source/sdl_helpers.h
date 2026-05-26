@@ -23,6 +23,7 @@ typedef float		GLfloat;	/* single precision float */
 GLuint SDL_GL_LoadTexture(SDL_Surface * surface, GLfloat * texcoord);
 std::vector<SDL_Surface*> SDL_ANM_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_C2_Load(const char* pFilePath);
+std::vector<SDL_Surface*> SDL_16_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_256_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_FAN_Load(const char* pFilePath);
 std::vector<SDL_Surface*> SDL_FLC_Load(const char* pFilePath);
@@ -32,6 +33,7 @@ SDL_Surface* SDL_C1_Load(const char* pFilePath);
 
 int SDL_Surface_CountUniqueColors(SDL_Surface* pSurface, std::map<Uint32,Uint32>* pGlobalHistogram = nullptr );
 
+void SDL_IMG_Save16(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath);
 void SDL_IMG_Save256(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath);
 void SDL_IMG_SaveFAN(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath, bool bTiled=false);
 

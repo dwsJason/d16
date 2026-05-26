@@ -620,6 +620,19 @@ void MainMenuBarUI()
 
 
 						}
+						else if (endsWith(pathName, ".16"))
+						{
+							// Foenix Bitmap Image
+							std::vector<SDL_Surface*> frames = SDL_16_Load(pathName.c_str());
+							LOG("16_Load %d Frames\n", frames.size());
+							if (frames.size())
+							{
+								LOG("Loaded %s\n", pathName.c_str());
+								imageDocuments.push_back(new ImageDocument(fileName, pathName, frames));
+							}
+
+
+						}
 						else if (endsWith(pathName, ".gif"))
 						{
 							// Use GIF Library

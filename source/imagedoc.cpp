@@ -911,6 +911,28 @@ void ImageDocument::Render()
 
 				}
 
+				if (ImGui::MenuItem("Save as I16 (Foenix 16-Color Bitmap)"))
+				{
+					NFD::UniquePathU8 savePath;
+
+					const nfdu8char_t* defaultFileName = FixExtension( m_filename, ".16" );
+
+					// prepare filters for the dialog
+					nfdu8filteritem_t filterItem[1] = { {"Foenix I16", "16"} };
+
+					nfdresult_t result = NFD::SaveDialog(savePath,
+														 filterItem, // filter
+														 1,          // filterCount
+														 nullptr,    // default path !!! FIXME
+														 defaultFileName);  // default filename
+
+					if (result == NFD_OKAY)
+					{
+						Save16( savePath.get() );
+					}
+
+				}
+
 #if 0
 				if (ImGui::MenuItem("Save as 256 (Foenix Tilemap)(8x8)"))
 				{
@@ -4556,6 +4578,16 @@ void ImageDocument::Save256(std::string filenamepath)
 {
 // Choose a surface to save
 	SDL_IMG_Save256(m_pTargetSurfaces, filenamepath.c_str());
+}
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Save as Foenix 16-color Bitmap
+//
+void ImageDocument::Save16(std::string filenamepath)
+{
+// Choose a surface to save
+	SDL_IMG_Save16(m_pTargetSurfaces, filenamepath.c_str());
 }
 //------------------------------------------------------------------------------
 

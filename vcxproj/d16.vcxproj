@@ -273,6 +273,7 @@
     <ClCompile Include="..\libs\lzsa\src\stream.c" />
     <ClCompile Include="..\libs\nativefiledialog-extended\src\nfd_win.cpp" />
     <ClCompile Include="..\source\256_file.cpp" />
+    <ClCompile Include="..\source\16_file.cpp" />
     <ClCompile Include="..\source\anm_file.cpp" />
     <ClCompile Include="..\source\blit_file.cpp" />
     <ClCompile Include="..\source\c2_file.cpp" />
@@ -447,6 +448,7 @@
     <ClInclude Include="..\libs\vectormath\vec2d.hpp" />
     <ClInclude Include="..\libs\vectormath\vectormath.hpp" />
     <ClInclude Include="..\source\256_file.h" />
+    <ClInclude Include="..\source\16_file.h" />
     <ClInclude Include="..\source\anm_file.h" />
     <ClInclude Include="..\source\blit_file.h" />
     <ClInclude Include="..\source\c2_file.h" />

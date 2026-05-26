@@ -7,6 +7,7 @@
 #include "sdl_helpers.h"
 #include "compat.h"
 
+#include "16_file.h"   // Support C16 Image File
 #include "256_file.h"  // Support C256 Image File
 #include "anm_file.h"  // Support Deluxe Animation File
 #include "c2_file.h"   // Support Paintworks Animation File
@@ -473,6 +474,71 @@ std::vector<SDL_Surface*> SDL_256_Load(const char* pFilePath)
 	return results;
 }
 
+//------------------------------------------------------------------------------
+
+SDL_Surface* SDL_16GetSurface(C16File& c16File, int frameNo)
+{
+	SDL_Surface* pTargetSurface = nullptr;
+
+	const C16_Palette& clut = c16File.GetPalette();
+	const std::vector<unsigned char*>& pPixelMaps = c16File.GetPixelMaps();
+
+	int width  = c16File.GetWidth();
+	int height = c16File.GetHeight();
+
+	unsigned char* pRawPixels = new unsigned char[ width * height ];
+	memcpy(pRawPixels, pPixelMaps[ frameNo ], width * height);
+
+	pTargetSurface = SDL_CreateRGBSurfaceWithFormatFrom(
+		pRawPixels, width, height,
+		8, width, SDL_PIXELFORMAT_INDEX8);
+
+	SDL_Palette *pPalette = SDL_AllocPalette(clut.iNumColors);
+
+	// C16 Colors to SDL Colors (expand 4-bit channels to 8-bit by nibble replication)
+	for (int idx = 0; idx < clut.iNumColors; ++idx)
+	{
+		C16_Color inColor = clut.pColors[ idx ];
+		SDL_Color  outColor;
+		outColor.r = (inColor.r << 4) | inColor.r;
+		outColor.g = (inColor.g << 4) | inColor.g;
+		outColor.b = (inColor.b << 4) | inColor.b;
+		outColor.a = (inColor.a << 4) | inColor.a;
+
+		SDL_SetPaletteColors(pPalette, (const SDL_Color *)&outColor, idx, 1);
+	}
+
+	SDL_SetSurfacePalette(pTargetSurface, pPalette);
+
+	// Stuff in the Delay Time
+	int delayTime = 4; 	// hard coded for now
+	pTargetSurface->userdata = (void *)((long long)(delayTime & 0xFFFF));
+
+	return pTargetSurface;
+}
+
+//------------------------------------------------------------------------------
+
+//
+//  Helpers
+//
+std::vector<SDL_Surface*> SDL_16_Load(const char* pFilePath)
+{
+	std::vector<SDL_Surface*> results;
+
+	C16File c16File(pFilePath);
+
+	int numFrames = c16File.GetFrameCount();
+
+	for (int idx = 0; idx < numFrames; ++idx)
+	{
+		SDL_Surface* pSurface = SDL_16GetSurface(c16File, idx);
+		results.push_back(pSurface);
+	}
+
+	return results;
+}
+
 SDL_Surface* SDL_FLC_GetSurface(FlcFile& animFile, int frameNo)
 {
 	SDL_Surface* pTargetSurface = nullptr;
@@ -679,6 +745,92 @@ void SDL_IMG_Save256(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath)
 
 		// Save the File
 		c256File.SaveToFile( pFilePath );
+
+		// Unlock Surfaces
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			pSurface = pSurfaces[ idx ];
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_UnlockSurface(pSurface);
+		}
+
+	}
+}
+
+//------------------------------------------------------------------------------
+
+void SDL_IMG_Save16(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath)
+{
+	if (pSurfaces.size())
+	{
+		// 1. Convert Surfaces into a format that the C16File can accept
+		SDL_Surface* pSurface = pSurfaces[0];
+
+		int width  = pSurface->w;
+		int height = pSurface->h;
+
+		// Check for palette right now
+		SDL_Palette *pPal = pSurface->format->palette;
+
+		if (!pPal)
+		{
+			LOG("FAILED: Save C16 Bitmap: %s\n", pFilePath);
+			LOG("SDL_Surface does not contain a palette!\n");
+			return;
+		}
+
+		// Ok, to keep the types as simple as possible, the C16File class
+		// requires a list of pointer to a char array, that contains the data it's going to process
+		// the char array contains the 8 bit index data used to represent the pixels
+
+		// As it happens, each our surfaces, contains such an array, already
+
+		std::vector<unsigned char*> pixelMaps;
+
+		for (int idx = 0; idx < pSurfaces.size(); ++idx)
+		{
+			pSurface = pSurfaces[ idx ];
+
+			if( SDL_MUSTLOCK(pSurface) )
+				SDL_LockSurface(pSurface);
+
+			pixelMaps.push_back( (unsigned char*)pSurface->pixels );
+		}
+
+		// 2. Convert Color Table into a format that the C16File can accept;
+		//
+		// Convert the surface palette, into a Foenix palette B G R A (4-bits per channel) format
+
+		C16_Palette palette;
+		palette.iNumColors = pPal->ncolors;
+		palette.pColors = new C16_Color[ pPal->ncolors ];
+
+		for (int idx = 0; idx < pPal->ncolors; ++idx)
+		{
+			// Shift 8-bit channels down to 4 bits (take the high nibble)
+			palette.pColors[ idx ].r = pPal->colors[ idx ].r >> 4;
+			palette.pColors[ idx ].g = pPal->colors[ idx ].g >> 4;
+			palette.pColors[ idx ].b = pPal->colors[ idx ].b >> 4;
+			palette.pColors[ idx ].a = pPal->colors[ idx ].a >> 4;
+		}
+
+
+		// Create the C16File Object
+
+		C16File c16File(width, height, palette.iNumColors);
+
+		// Add the colors
+		c16File.SetPalette( palette );
+		// free the palette
+		delete[] palette.pColors;
+		palette.pColors = nullptr;
+
+		// Add the pixels
+		c16File.AddImages( pixelMaps );
+
+		// Save the File
+		c16File.SaveToFile( pFilePath );
 
 		// Unlock Surfaces
 		for (int idx = 0; idx < pSurfaces.size(); ++idx)

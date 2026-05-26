@@ -173,6 +173,9 @@
     <ClCompile Include="..\source\256_file.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\16_file.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
     <ClCompile Include="..\libs\flic\stdio.cpp">
       <Filter>libs\flic</Filter>
     </ClCompile>
@@ -692,6 +695,9 @@
       <Filter>libs\lzsa\libdivsufsort\include</Filter>
     </ClInclude>
     <ClInclude Include="..\source\256_file.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\16_file.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\flic\flic_details.h">

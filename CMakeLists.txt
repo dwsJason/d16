@@ -24,6 +24,7 @@ set(APP_SOURCES
     source/xu_line.cpp
     source/compiled.cpp
     source/256_file.cpp
+    source/16_file.cpp
     source/anm_file.cpp
     source/blit_file.cpp
     source/c2_file.cpp
