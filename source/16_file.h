@@ -37,7 +37,7 @@ typedef struct C16File_Header
 	unsigned int 	file_length;  // In bytes, including the 16 byte header
 
 	short 			version;  // 0x0000 for now
-	short			width;	  // In pixels (the disk byte width is (width+1)/2)
+	short			width;	  // In bytes (on-disk byte width per scanline)
 	short			height;	  // In pixels
 
 	short			reserved; // Reserved for future expansion, set to 0
@@ -86,6 +86,25 @@ typedef struct C16File_PIXL
 
 
 } C16File_PIXL;
+
+// Scanline Control Byte Chunk
+typedef struct C16File_SCBs
+{
+	char		S,c,b,s;		// 'S','C','B','s'
+	unsigned int	chunk_length;  // in bytes, including the 10 bytes header of this chunk
+	unsigned short  num_scbs;
+
+//------------------------------------------------------------------------------
+// If you're doing C, just get rid of these methods
+	bool IsValid()
+	{
+		if ((S!='S')||(c!='C')||(b!='B')||(s!='s'))
+			return false;				// signature is not right
+
+		return true;
+	}
+
+} C16File_SCBs;
 
 
 // Color LookUp Table, Chunk
@@ -136,11 +155,17 @@ typedef struct C16_Palette
 
 } C16_Palette;
 
+typedef struct C16_SCB
+{
+	int iNumScanLines;
+	uint8_t* pSCB;
+} C16_SCB;
+
 class C16File
 {
 public:
 	// Create a Blank 16 File
-	C16File(int iWidthPixels, int iHeightPixels, int iNumColors);
+	C16File(int iWidthBytes, int iHeightPixels, int iNumColors);
 	// Load in a C16 Image File
 	C16File(const char *pFilePath);
 
@@ -148,22 +173,31 @@ public:
 
 	// Creation
 	void SetPalette( const C16_Palette& palette );
+	// Caller-trusted: iNumScanLines isn't validated against m_heightPixels.
+	// IIgs convention is one SCB per scanline (bit 7 = 320/640 mode,
+	// bits 3-0 = palette index 0-15).
+	void SetSCBs( const C16_SCB& scbs );
 	void AddImages( const std::vector<unsigned char*>& pPixelMaps );
 	void SaveToFile(const char* pFilenamePath);
 
 	// Retrieval
 	void LoadFromFile(const char* pFilePath);
 	int GetFrameCount() { return (int)m_pPixelMaps.size(); }
-	int GetWidth()  { return m_widthPixels; }
+	int GetWidthBytes()  { return m_widthBytes; }
+	// Default 16-color/320-mode assumption: 2 pixels per byte.
+	int GetWidthPixels() { return m_widthBytes * 2; }
 	int GetHeight() { return m_heightPixels; }
 
 	const C16_Palette& GetPalette() { return m_pal; }
+	// iNumScanLines == 0 when the file has no SCBs chunk.
+	const C16_SCB& GetSCBs() { return m_scb; }
 	const std::vector<unsigned char*>& GetPixelMaps() { return m_pPixelMaps; }
 
 private:
 
 	void UnpackClut(C16File_CLUT* pCLUT);
 	void UnpackPixel(C16File_PIXL* pPIXL);
+	void UnpackSCBs(C16File_SCBs* pSCBs);
 
 	void CombinePixelMaps();
 
@@ -173,11 +207,12 @@ private:
 	static void NibbleUnpack(const unsigned char* pSrc, unsigned char* pDst,
 							 int widthPixels, int heightPixels);
 
-	int m_widthPixels;		// Width of image in pixels
+	int m_widthBytes;		// Width of image in bytes (on-disk scanline width)
 	int m_heightPixels;		// Height of image in pixels
 	int m_numColors;		// number of colors in the initial CLUT
 
 	C16_Palette m_pal;
+	C16_SCB     m_scb;   // iNumScanLines == 0 when no SCBs chunk is present
 
 	std::vector<unsigned char*> m_pPixelMaps;
 };

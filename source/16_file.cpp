@@ -32,13 +32,14 @@ static_assert(sizeof(C16_Color)==2,       "C16_Color is supposed to be 2 bytes")
 static_assert(sizeof(C16File_Header)==16, "C16File_Header is supposed to be 16 bytes");
 static_assert(sizeof(C16File_CLUT)==10,   "C16File_CLUT is supposed to be 10 bytes");
 static_assert(sizeof(C16File_PIXL)==10,   "C16File_PIXL is supposed to be 10 bytes");
+static_assert(sizeof(C16File_SCBs)==10,   "C16File_SCBs is supposed to be 10 bytes");
 static_assert(sizeof(C16File_CHUNK)==8,   "C16File_CHUNK is supposed to be 8 bytes");
 
 //------------------------------------------------------------------------------
 // Load in a C16File constructor
 //
 C16File::C16File(const char *pFilePath)
-	: m_widthPixels(0)
+	: m_widthBytes(0)
 	, m_heightPixels(0)
 	, m_numColors( 0 )
 {
@@ -46,19 +47,25 @@ C16File::C16File(const char *pFilePath)
 	m_pal.iNumColors = 0;
 	m_pal.pColors = nullptr;
 
+	m_scb.iNumScanLines = 0;
+	m_scb.pSCB = nullptr;
+
 	LoadFromFile(pFilePath);
 }
 //------------------------------------------------------------------------------
 // Create a blank C16File constructor
 //
-C16File::C16File(int iWidthPixels, int iHeightPixels, int iNumColors)
-	: m_widthPixels( iWidthPixels )
+C16File::C16File(int iWidthBytes, int iHeightPixels, int iNumColors)
+	: m_widthBytes( iWidthBytes )
 	, m_heightPixels( iHeightPixels )
 	, m_numColors( iNumColors )
 {
 
 	m_pal.iNumColors = iNumColors;
 	m_pal.pColors = new C16_Color[ iNumColors ];
+
+	m_scb.iNumScanLines = 0;
+	m_scb.pSCB = nullptr;
 }
 
 C16File::~C16File()
@@ -67,6 +74,11 @@ C16File::~C16File()
 	{
 		delete[] m_pal.pColors;
 		m_pal.pColors = nullptr;
+	}
+	if (m_scb.pSCB)
+	{
+		delete[] m_scb.pSCB;
+		m_scb.pSCB = nullptr;
 	}
 	// Free Up the memory
 	for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
@@ -89,12 +101,33 @@ void C16File::SetPalette( const C16_Palette& palette )
 }
 
 //------------------------------------------------------------------------------
+
+void C16File::SetSCBs( const C16_SCB& scbs )
+{
+	// Free any existing SCBs
+	if (m_scb.pSCB)
+	{
+		delete[] m_scb.pSCB;
+		m_scb.pSCB = nullptr;
+	}
+
+	m_scb.iNumScanLines = scbs.iNumScanLines;
+
+	if (scbs.iNumScanLines > 0 && scbs.pSCB != nullptr)
+	{
+		m_scb.pSCB = new uint8_t[ scbs.iNumScanLines ];
+		memcpy(m_scb.pSCB, scbs.pSCB, scbs.iNumScanLines);
+	}
+}
+
+//------------------------------------------------------------------------------
 //
 // Make a Copy of the image data (caller-supplied buffers are 1 byte per pixel)
 //
 void C16File::AddImages( const std::vector<unsigned char*>& pPixelMaps )
 {
-	int numPixels = m_widthPixels * m_heightPixels;
+	int widthPixels = m_widthBytes * 2;
+	int numPixels = widthPixels * m_heightPixels;
 
 	for (int idx = 0; idx < pPixelMaps.size(); ++idx)
 	{
@@ -161,7 +194,8 @@ void C16File::CombinePixelMaps()
 
 	if (numFrames > 1)
 	{
-		int numPixelsPerFrame = m_widthPixels * m_heightPixels;
+		int widthPixels = m_widthBytes * 2;
+		int numPixelsPerFrame = widthPixels * m_heightPixels;
 		int numPixelsCombined = numPixelsPerFrame * numFrames;
 
 		unsigned char* pPixels = new unsigned char[ numPixelsCombined ];
@@ -220,7 +254,7 @@ void C16File::SaveToFile(const char* pFilenamePath)
 	pHeader->file_length = (unsigned int)bytes.size(); // get some valid data in there
 
 	pHeader->version = 0x0000;
-	pHeader->width  = m_widthPixels  & 0xFFFF;
+	pHeader->width  = m_widthBytes   & 0xFFFF;
 	pHeader->height = m_heightPixels & 0xFFFF;
 	pHeader->reserved = 0x0000;
 
@@ -288,12 +322,13 @@ void C16File::SaveToFile(const char* pFilenamePath)
 	pPIXL->p = 'P'; pPIXL->i = 'I'; pPIXL->x = 'X'; pPIXL->l = 'L';
 	pPIXL->chunk_length = 0; // Temporary Chunk Size
 
-	// Nibble-pack the pixel data first. Disk byte width per row = (W+1)/2.
-	int packedRowBytes = (m_widthPixels + 1) / 2;
+	// Nibble-pack the pixel data first. Disk byte width per row = m_widthBytes.
+	int packedRowBytes = m_widthBytes;
+	int widthPixels    = m_widthBytes * 2;
 	size_t decompressed_size = (size_t)packedRowBytes * (size_t)m_heightPixels;
 
 	unsigned char* pPackedPixels = new unsigned char[ decompressed_size ];
-	NibblePack(m_pPixelMaps[ 0 ], pPackedPixels, m_widthPixels, m_heightPixels);
+	NibblePack(m_pPixelMaps[ 0 ], pPackedPixels, widthPixels, m_heightPixels);
 
 	pPIXL->num_blobs = (short) (decompressed_size / 0x10000);
 
@@ -378,6 +413,59 @@ void C16File::SaveToFile(const char* pFilenamePath)
 	pPIXL->chunk_length = (unsigned int) (bytes.size() - pixl_offset);
 
 	//--------------------------------------------------------------------------
+	// Add an SCBs Chunk -- one Scanline Control Byte per scanline
+	// (Apple IIgs convention: bit 7 = 320/640 mode, bits 3-0 = palette index).
+	// Mirrors the CLUT compression scheme: high bit of num_scbs = compressed flag.
+	if ((m_scb.iNumScanLines > 0) && (m_scb.pSCB != nullptr))
+	{
+		size_t scb_offset = bytes.size();
+		size_t decompressed_scb_size = (size_t)m_scb.iNumScanLines;
+
+		unsigned char* pScbCompBuffer = new unsigned char[
+			lzsa_get_max_compressed_size_inmem( decompressed_scb_size ) ];
+
+		size_t scbCompSize = lzsa_compress_inmem(
+			m_scb.pSCB,                                                            // input
+			pScbCompBuffer,                                                        // output
+			decompressed_scb_size,                                                 // input size
+			lzsa_get_max_compressed_size_inmem( decompressed_scb_size ),           // max output buffer size
+			LZSA_FLAG_FAVOR_RATIO | LZSA_FLAG_RAW_BLOCK,
+			0,                                                                     // minmatchsize (0 better for ratio)
+			2                                                                      // Format Version
+		);
+
+		unsigned int scb_chunk_size;
+		if ((scbCompSize > 0) && (scbCompSize < decompressed_scb_size))
+		{
+			// Save compressed
+			scb_chunk_size = (unsigned int)(scbCompSize + sizeof(C16File_SCBs));
+			bytes.resize( bytes.size() + scb_chunk_size );
+			C16File_SCBs* pSCBs = (C16File_SCBs*)&bytes[ scb_offset ];
+			pSCBs->S = 'S'; pSCBs->c = 'C'; pSCBs->b = 'B'; pSCBs->s = 's';
+			pSCBs->chunk_length = scb_chunk_size;
+			pSCBs->num_scbs = (unsigned short)(m_scb.iNumScanLines) | (unsigned short)0x8000;
+
+			memcpy(&bytes[ scb_offset + sizeof(C16File_SCBs) ], pScbCompBuffer,
+				   scbCompSize);
+		}
+		else
+		{
+			// Save uncompressed
+			scb_chunk_size = (unsigned int)(decompressed_scb_size + sizeof(C16File_SCBs));
+			bytes.resize( bytes.size() + scb_chunk_size );
+			C16File_SCBs* pSCBs = (C16File_SCBs*)&bytes[ scb_offset ];
+			pSCBs->S = 'S'; pSCBs->c = 'C'; pSCBs->b = 'B'; pSCBs->s = 's';
+			pSCBs->chunk_length = scb_chunk_size;
+			pSCBs->num_scbs = (unsigned short)(m_scb.iNumScanLines);
+
+			memcpy(&bytes[ scb_offset + sizeof(C16File_SCBs) ], m_scb.pSCB,
+				   decompressed_scb_size);
+		}
+
+		delete[] pScbCompBuffer;
+	}
+
+	//--------------------------------------------------------------------------
 	// Update the header
 	pHeader = (C16File_Header*)&bytes[0]; // Required
 	pHeader->file_length = (unsigned int)bytes.size(); // get some valid data in there
@@ -404,6 +492,12 @@ void C16File::LoadFromFile(const char* pFilePath)
 		delete[] m_pal.pColors;
 		m_pal.pColors = nullptr;
 	}
+	if (m_scb.pSCB)
+	{
+		delete[] m_scb.pSCB;
+		m_scb.pSCB = nullptr;
+	}
+	m_scb.iNumScanLines = 0;
 	// Free Up the memory
 	for (int idx = 0; idx < m_pPixelMaps.size(); ++idx)
 	{
@@ -446,11 +540,12 @@ void C16File::LoadFromFile(const char* pFilePath)
 		if (!pHeader->IsValid((unsigned int)bytes.size()))
 			return;
 
-		m_widthPixels = pHeader->width;
+		m_widthBytes   = pHeader->width;
 		m_heightPixels = pHeader->height;
 
 		// Go ahead and allocate the bitmap (1 byte per pixel after unpack)
-		size_t frameSize = (size_t)m_widthPixels * (size_t)m_heightPixels;
+		int widthPixels = m_widthBytes * 2;
+		size_t frameSize = (size_t)widthPixels * (size_t)m_heightPixels;
 
 		// Allocate a Frame
 		unsigned char* pFrame = new unsigned char[ frameSize ];
@@ -470,6 +565,7 @@ void C16File::LoadFromFile(const char* pFilePath)
 			// at offset +4, so that we can ignore ones we don't understand
 			C16File_CLUT* pCLUT = (C16File_CLUT*)&bytes[ file_offset ];
 			C16File_PIXL* pPIXL = (C16File_PIXL*)&bytes[ file_offset ];
+			C16File_SCBs* pSCBs = (C16File_SCBs*)&bytes[ file_offset ];
 			C16File_CHUNK* pCHUNK = (C16File_CHUNK*)&bytes[ file_offset ];
 
 			if (pCLUT->IsValid())
@@ -481,6 +577,11 @@ void C16File::LoadFromFile(const char* pFilePath)
 			{
 				// We have a PIXeL chunk
 				UnpackPixel(pPIXL);
+			}
+			else if (pSCBs->IsValid())
+			{
+				// We have an SCBs chunk
+				UnpackSCBs(pSCBs);
 			}
 
 			file_offset += pCHUNK->chunk_length;
@@ -533,7 +634,8 @@ void C16File::UnpackPixel(C16File_PIXL* pPIXL)
 
 	unsigned char *pData = ((unsigned char*)pPIXL) + sizeof(C16File_PIXL);
 
-	int packedRowBytes = (m_widthPixels + 1) / 2;
+	int packedRowBytes = m_widthBytes;
+	int widthPixels    = m_widthBytes * 2;
 	size_t packedSize = (size_t)packedRowBytes * (size_t)m_heightPixels;
 
 	// Decompress the nibble-packed bytes into a temp buffer first.
@@ -580,9 +682,51 @@ void C16File::UnpackPixel(C16File_PIXL* pPIXL)
 	}
 
 	// Now nibble-unpack into the per-pixel target buffer
-	NibbleUnpack(pPackedBuffer, m_pPixelMaps[ 0 ], m_widthPixels, m_heightPixels);
+	NibbleUnpack(pPackedBuffer, m_pPixelMaps[ 0 ], widthPixels, m_heightPixels);
 
 	delete[] pPackedBuffer;
+}
+
+//------------------------------------------------------------------------------
+//
+// Move data out of the SCBs block into the unpacked class structure.
+// Mirrors UnpackClut: high bit of num_scbs == compressed flag.
+//
+void C16File::UnpackSCBs(C16File_SCBs* pSCBs)
+{
+	int numScanLines = pSCBs->num_scbs & 0x7FFF;
+
+	// Free any prior SCBs (defensive; LoadFromFile also clears upfront).
+	if (m_scb.pSCB)
+	{
+		delete[] m_scb.pSCB;
+		m_scb.pSCB = nullptr;
+	}
+
+	m_scb.iNumScanLines = numScanLines;
+
+	if (numScanLines <= 0)
+		return;
+
+	unsigned char* pPacked = ((unsigned char*) pSCBs) + sizeof(C16File_SCBs);
+
+	m_scb.pSCB = new uint8_t[ numScanLines ];
+
+	if (pSCBs->num_scbs & 0x8000)
+	{
+		// data is compressed
+		int version = 2; // format version
+		lzsa_decompress_inmem(pPacked,                                       // compressed data
+							  (unsigned char *)m_scb.pSCB,                   // target uncompressed data
+							  pSCBs->chunk_length - sizeof(C16File_SCBs),    // compressed size in bytes
+							  numScanLines,
+							  LZSA_FLAG_RAW_BLOCK,
+							  &version);
+	}
+	else
+	{
+		memcpy(m_scb.pSCB, pPacked, numScanLines);
+	}
 }
 
 //------------------------------------------------------------------------------

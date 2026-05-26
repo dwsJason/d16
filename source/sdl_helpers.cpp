@@ -483,7 +483,7 @@ SDL_Surface* SDL_16GetSurface(C16File& c16File, int frameNo)
 	const C16_Palette& clut = c16File.GetPalette();
 	const std::vector<unsigned char*>& pPixelMaps = c16File.GetPixelMaps();
 
-	int width  = c16File.GetWidth();
+	int width  = c16File.GetWidthPixels();
 	int height = c16File.GetHeight();
 
 	unsigned char* pRawPixels = new unsigned char[ width * height ];
@@ -817,8 +817,9 @@ void SDL_IMG_Save16(std::vector<SDL_Surface*> pSurfaces, const char* pFilePath)
 
 
 		// Create the C16File Object
-
-		C16File c16File(width, height, palette.iNumColors);
+		// On-disk width is bytes per scanline; default 16-color/320-mode is 2 px/byte.
+		int widthBytes = (width + 1) / 2;
+		C16File c16File(widthBytes, height, palette.iNumColors);
 
 		// Add the colors
 		c16File.SetPalette( palette );
