@@ -526,7 +526,7 @@ void MainMenuBarUI()
 				// Open File
 				NFD::UniquePathSet outPaths;
 
-				nfdu8filteritem_t filterItem[1] = { {"Images", "png,tif,tga,gif,flc,fli,jpg,jpeg,jfif,lbm,bmp,webp,anm,pal,c1,c2,256,#C10000,#C20000,gsla"} };
+				nfdu8filteritem_t filterItem[1] = { {"Images", "png,tif,tga,gif,flc,fli,jpg,jpeg,jfif,lbm,bmp,webp,anm,pal,c1,c2,16,256,#C10000,#C20000,gsla"} };
 
 
 				nfdresult_t result = NFD::OpenDialogMultiple(outPaths,
