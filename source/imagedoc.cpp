@@ -911,14 +911,14 @@ void ImageDocument::Render()
 
 				}
 
-				if (ImGui::MenuItem("Save as I16 (Foenix 16-Color Bitmap)"))
+				if (ImGui::MenuItem("Save as I16 (Apple IIgs 16-Color Bitmap)"))
 				{
 					NFD::UniquePathU8 savePath;
 
 					const nfdu8char_t* defaultFileName = FixExtension( m_filename, ".16" );
 
 					// prepare filters for the dialog
-					nfdu8filteritem_t filterItem[1] = { {"Foenix I16", "16"} };
+					nfdu8filteritem_t filterItem[1] = { {"Apple IIgs I16", "16"} };
 
 					nfdresult_t result = NFD::SaveDialog(savePath,
 														 filterItem, // filter
